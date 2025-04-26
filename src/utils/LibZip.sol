@@ -178,24 +178,26 @@ library LibZip {
                 _z := xor(x_, mul(xor(x_, y_), lt(y_, x_)))
             }
             result := mload(0x40)
+            let end := add(data, mload(data))
+            let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
             let o := add(result, 0x20)
-            for { let end := add(data, mload(data)) } iszero(eq(data, end)) {} {
-                data := add(data, 1)
-                let c := byte(31, mload(data))
+            for { let i := data } iszero(eq(i, end)) {} {
+                i := add(i, 1)
+                let c := byte(31, mload(i))
                 if iszero(c) {
                     for {} 1 {} {
-                        let x := mload(add(data, 0x20))
+                        let x := mload(add(i, 0x20))
                         if iszero(x) {
-                            let r := min(sub(end, data), 0x20)
+                            let r := min(sub(end, i), 0x20)
                             r := min(sub(0x7f, c), r)
-                            data := add(data, r)
+                            i := add(i, r)
                             c := add(c, r)
                             if iszero(gt(r, 0x1f)) { break }
                             continue
                         }
                         let r := countLeadingZeroBytes(x)
-                        r := min(sub(end, data), r)
-                        data := add(data, r)
+                        r := min(sub(end, i), r)
+                        i := add(i, r)
                         c := add(c, r)
                         break
                     }
@@ -205,16 +207,29 @@ library LibZip {
                 }
                 if eq(c, 0xff) {
                     let r := 0x20
-                    let x := not(mload(add(data, r)))
+                    let x := not(mload(add(i, r)))
                     if x { r := countLeadingZeroBytes(x) }
-                    r := min(min(sub(end, data), r), 0x1f)
-                    data := add(data, r)
+                    r := min(min(sub(end, i), r), 0x1f)
+                    i := add(i, r)
                     mstore(o, shl(240, or(r, 0x80)))
                     o := add(o, 2)
                     continue
                 }
                 mstore8(o, c)
                 o := add(o, 1)
+                c := mload(add(i, 0x20))
+                mstore(o, c)
+                // `.each(b => b == 0x00 || b == 0xff ? 0x80 : 0x00)`.
+                c := not(or(and(or(add(and(c, m), m), c), or(add(and(not(c), m), m), not(c))), m))
+                let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c)) // Save bytecode.
+                r := or(shl(6, lt(0xffffffffffffffff, shr(r, c))), r)
+                // forgefmt: disable-next-item
+                r := add(iszero(c), shr(3, xor(byte(and(0x1f, shr(byte(24,
+                    mul(0x02040810204081, shr(r, c))), 0x8421084210842108cc6318c6db6d54be)),
+                    0xc0c8c8d0c8e8d0d8c8e8e0e8d0d8e0f0c8d0e8d0e0e0d8f0d0d0e0d8f8f8f8f8), r)))
+                r := min(sub(end, i), r)
+                o := add(o, r)
+                i := add(i, r)
             }
             // Bitwise negate the first 4 bytes.
             mstore(add(result, 4), not(mload(add(result, 4))))
@@ -233,34 +248,34 @@ library LibZip {
                 let s := add(data, 4)
                 let v := mload(s)
                 let end := add(add(0x20, data), mload(data))
-                let m := not(shl(7, div(not(iszero(end)), 255))) // `0x7f7f ...`.
+                let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
                 let o := add(result, 0x20)
                 mstore(s, not(v)) // Bitwise negate the first 4 bytes.
                 for { let i := add(0x20, data) } 1 {} {
                     let c := mload(i)
                     if iszero(byte(0, c)) {
-                        c := add(byte(1, c), 1)
+                        c := add(1, byte(1, c))
                         if iszero(gt(c, 0x80)) {
+                            i := add(i, 2)
                             calldatacopy(o, calldatasize(), c) // Fill with 0x00.
                             o := add(o, c)
-                            i := add(i, 2)
                             if iszero(lt(i, end)) { break }
                             continue
                         }
+                        i := add(i, 2)
                         mstore(o, not(0)) // Fill with 0xff.
                         o := add(o, sub(c, 0x80))
-                        i := add(i, 2)
                         if iszero(lt(i, end)) { break }
                         continue
                     }
                     mstore(o, c)
-                    c := not(or(or(add(and(c, m), m), c), m))
-                    let r := shl(7, lt(0xffffffffffffffffffffffffffffffff, c))
-                    r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, c))))
+                    c := not(or(or(add(and(c, m), m), c), m)) // `.each(b => b == 0x00 ? 0x80 : 0x00)`.
+                    let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c)) // Save bytecode.
+                    r := or(shl(6, lt(0xffffffffffffffff, shr(r, c))), r)
                     // forgefmt: disable-next-item
-                    c := add(iszero(c), xor(byte(and(0x1f, shr(byte(24, mul(0x02040810204081, shr(r, c))),
-                        0x8421084210842108cc6318c6db6d54be)),
-                        0x1819191a191d1a1b191d1c1d1a1b1c1e191a1d1a1c1c1b1e1a1a1c1b1f1f1f1f), shr(3, r)))
+                    c := add(iszero(c), shr(3, xor(byte(and(0x1f, shr(byte(24,
+                        mul(0x02040810204081, shr(r, c))), 0x8421084210842108cc6318c6db6d54be)),
+                        0xc0c8c8d0c8e8d0d8c8e8e0e8d0d8e0f0c8d0e8d0e0e0d8f0d0d0e0d8f8f8f8f8), r)))
                     o := add(o, c)
                     i := add(i, c)
                     if lt(i, end) { continue }

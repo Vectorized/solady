@@ -83,13 +83,13 @@ contract LibZipTest is SoladyTest {
         _bytesStorage.set(LibZip.flzCompress(abi.encode(_A, _B, _C)));
     }
 
-    function testStoreABCGas() public {
+    function testABCStoreGas() public {
         _abc.a = _A;
         _abc.b = _B;
         _abc.c = _C;
     }
 
-    function testStoreABCPackedGas() public {
+    function testABCStorePackedGas() public {
         _abcPacked.a = uint32(_A);
         _abcPacked.b = uint64(_B);
         _abcPacked.c = uint32(_C);
