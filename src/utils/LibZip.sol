@@ -254,8 +254,8 @@ library LibZip {
                         continue
                     }
                     mstore(o, c)
-                    c := not(or(or(add(and(c, m), m), c), m))
-                    let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c))
+                    c := not(or(or(add(and(c, m), m), c), m)) // 0x00 -> 0x80.
+                    let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c)) // Save bytecode.
                     r := or(shl(6, lt(0xffffffffffffffff, shr(r, c))), r)
                     // forgefmt: disable-next-item
                     c := add(iszero(c), shr(3, xor(byte(and(0x1f, shr(byte(24,
