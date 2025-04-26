@@ -233,13 +233,13 @@ library LibZip {
                 let s := add(data, 4)
                 let v := mload(s)
                 let end := add(add(0x20, data), mload(data))
-                let m := not(shl(7, div(not(iszero(end)), 255))) // `0x7f7f ...`.
+                let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
                 let o := add(result, 0x20)
                 mstore(s, not(v)) // Bitwise negate the first 4 bytes.
                 for { let i := add(0x20, data) } 1 {} {
                     let c := mload(i)
                     if iszero(byte(0, c)) {
-                        c := add(byte(1, c), 1)
+                        c := add(1, byte(1, c))
                         if iszero(gt(c, 0x80)) {
                             calldatacopy(o, calldatasize(), c) // Fill with 0x00.
                             o := add(o, c)
@@ -255,12 +255,12 @@ library LibZip {
                     }
                     mstore(o, c)
                     c := not(or(or(add(and(c, m), m), c), m))
-                    let r := shl(7, lt(0xffffffffffffffffffffffffffffffff, c))
-                    r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, c))))
+                    let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c))
+                    r := or(shl(6, lt(0xffffffffffffffff, shr(r, c))), r)
                     // forgefmt: disable-next-item
-                    c := add(iszero(c), xor(byte(and(0x1f, shr(byte(24, mul(0x02040810204081, shr(r, c))),
-                        0x8421084210842108cc6318c6db6d54be)),
-                        0x1819191a191d1a1b191d1c1d1a1b1c1e191a1d1a1c1c1b1e1a1a1c1b1f1f1f1f), shr(3, r)))
+                    c := add(iszero(c), shr(3, xor(byte(and(0x1f, shr(byte(24,
+                        mul(0x02040810204081, shr(r, c))), 0x8421084210842108cc6318c6db6d54be)),
+                        0xc0c8c8d0c8e8d0d8c8e8e0e8d0d8e0f0c8d0e8d0e0e0d8f0d0d0e0d8f8f8f8f8), r)))
                     o := add(o, c)
                     i := add(i, c)
                     if lt(i, end) { continue }
