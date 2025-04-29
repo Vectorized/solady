@@ -26,6 +26,16 @@ abstract contract EIP712 {
     bytes32 internal constant _DOMAIN_TYPEHASH_SANS_CHAIN_ID =
         0x91ab3d17e3a50a9d89e63fd30b92be7f5336b03b287bb946787a83a9d62a2766;
 
+    /// @dev `keccak256("EIP712Domain(string name,string version)")`.
+    /// This is only used in `_hashTypedDataSansChainIdAndVerifyingContract`.
+    bytes32 internal constant _DOMAIN_TYPEHASH_SANS_CHAIN_ID_AND_VERIFYING_CONTRACT =
+        0xb03948446334eb9b2196d5eb166f69b9d49403eb4a12f36de8d3f9f3cb8e15c3;
+
+    /// @dev `keccak256("EIP712Domain(string name,string version,uint256 chainId)")`.
+    /// This is only used in `_hashTypedDataSansVerifyingContract`.
+    bytes32 internal constant _DOMAIN_TYPEHASH_SANS_VERIFYING_CONTRACT =
+        0xc2f8787176b8ac6bf7215b4adcc1e069bf4ab82d9ab1df05a57a91d425935b6e;
+
     uint256 private immutable _cachedThis;
     uint256 private immutable _cachedChainId;
     bytes32 private immutable _cachedNameHash;
@@ -147,9 +157,7 @@ abstract contract EIP712 {
     }
 
     /// @dev Variant of `_hashTypedData` that excludes the chain ID.
-    /// We expect that most contracts will use `_hashTypedData` as the main hash,
-    /// and `_hashTypedDataSansChainId` only occasionally for cross-chain workflows.
-    /// Thus this is optimized for smaller bytecode size over runtime gas.
+    /// Included for the niche use case of cross-chain workflows.
     function _hashTypedDataSansChainId(bytes32 structHash)
         internal
         view
@@ -164,6 +172,57 @@ abstract contract EIP712 {
             mstore(0x20, keccak256(add(name, 0x20), mload(name)))
             mstore(0x40, keccak256(add(version, 0x20), mload(version)))
             mstore(0x60, address())
+            // Compute the digest.
+            mstore(0x20, keccak256(0x00, 0x80)) // Store the domain separator.
+            mstore(0x00, 0x1901) // Store "\x19\x01".
+            mstore(0x40, structHash) // Store the struct hash.
+            digest := keccak256(0x1e, 0x42)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
+        }
+    }
+
+    /// @dev Variant of `_hashTypedData` that excludes the chain ID and verifying contract.
+    /// Included for the niche use case of cross-chain and multi-verifier workflows.
+    function _hashTypedDataSansChainIdAndVerifyingContract(bytes32 structHash)
+        internal
+        view
+        virtual
+        returns (bytes32 digest)
+    {
+        (string memory name, string memory version) = _domainNameAndVersion();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(0x00, _DOMAIN_TYPEHASH_SANS_CHAIN_ID_AND_VERIFYING_CONTRACT)
+            mstore(0x20, keccak256(add(name, 0x20), mload(name)))
+            mstore(0x40, keccak256(add(version, 0x20), mload(version)))
+            // Compute the digest.
+            mstore(0x20, keccak256(0x00, 0x60)) // Store the domain separator.
+            mstore(0x00, 0x1901) // Store "\x19\x01".
+            mstore(0x40, structHash) // Store the struct hash.
+            digest := keccak256(0x1e, 0x42)
+            mstore(0x40, m) // Restore the free memory pointer.
+            mstore(0x60, 0) // Restore the zero pointer.
+        }
+    }
+
+    /// @dev Variant of `_hashTypedData` that excludes the chain ID and verifying contract.
+    /// Included for the niche use case of multi-verifier workflows.
+    function _hashTypedDataSansVerifyingContract(bytes32 structHash)
+        internal
+        view
+        virtual
+        returns (bytes32 digest)
+    {
+        (string memory name, string memory version) = _domainNameAndVersion();
+        /// @solidity memory-safe-assembly
+        assembly {
+            let m := mload(0x40) // Load the free memory pointer.
+            mstore(0x00, _DOMAIN_TYPEHASH_SANS_VERIFYING_CONTRACT)
+            mstore(0x20, keccak256(add(name, 0x20), mload(name)))
+            mstore(0x40, keccak256(add(version, 0x20), mload(version)))
+            mstore(0x60, chainid())
             // Compute the digest.
             mstore(0x20, keccak256(0x00, 0x80)) // Store the domain separator.
             mstore(0x00, 0x1901) // Store "\x19\x01".
