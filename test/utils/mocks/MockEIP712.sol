@@ -27,4 +27,20 @@ contract MockEIP712 is EIP712 {
     function hashTypedDataSansChainId(bytes32 structHash) external view returns (bytes32) {
         return _hashTypedDataSansChainId(structHash);
     }
+
+    function hashTypedDataSansChainIdAndVerifyingContract(bytes32 structHash)
+        external
+        view
+        returns (bytes32)
+    {
+        return _hashTypedDataSansChainIdAndVerifyingContract(structHash);
+    }
+
+    function hashTypedDataSansVerifyingContract(bytes32 structHash)
+        external
+        view
+        returns (bytes32)
+    {
+        return _hashTypedDataSansVerifyingContract(structHash);
+    }
 }
