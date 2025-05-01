@@ -634,7 +634,7 @@ contract SignatureCheckerLibTest is SoladyTest {
         assertEq(t.smartAccount.code.length, 0);
     }
 
-    function check_EcrecoverTrickEquivalance(bool success, uint256 signer, uint256 recovered)
+    function check_EcrecoverTrickEquivalence(bool success, uint256 signer, uint256 recovered)
         public
         pure
     {
@@ -648,11 +648,11 @@ contract SignatureCheckerLibTest is SoladyTest {
         assert(optimized == expected);
     }
 
-    function testEcrecoverTrickEquivalance(bool success, uint256 signer, uint256 recovered)
+    function testEcrecoverTrickEquivalence(bool success, uint256 signer, uint256 recovered)
         public
         pure
     {
-        check_EcrecoverTrickEquivalance(success, signer, recovered);
+        check_EcrecoverTrickEquivalence(success, signer, recovered);
     }
 
     function check_EcrecoverLoopTrick(uint256 n) public pure {
