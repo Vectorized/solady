@@ -160,5 +160,31 @@ contract SemVerLibTest is SoladyTest {
         _checkLt("1.2.3-99999999999999999999999999", "1.2.3-t");
         _checkLt("1.2.3-alpha", "1.2.3-alpha.0");
         _checkLt("1.2-alpha", "1.2.3-alpha");
+
+        _checkLt("1.2.3-1", "1.2.3-a");
+        _checkLt("1.2.3-1", "1.2.3-alpha");
+        _checkLt("1.2.3-1.0", "1.2.3-1.a");
+
+        _checkLt("1.2.3-alpha", "1.2.3-alpha.0");
+        _checkLt("1.2.3-alpha.1", "1.2.3-alpha.1.1");
+        _checkLt("1.2.3-alpha.1.a", "1.2.3-alpha.1.a.0");
+
+        _checkEq("1.2.3-alpha+build", "1.2.3-alpha");
+        _checkEq("1.2.3+build", "1.2.3");
+        _checkLt("1.2.3-alpha", "1.2.3+build");
+
+        _checkLt("1..3", "1.1.3");
+        _checkLt("1..4", "1.1.3"); // `1.0.4` < `1.1.3`.
+        _checkEq("1.2.3a", "1.2.3a");
+        _checkLt("1.2.3a", "1.2.4");
+
+        _checkEq("1..4", "1.0.4"); // confirm parsing is consistent
+        _checkLt("1..4", "1.0.5"); // `1.0.4` < `1.0.5`
+        _checkLt("1..4", "1.1"); // `1.0.4` < `1.1.0`
+        _checkLt("1..", "1.0.1"); // `1.0.0` < `1.0.1` if final component is missing
+        _checkEq("1.0.", "1.0.0"); // forgiving trailing dot
+
+        _checkEq("01.002.0003", "1.2.3");
+        _checkEq("v01.2.03", "1.2.3");
     }
 }
