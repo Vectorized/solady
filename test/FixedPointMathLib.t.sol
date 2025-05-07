@@ -1203,7 +1203,7 @@ contract FixedPointMathLibTest is SoladyTest {
             if (mulmod(a, b, d) > 0) {
                 if (!(fullMulDivResult < type(uint256).max)) {
                     vm.expectRevert(FixedPointMathLib.FullMulDivFailed.selector);
-                    FixedPointMathLib.fullMulDivUp(a, b, d);
+                    this.fullMulDivUp(a, b, d);
                     return;
                 }
                 expectedResult++;
