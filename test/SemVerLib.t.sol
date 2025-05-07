@@ -107,10 +107,10 @@ contract SemVerLibTest is SoladyTest {
         uint256 n;
         uint256[] a;
         uint256[] b;
-        bool aIsNumeric;
-        bool bIsNumeric;
-        uint256 aNumber;
-        uint256 bNumber;
+        bool aIsNum;
+        bool bIsNum;
+        uint256 aNum;
+        uint256 bNum;
         bytes aBuffer;
         bytes bBuffer;
         bytes aPreReleaseBuffer;
@@ -129,40 +129,40 @@ contract SemVerLibTest is SoladyTest {
         }
         t.aBuffer = _s(_maybePrependV(_s(t.a)));
         t.bBuffer = _s(_maybePrependV(_s(t.b)));
-        t.aIsNumeric = _randomChance(2);
-        t.bIsNumeric = _randomChance(2);
+        t.aIsNum = _randomChance(2);
+        t.bIsNum = _randomChance(2);
 
-        if (t.aIsNumeric) {
-            t.aNumber = _random() % (10 ** (32 - 1 - t.aBuffer.length));
-            t.aBuffer = abi.encodePacked(t.aBuffer, "-", _s(t.aNumber));
+        if (t.aIsNum) {
+            t.aNum = _random() % (10 ** (32 - 1 - t.aBuffer.length));
+            t.aBuffer = abi.encodePacked(t.aBuffer, "-", _s(t.aNum));
         } else {
-            t.aNumber = _random() % (10 ** (32 - 2 - t.aBuffer.length));
-            t.aPreReleaseBuffer = abi.encodePacked(_s(t.aNumber), "h");
+            t.aNum = _random() % (10 ** (32 - 2 - t.aBuffer.length));
+            t.aPreReleaseBuffer = abi.encodePacked(_s(t.aNum), "h");
             t.aBuffer = abi.encodePacked(t.aBuffer, "-", t.aPreReleaseBuffer);
         }
 
-        if (t.bIsNumeric) {
-            t.bNumber = _random() % (10 ** (32 - 1 - t.bBuffer.length));
-            t.bBuffer = abi.encodePacked(t.bBuffer, "-", _s(t.bNumber));
+        if (t.bIsNum) {
+            t.bNum = _random() % (10 ** (32 - 1 - t.bBuffer.length));
+            t.bBuffer = abi.encodePacked(t.bBuffer, "-", _s(t.bNum));
         } else {
-            t.bNumber = _random() % (10 ** (32 - 2 - t.bBuffer.length));
-            t.bPreReleaseBuffer = abi.encodePacked(_s(t.bNumber), "h");
+            t.bNum = _random() % (10 ** (32 - 2 - t.bBuffer.length));
+            t.bPreReleaseBuffer = abi.encodePacked(_s(t.bNum), "h");
             t.bBuffer = abi.encodePacked(t.bBuffer, "-", t.bPreReleaseBuffer);
         }
 
-        if (t.aIsNumeric && t.bIsNumeric) {
-            if (t.aNumber < t.bNumber) {
+        if (t.aIsNum && t.bIsNum) {
+            if (t.aNum < t.bNum) {
                 _checkLt(_s(t.aBuffer), _s(t.bBuffer));
-            } else if (t.aNumber > t.bNumber) {
+            } else if (t.aNum > t.bNum) {
                 _checkLt(_s(t.bBuffer), _s(t.aBuffer));
             } else {
                 _checkEq(_s(t.aBuffer), _s(t.bBuffer));
             }
-        } else if (t.aIsNumeric && !t.bIsNumeric) {
+        } else if (t.aIsNum && !t.bIsNum) {
             _checkLt(_s(t.aBuffer), _s(t.bBuffer));
-        } else if (!t.aIsNumeric && t.bIsNumeric) {
+        } else if (!t.aIsNum && t.bIsNum) {
             _checkLt(_s(t.bBuffer), _s(t.aBuffer));
-        } else if (!t.aIsNumeric && !t.bIsNumeric) {
+        } else if (!t.aIsNum && !t.bIsNum) {
             t.lexoCmpResult = _lexoCmp(t.aPreReleaseBuffer, t.bPreReleaseBuffer);
             if (t.lexoCmpResult == -1) {
                 _checkLt(_s(t.aBuffer), _s(t.bBuffer));
