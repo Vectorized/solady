@@ -17,14 +17,11 @@ library SemVerLib {
         /// @solidity memory-safe-assembly
         assembly {
             function mmp(i_, a_) -> _r, _o {
-                for { _o := i_ } 1 { _o := add(1, _o) } {
-                    let digit_ := sub(byte(_o, a_), 48)
-                    if iszero(lt(digit_, 10)) { break }
-                    _r := add(mul(10, _r), digit_)
+                for { _o := i_ } iszero(gt(sub(byte(_o, a_), 48), 9)) { _o := add(1, _o) } {
+                    _r := add(mul(10, _r), sub(byte(_o, a_), 48))
                 }
             }
-            function pre(i_, a_) -> _r, _o {
-                let hasNonDigit_ := 0
+            function pre(i_, a_) -> hasNonDigit_, _r, _o {
                 mstore(0x00, 0)
                 for { _o := i_ } 1 { _o := add(1, _o) } {
                     let c_ := byte(_o, a_)
@@ -48,19 +45,21 @@ library SemVerLib {
                 result := sub(gt(x, y), lt(x, y))
             }
             if iszero(result) {
-                x := eq(byte(i, a), 45)
-                y := eq(byte(j, b), 45)
-                result := sub(lt(x, y), gt(x, y))
-                if lt(result, eq(1, and(x, y))) {
+                let u := eq(byte(i, a), 45)
+                let v := eq(byte(j, b), 45)
+                result := sub(lt(u, v), gt(u, v))
+                if lt(result, eq(1, and(u, v))) {
                     for {} 1 {} {
-                        x, i := pre(add(i, 1), a)
-                        y, j := pre(add(j, 1), b)
+                        u, x, i := pre(add(i, 1), a)
+                        v, y, j := pre(add(j, 1), b)
+                        result := sub(gt(u, v), lt(u, v))
+                        if result { break }
                         result := sub(gt(x, y), lt(x, y))
                         if result { break }
-                        x := eq(byte(i, a), 46)
-                        y := eq(byte(j, b), 46)
-                        result := sub(gt(x, y), lt(x, y))
-                        if or(result, iszero(x)) { break }
+                        u := eq(byte(i, a), 46)
+                        v := eq(byte(j, b), 46)
+                        result := sub(gt(u, v), lt(u, v))
+                        if or(result, iszero(u)) { break }
                     }
                 }
             }

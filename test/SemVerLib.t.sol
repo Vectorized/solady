@@ -26,9 +26,14 @@ contract SemVerLibTest is SoladyTest {
     }
 
     function _addMeta(bytes32 a) internal returns (bytes32) {
-        bytes memory data = abi.encodePacked(LibString.fromSmallString(a), "+");
-        if (_randomChance(2)) data = abi.encodePacked(data, "hehe");
-        return LibString.toSmallString(string(data));
+        bytes memory data = bytes(LibString.fromSmallString(a));
+        if (data.length < 20) {
+            data = abi.encodePacked(data, "+");
+            if (_randomChance(2)) data = abi.encodePacked(data, "hehe");
+            return LibString.toSmallString(string(data));
+        } else {
+            return a;
+        }
     }
 
     function testCmpMajorMinor(uint256 aMajor, uint256 bMajor, uint256 aMinor, uint256 bMinor)
@@ -198,6 +203,11 @@ contract SemVerLibTest is SoladyTest {
         _checkLt("1.2.3-alpha.123.", "1.2.3-alpha.124");
         _checkLt("1.2.3-alpha.124", "1.2.3-alpha.124a");
         _checkLt("1.2.3-alpha.124", "1.2.3-alpha.12a");
+        _checkLt("1.2.3-thequickbrownfoxjumpsover", "1.2.3-thequickbrownfoxjumpsover1");
+        _checkLt("1.2.3-thequickbrownfoxjumpsover", "1.2.3-thequickbrownfoxjumpsover0");
+        _checkEq("1.2.3-thequickbrownfoxjumpsover0", "1.2.3-thequickbrownfoxjumpsover0");
+        _checkLt("1.2.3-99999999999999999999999999", "1.2.3-thequickbrownfoxjumpsover0");
+        _checkLt("1.2.3-99999999999999999999999999", "1.2.3-t");
         _checkLt("1.2.3-alpha", "1.2.3-alpha.0");
         _checkLt("1.2-alpha", "1.2.3-alpha");
     }
