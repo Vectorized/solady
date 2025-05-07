@@ -28,12 +28,12 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "post-cancun" ] &&
-            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 &&
-            FOUNDRY_PROFILE=zksync forge test --use 0.8.28
+            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.30 &&
+            FOUNDRY_PROFILE=zksync forge test --use 0.8.30
           ) ||
           ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
-            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.28 --via-ir &&
-            FOUNDRY_PROFILE=zksync forge test --use 0.8.28 --via-ir
+            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.30 --via-ir &&
+            FOUNDRY_PROFILE=zksync forge test --use 0.8.30 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
             FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.5 --fuzz-runs 16 &&
@@ -60,7 +60,9 @@ jobs:
             forge test --use 0.8.24 --fuzz-runs 16 &&
             forge test --use 0.8.25 --fuzz-runs 16 &&
             forge test --use 0.8.26 --fuzz-runs 16 &&
-            forge test --use 0.8.27 --fuzz-runs 16
+            forge test --use 0.8.27 --fuzz-runs 16 &&
+            forge test --use 0.8.28 --fuzz-runs 16 &&
+            forge test --use 0.8.29 --fuzz-runs 16
 
           ) ||
           ( [ "${{ matrix.profile }}" = "via-ir" ] &&
