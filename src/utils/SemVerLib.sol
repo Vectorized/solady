@@ -25,17 +25,17 @@ library SemVerLib {
                 mstore(0x00, 0)
                 for { _o := i_ } 1 { _o := add(1, _o) } {
                     let c_ := byte(_o, a_)
-                    if and(1, shr(c_, 0x480000000001)) { break }
+                    if and(1, shr(c_, 0x480000000001)) { break } // `0x00`, '.', '+'
                     let digit_ := sub(c_, 48)
                     hasNonDigit_ := or(hasNonDigit_, gt(digit_, 9))
                     _r := add(mul(10, _r), digit_)
                     mstore8(sub(_o, i_), c_)
                 }
-                mstore(shl(5, hasNonDigit_), _r)
+                mstore(shl(5, hasNonDigit_), _r) // Overwrite if it's numeric.
                 _r := mload(0x00)
             }
-            let x, i := mmp(or(eq(byte(0, a), 118), eq(byte(0, a), 86)), a)
-            let y, j := mmp(or(eq(byte(0, b), 118), eq(byte(0, b), 86)), b)
+            let x, i := mmp(or(eq(byte(0, a), 118), eq(byte(0, a), 86)), a) // 'v', 'V'.
+            let y, j := mmp(or(eq(byte(0, b), 118), eq(byte(0, b), 86)), b) // 'v', 'V'.
             result := sub(gt(x, y), lt(x, y))
             for {} lt(result, or(eq(byte(i, a), 46), eq(byte(j, b), 46))) {} {
                 x := 0
