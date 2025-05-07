@@ -25,7 +25,7 @@ library SemVerLib {
                 mstore(0x00, 0)
                 for { _o := i_ } 1 { _o := add(1, _o) } {
                     let c_ := byte(_o, a_)
-                    if and(1, shr(c_, 0x480000000001)) { break } // `0x00`, '.', '+'
+                    if and(1, shr(c_, 0x480000000001)) { break } // `0x00`, '.', '+'.
                     let digit_ := sub(c_, 48)
                     hasNonDigit_ := or(hasNonDigit_, gt(digit_, 9))
                     _r := add(mul(10, _r), digit_)
