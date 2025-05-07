@@ -3,36 +3,202 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {SemVerLib} from "../src/utils/SemVerLib.sol";
+import {LibString} from "../src/utils/LibString.sol";
 
 contract SemVerLibTest is SoladyTest {
-    int256 internal constant _EQ = 0;
-    int256 internal constant _LT = -1;
-    int256 internal constant _GT = 1;
+    function _checkEq(bytes32 a, bytes32 b) internal {
+        assertEq(SemVerLib.cmp(a, b), 0);
+        assertEq(SemVerLib.cmp(_addMeta(a), b), 0);
+        assertEq(SemVerLib.cmp(a, _addMeta(b)), 0);
+        assertEq(SemVerLib.cmp(_addMeta(a), _addMeta(b)), 0);
+    }
+
+    function _checkLt(bytes32 a, bytes32 b) internal {
+        assertEq(SemVerLib.cmp(a, b), -1);
+        assertEq(SemVerLib.cmp(_addMeta(a), b), -1);
+        assertEq(SemVerLib.cmp(a, _addMeta(b)), -1);
+        assertEq(SemVerLib.cmp(_addMeta(a), _addMeta(b)), -1);
+        (a, b) = (b, a);
+        assertEq(SemVerLib.cmp(a, b), 1);
+        assertEq(SemVerLib.cmp(_addMeta(a), b), 1);
+        assertEq(SemVerLib.cmp(a, _addMeta(b)), 1);
+        assertEq(SemVerLib.cmp(_addMeta(a), _addMeta(b)), 1);
+    }
+
+    function _addMeta(bytes32 a) internal returns (bytes32) {
+        bytes memory data = abi.encodePacked(LibString.fromSmallString(a), "+");
+        if (_randomChance(2)) data = abi.encodePacked(data, "hehe");
+        return LibString.toSmallString(string(data));
+    }
+
+    function testCmpMajorMinor(uint256 aMajor, uint256 bMajor, uint256 aMinor, uint256 bMinor)
+        public
+    {
+        aMajor = _bound(aMajor, 0, 100000);
+        bMajor = _bound(bMajor, 0, 100000);
+        aMinor = _bound(aMinor, 0, 100000);
+        bMinor = _bound(bMinor, 0, 100000);
+        if (bMajor < aMajor) (aMajor, bMajor) = (bMajor, aMajor);
+        if (aMajor < bMajor) {
+            _checkLt(
+                LibString.toSmallString(
+                    string(
+                        abi.encodePacked(
+                            LibString.toString(aMajor), ".", LibString.toString(aMinor), ".0"
+                        )
+                    )
+                ),
+                LibString.toSmallString(
+                    string(
+                        abi.encodePacked(
+                            LibString.toString(bMajor), ".", LibString.toString(bMinor), ".0"
+                        )
+                    )
+                )
+            );
+        }
+        if (aMajor == bMajor && aMinor < bMinor) {
+            _checkLt(
+                LibString.toSmallString(
+                    string(
+                        abi.encodePacked(
+                            LibString.toString(aMajor), ".", LibString.toString(aMinor), ".0"
+                        )
+                    )
+                ),
+                LibString.toSmallString(
+                    string(
+                        abi.encodePacked(
+                            LibString.toString(bMajor), ".", LibString.toString(bMinor), ".0"
+                        )
+                    )
+                )
+            );
+        }
+        if (aMajor == bMajor && aMinor == bMinor) {
+            _checkLt(
+                LibString.toSmallString(
+                    string(
+                        abi.encodePacked(
+                            LibString.toString(aMajor), ".", LibString.toString(aMinor), ".0"
+                        )
+                    )
+                ),
+                LibString.toSmallString(
+                    string(
+                        abi.encodePacked(
+                            LibString.toString(bMajor), ".", LibString.toString(bMinor), ".0"
+                        )
+                    )
+                )
+            );
+        }
+    }
+
+    function testCmpMajor(uint256 a, uint256 b) public {
+        a = _bound(a, 0, 100000);
+        b = _bound(b, 0, 100000);
+        if (b < a) (a, b) = (b, a);
+        if (a < b) {
+            _checkLt(
+                LibString.toSmallString(string(abi.encodePacked(LibString.toString(a), ".0.0"))),
+                LibString.toSmallString(string(abi.encodePacked(LibString.toString(b), ".0.0")))
+            );
+        } else if (a == b) {
+            _checkEq(
+                LibString.toSmallString(string(abi.encodePacked(LibString.toString(a), ".0.0"))),
+                LibString.toSmallString(string(abi.encodePacked(LibString.toString(b), ".0.0")))
+            );
+        }
+    }
+
+    function testCmpMinor(uint256 a, uint256 b) public {
+        a = _bound(a, 0, 100000);
+        b = _bound(b, 0, 100000);
+        if (b < a) (a, b) = (b, a);
+        if (a < b) {
+            _checkLt(
+                LibString.toSmallString(
+                    string(abi.encodePacked("0.", LibString.toString(a), ".0.0"))
+                ),
+                LibString.toSmallString(
+                    string(abi.encodePacked("0.", LibString.toString(b), ".0.0"))
+                )
+            );
+        } else if (a == b) {
+            _checkEq(
+                LibString.toSmallString(
+                    string(abi.encodePacked("0.", LibString.toString(a), ".0.0"))
+                ),
+                LibString.toSmallString(
+                    string(abi.encodePacked("0.", LibString.toString(b), ".0.0"))
+                )
+            );
+        }
+    }
+
+    function testCmpPatch(uint256 a, uint256 b) public {
+        a = _bound(a, 0, 100000);
+        b = _bound(b, 0, 100000);
+        if (b < a) (a, b) = (b, a);
+        if (a < b) {
+            _checkLt(
+                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(a)))),
+                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(b))))
+            );
+        } else if (a == b) {
+            _checkEq(
+                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(a)))),
+                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(b))))
+            );
+        }
+    }
 
     function testCmp() public {
-        assertEq(SemVerLib.cmp("a", "1"), _LT); // Forgiving: coalesces to `0.0.0`, `1.0.0`.
-        assertEq(SemVerLib.cmp("a1", "1"), _LT); // Forgiving: coalesces to `0.0.0`, `1.0.0`.
-        assertEq(SemVerLib.cmp("!", "1"), _LT); // Forgiving: coalesces to `0.0.0`, `1.0.0`.
-        assertEq(SemVerLib.cmp("1", "1"), _EQ); // Forgiving: coalesces to `1.0.0`, `1.0.0`.
-        assertEq(SemVerLib.cmp("1", "2"), _LT); // Forgiving: coalesces to `1.0.0`, `2.0.0`.
-        assertEq(SemVerLib.cmp("2", "1"), _GT); // Forgiving: coalesces to `2.0.0`, `1.0.0`.
-        assertEq(SemVerLib.cmp("1.0.0", "1.0.0"), _EQ); // Equal.
-        assertEq(SemVerLib.cmp("1.0.0", "1.0.1"), _LT); // Patch compared.
-        assertEq(SemVerLib.cmp("1.0.1", "1.0.0"), _GT); // Patch compared.
-        assertEq(SemVerLib.cmp("1.2.3", "1.3.0"), _LT); // Minor compared.
-        assertEq(SemVerLib.cmp("2.0.0", "1.9.999"), _GT); // Early exit at major.
-        assertEq(SemVerLib.cmp("v1.2.3", "1.2.3"), _EQ); // Forgiving: skips v.
-        assertEq(SemVerLib.cmp("v1.2.4", "1.2.3"), _GT); // Forgiving: skips v.
-        assertEq(SemVerLib.cmp("v1.2.2", "1.2.3"), _LT); // Forgiving: skips v.
-        assertEq(SemVerLib.cmp("1.2", "1.2.0"), _EQ); // Forgiving: implicit `.0` for patch.
-        assertEq(SemVerLib.cmp("1.3", "1.2.0"), _GT); // Forgiving: implicit `.0` for patch.
-        assertEq(SemVerLib.cmp("1.1", "1.2.0"), _LT); // Forgiving: implicit `.0` for patch.
-        assertEq(SemVerLib.cmp("1.2.3", "1.2.3-alpha"), _GT); // Prerelease loses.
-        assertEq(SemVerLib.cmp("1.2.3-alpha", "1.2.3"), _LT); // Prerelease loses.
-        assertEq(SemVerLib.cmp("1.2.3-alpha", "1.2.3-alpha"), _EQ);
-        assertEq(SemVerLib.cmp("1.2.3-alpha", "1.2.3-alpha.123"), _LT);
-        assertEq(SemVerLib.cmp("1.2.3-alpha", "1.2.3-alpha.0"), _LT);
-        assertEq(SemVerLib.cmp("1.2.3-alpha.123", "1.2.3-alpha"), _GT);
-        // We should probably make some helper to auto test the `_GT` for every `_LT`.
+        // Compliant.
+        _checkEq("1.0.0", "1.0.0");
+        _checkLt("1.0.0", "1.0.1");
+        _checkLt("1.0.0", "1.1.0");
+        _checkLt("1.0.0", "1.1.1");
+        _checkLt("1.0.0", "2.0.1");
+        _checkLt("1.0.0", "2.1.0");
+        _checkLt("1.0.0", "2.1.1");
+        _checkLt("1.2.0", "2.1.1");
+        _checkLt("1.2.999999", "2.1.1");
+        _checkLt("1.9.999", "2.0.0");
+
+        // Forgiving.
+        _checkLt("a", "1");
+        _checkLt("a1", "1");
+        _checkLt("!", "1");
+        _checkEq("1", "1");
+        _checkLt("1", "2");
+        _checkLt("1a", "2");
+        _checkLt("1a", "2a");
+        _checkLt("1", "2a");
+        _checkLt("", "2a");
+        _checkEq("", "");
+
+        _checkEq("v1.2.3", "1.2.3");
+        _checkLt("v1.2.2", "1.2.3");
+        _checkLt("v1.2", "1.2.3");
+        _checkEq("v1.2", "1.2.0");
+        _checkEq("1.2.3", "v1.2.3");
+        _checkLt("1.2.2", "v1.2.3");
+        _checkLt("1.2", "v1.2.3");
+        _checkEq("1.2", "v1.2.0");
+
+        _checkEq("1.2", "1.2.0");
+        _checkLt("1.2.3-alpha", "1.2.3");
+        _checkLt("1.2-alpha", "1.2.3");
+        _checkEq("1.2.3-alpha", "1.2.3-alpha");
+        _checkLt("1.2.3-alpha", "1.2.3-alpha.123");
+        _checkLt("1.2.3-alpha.123", "1.2.3-alpha.124");
+        _checkLt("1.2.3-alpha.123.z", "1.2.3-alpha.124");
+        _checkLt("1.2.3-alpha.123.", "1.2.3-alpha.124");
+        _checkLt("1.2.3-alpha.124", "1.2.3-alpha.124a");
+        _checkLt("1.2.3-alpha.124", "1.2.3-alpha.12a");
+        _checkLt("1.2.3-alpha", "1.2.3-alpha.0");
+        _checkLt("1.2-alpha", "1.2.3-alpha");
     }
 }

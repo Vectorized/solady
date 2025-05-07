@@ -25,25 +25,26 @@ library SemVerLib {
             }
             function pre(i_, a_) -> _r, _o {
                 let hasNonDigit_ := 0
-                let numeric_ := 0
                 mstore(0x00, 0)
                 for { _o := i_ } 1 { _o := add(1, _o) } {
                     let c_ := byte(_o, a_)
                     if and(1, shr(c_, 0x480000000001)) { break }
                     let digit_ := sub(c_, 48)
                     hasNonDigit_ := or(hasNonDigit_, gt(digit_, 9))
-                    numeric_ := add(mul(10, numeric_), digit_)
+                    _r := add(mul(10, _r), digit_)
                     mstore8(sub(_o, i_), c_)
                 }
-                mstore(shl(5, hasNonDigit_), numeric_)
+                mstore(shl(5, hasNonDigit_), _r)
                 _r := mload(0x00)
             }
             let x, i := mmp(or(eq(byte(0, a), 118), eq(byte(0, a), 86)), a)
             let y, j := mmp(or(eq(byte(0, b), 118), eq(byte(0, b), 86)), b)
             result := sub(gt(x, y), lt(x, y))
-            for {} lt(result, and(eq(byte(i, a), 46), eq(byte(j, b), 46))) {} {
-                x, i := mmp(add(i, 1), a)
-                y, j := mmp(add(j, 1), b)
+            for {} lt(result, or(eq(byte(i, a), 46), eq(byte(j, b), 46))) {} {
+                x := 0
+                y := 0
+                if eq(byte(i, a), 46) { x, i := mmp(add(i, 1), a) }
+                if eq(byte(j, b), 46) { y, j := mmp(add(j, 1), b) }
                 result := sub(gt(x, y), lt(x, y))
             }
             if iszero(result) {
