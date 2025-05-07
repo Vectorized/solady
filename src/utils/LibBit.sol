@@ -81,6 +81,19 @@ library LibBit {
         }
     }
 
+    /// @dev Returns the number of zero bits in `x`.
+    /// To get the number of non-zero bytes, simply do `32 - countZeroBytes(x)`
+    function countZeroBytes(uint256 x) internal pure returns (uint256 c) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            c := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+            c := not(or(or(add(and(x, c), c), x), c)) // `.each(b => b == 0x00 ? 0x80 : 0x00)`.
+            c := shr(7, c)
+            c := mul(0x0101010101010101010101010101010101010101010101010101010101010101, c)
+            c := byte(0, c)
+        }
+    }
+
     /// @dev Returns whether `x` is a power of 2.
     function isPo2(uint256 x) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
