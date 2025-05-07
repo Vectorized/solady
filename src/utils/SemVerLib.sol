@@ -34,15 +34,16 @@ library SemVerLib {
                 mstore(shl(5, hasNonDigit_), _r) // Overwrite if it's numeric.
                 _r := mload(0x00)
             }
-            let x, i := mmp(or(eq(byte(0, a), 118), eq(byte(0, a), 86)), a) // 'v', 'V'
-            let y, j := mmp(or(eq(byte(0, b), 118), eq(byte(0, b), 86)), b) // 'v', 'V'
+            let x, i := mmp(eq(118, or(32, byte(0, a))), a) // 'v', 'V'
+            let y, j := mmp(eq(118, or(32, byte(0, b))), b) // 'v', 'V'
             result := sub(gt(x, y), lt(x, y))
-            for {} lt(result, or(eq(byte(i, a), 46), eq(byte(j, b), 46))) {} {
-                x := 0
-                y := 0
-                if eq(byte(i, a), 46) { x, i := mmp(add(i, 1), a) } // `.`
-                if eq(byte(j, b), 46) { y, j := mmp(add(j, 1), b) } // `.`
-                result := sub(gt(x, y), lt(x, y))
+            for {} 1 {} {
+                let u := eq(byte(i, a), 46) // `.`
+                let v := eq(byte(j, b), 46) // `.`
+                if iszero(lt(result, or(u, v))) { break }
+                if u { u, i := mmp(add(i, 1), a) } // `.`
+                if v { v, j := mmp(add(j, 1), b) } // `.`
+                result := sub(gt(u, v), lt(u, v))
             }
             if iszero(result) {
                 let u := eq(byte(i, a), 45) // `-`
