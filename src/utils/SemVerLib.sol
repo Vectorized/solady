@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for comparing SemVer.
+/// @notice Library for comparing SemVers.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/SemVerLib.sol)
 library SemVerLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -13,6 +13,7 @@ library SemVerLib {
     /// - Early returns if a strict order can be determined.
     /// - Skips the first byte if it is `v` (case insensitive).
     /// - If a strict order cannot be determined, returns 0.
+    /// To convert a regular string to a small string (bytes32), use `LibString.toSmallString`.
     function cmp(bytes32 a, bytes32 b) internal pure returns (int256 result) {
         /// @solidity memory-safe-assembly
         assembly {

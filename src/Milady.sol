@@ -62,6 +62,7 @@ import "./utils/ReentrancyGuard.sol";
 import "./utils/SSTORE2.sol";
 import "./utils/SafeCastLib.sol";
 import "./utils/SafeTransferLib.sol";
+import "./utils/SemVerLib.sol";
 import "./utils/SignatureCheckerLib.sol";
 import "./utils/UUPSUpgradeable.sol";
 import "./utils/UpgradeableBeacon.sol";

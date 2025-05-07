@@ -100,6 +100,7 @@ utils
 ├─ SSTORE2 — "Library for cheaper reads and writes to persistent storage"
 ├─ SafeCastLib — "Library for integer casting that reverts on overflow"
 ├─ SafeTransferLib — "Safe ERC20/ETH transfer lib that handles missing return values"
+├─ SemVerLib — "Library for comparing SemVers"
 ├─ SignatureCheckerLib — "Library for verification of ECDSA and ERC1271 signatures"
 ├─ UUPSUpgradeable — "UUPS proxy mixin"
 ├─ UpgradeableBeacon — "Upgradeable beacon for ERC1967 beacon proxies"
