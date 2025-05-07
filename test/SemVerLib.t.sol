@@ -36,6 +36,14 @@ contract SemVerLibTest is SoladyTest {
         }
     }
 
+    function _s(uint256 x) internal pure returns (bytes memory) {
+        return bytes(LibString.toString(x));
+    }
+
+    function _s(bytes memory x) internal pure returns (bytes32) {
+        return LibString.toSmallString(string(x));
+    }
+
     function testCmpMajorMinor(uint256 aMajor, uint256 bMajor, uint256 aMinor, uint256 bMinor)
         public
     {
@@ -46,56 +54,20 @@ contract SemVerLibTest is SoladyTest {
         if (bMajor < aMajor) (aMajor, bMajor) = (bMajor, aMajor);
         if (aMajor < bMajor) {
             _checkLt(
-                LibString.toSmallString(
-                    string(
-                        abi.encodePacked(
-                            LibString.toString(aMajor), ".", LibString.toString(aMinor), ".0"
-                        )
-                    )
-                ),
-                LibString.toSmallString(
-                    string(
-                        abi.encodePacked(
-                            LibString.toString(bMajor), ".", LibString.toString(bMinor), ".0"
-                        )
-                    )
-                )
+                _s(abi.encodePacked(_s(aMajor), ".", _s(aMinor), ".0")),
+                _s(abi.encodePacked(_s(bMajor), ".", _s(bMinor), ".0"))
             );
         }
         if (aMajor == bMajor && aMinor < bMinor) {
             _checkLt(
-                LibString.toSmallString(
-                    string(
-                        abi.encodePacked(
-                            LibString.toString(aMajor), ".", LibString.toString(aMinor), ".0"
-                        )
-                    )
-                ),
-                LibString.toSmallString(
-                    string(
-                        abi.encodePacked(
-                            LibString.toString(bMajor), ".", LibString.toString(bMinor), ".0"
-                        )
-                    )
-                )
+                _s(abi.encodePacked(_s(aMajor), ".", _s(aMinor), ".0")),
+                _s(abi.encodePacked(_s(bMajor), ".", _s(bMinor), ".0"))
             );
         }
         if (aMajor == bMajor && aMinor == bMinor) {
             _checkLt(
-                LibString.toSmallString(
-                    string(
-                        abi.encodePacked(
-                            LibString.toString(aMajor), ".", LibString.toString(aMinor), ".0"
-                        )
-                    )
-                ),
-                LibString.toSmallString(
-                    string(
-                        abi.encodePacked(
-                            LibString.toString(bMajor), ".", LibString.toString(bMinor), ".0"
-                        )
-                    )
-                )
+                _s(abi.encodePacked(_s(aMajor), ".", _s(aMinor), ".0")),
+                _s(abi.encodePacked(_s(bMajor), ".", _s(bMinor), ".0"))
             );
         }
     }
@@ -105,15 +77,9 @@ contract SemVerLibTest is SoladyTest {
         b = _bound(b, 0, 100000);
         if (b < a) (a, b) = (b, a);
         if (a < b) {
-            _checkLt(
-                LibString.toSmallString(string(abi.encodePacked(LibString.toString(a), ".0.0"))),
-                LibString.toSmallString(string(abi.encodePacked(LibString.toString(b), ".0.0")))
-            );
+            _checkLt(_s(abi.encodePacked(_s(a), ".0.0")), _s(abi.encodePacked(_s(b), ".0.0")));
         } else if (a == b) {
-            _checkEq(
-                LibString.toSmallString(string(abi.encodePacked(LibString.toString(a), ".0.0"))),
-                LibString.toSmallString(string(abi.encodePacked(LibString.toString(b), ".0.0")))
-            );
+            _checkEq(_s(abi.encodePacked(_s(a), ".0.0")), _s(abi.encodePacked(_s(b), ".0.0")));
         }
     }
 
@@ -123,21 +89,11 @@ contract SemVerLibTest is SoladyTest {
         if (b < a) (a, b) = (b, a);
         if (a < b) {
             _checkLt(
-                LibString.toSmallString(
-                    string(abi.encodePacked("0.", LibString.toString(a), ".0.0"))
-                ),
-                LibString.toSmallString(
-                    string(abi.encodePacked("0.", LibString.toString(b), ".0.0"))
-                )
+                _s(abi.encodePacked("0.", _s(a), ".0.0")), _s(abi.encodePacked("0.", _s(b), ".0.0"))
             );
         } else if (a == b) {
             _checkEq(
-                LibString.toSmallString(
-                    string(abi.encodePacked("0.", LibString.toString(a), ".0.0"))
-                ),
-                LibString.toSmallString(
-                    string(abi.encodePacked("0.", LibString.toString(b), ".0.0"))
-                )
+                _s(abi.encodePacked("0.", _s(a), ".0.0")), _s(abi.encodePacked("0.", _s(b), ".0.0"))
             );
         }
     }
@@ -147,15 +103,9 @@ contract SemVerLibTest is SoladyTest {
         b = _bound(b, 0, 100000);
         if (b < a) (a, b) = (b, a);
         if (a < b) {
-            _checkLt(
-                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(a)))),
-                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(b))))
-            );
+            _checkLt(_s(abi.encodePacked("0.0.", _s(a))), _s(abi.encodePacked("0.0.", _s(b))));
         } else if (a == b) {
-            _checkEq(
-                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(a)))),
-                LibString.toSmallString(string(abi.encodePacked("0.0.", LibString.toString(b))))
-            );
+            _checkEq(_s(abi.encodePacked("0.0.", _s(a))), _s(abi.encodePacked("0.0.", _s(b))));
         }
     }
 
