@@ -62,6 +62,27 @@ function countZeroBytes(uint256 x) internal pure returns (uint256 c)
 Returns the number of zero bytes in `x`.   
 To get the number of non-zero bytes, simply do `32 - countZeroBytes(x)`.
 
+### countZeroBytes(bytes)
+
+```solidity
+function countZeroBytes(bytes memory s) internal pure returns (uint256 c)
+```
+
+Returns the number of zero bytes in `s`.   
+To get the number of non-zero bytes, simply do `s.length - countZeroBytes(s)`.
+
+### countZeroBytesCalldata(bytes)
+
+```solidity
+function countZeroBytesCalldata(bytes calldata s)
+    internal
+    pure
+    returns (uint256 c)
+```
+
+Returns the number of zero bytes in `s`.   
+To get the number of non-zero bytes, simply do `s.length - countZeroBytes(s)`.
+
 ### isPo2(uint256)
 
 ```solidity

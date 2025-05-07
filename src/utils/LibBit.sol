@@ -86,11 +86,47 @@ library LibBit {
     function countZeroBytes(uint256 x) internal pure returns (uint256 c) {
         /// @solidity memory-safe-assembly
         assembly {
-            c := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
-            c := not(or(or(add(and(x, c), c), x), c)) // `.each(b => b == 0x00 ? 0x80 : 0x00)`.
-            c := shr(7, c)
-            c := mul(0x0101010101010101010101010101010101010101010101010101010101010101, c)
-            c := byte(0, c)
+            let m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+            c := byte(0, mul(shr(7, not(m)), shr(7, not(or(or(add(and(x, m), m), x), m)))))
+        }
+    }
+
+    /// @dev Returns the number of zero bytes in `s`.
+    /// To get the number of non-zero bytes, simply do `s.length - countZeroBytes(s)`.
+    function countZeroBytes(bytes memory s) internal pure returns (uint256 c) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function czb(x_) -> _c {
+                let _m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+                _c := shr(7, not(or(or(add(and(x_, _m), _m), x_), _m)))
+                _c := byte(0, mul(shr(7, not(_m)), _c))
+            }
+            let n := mload(s)
+            let l := shl(5, shr(5, n))
+            s := add(s, 0x20)
+            for { let i } xor(i, l) { i := add(i, 0x20) } { c := add(czb(mload(add(s, i))), c) }
+            if lt(l, n) { c := add(czb(or(shr(shl(3, sub(n, l)), not(0)), mload(add(s, l)))), c) }
+        }
+    }
+
+    /// @dev Returns the number of zero bytes in `s`.
+    /// To get the number of non-zero bytes, simply do `s.length - countZeroBytes(s)`.
+    function countZeroBytesCalldata(bytes calldata s) internal pure returns (uint256 c) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function czb(x_) -> _c {
+                let _m := 0x7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f7f
+                _c := shr(7, not(or(or(add(and(x_, _m), _m), x_), _m)))
+                _c := byte(0, mul(shr(7, not(_m)), _c))
+            }
+            let l := shl(5, shr(5, s.length))
+            for { let i } xor(i, l) { i := add(i, 0x20) } {
+                c := add(czb(calldataload(add(s.offset, i))), c)
+            }
+            if lt(l, s.length) {
+                let m := shr(shl(3, sub(s.length, l)), not(0))
+                c := add(czb(or(m, calldataload(add(s.offset, l)))), c)
+            }
         }
     }
 
