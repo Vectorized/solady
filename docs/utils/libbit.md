@@ -53,6 +53,15 @@ function popCount(uint256 x) internal pure returns (uint256 c)
 
 Returns the number of set bits in `x`.
 
+### countZeroBytes(uint256)
+
+```solidity
+function countZeroBytes(uint256 x) internal pure returns (uint256 c)
+```
+
+Returns the number of zero bytes in `x`.   
+To get the number of non-zero bytes, simply do `32 - countZeroBytes(x)`.
+
 ### isPo2(uint256)
 
 ```solidity

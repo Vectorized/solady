@@ -81,8 +81,8 @@ library LibBit {
         }
     }
 
-    /// @dev Returns the number of zero bits in `x`.
-    /// To get the number of non-zero bytes, simply do `32 - countZeroBytes(x)`
+    /// @dev Returns the number of zero bytes in `x`.
+    /// To get the number of non-zero bytes, simply do `32 - countZeroBytes(x)`.
     function countZeroBytes(uint256 x) internal pure returns (uint256 c) {
         /// @solidity memory-safe-assembly
         assembly {
