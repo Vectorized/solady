@@ -276,4 +276,23 @@ contract LibBitTest is SoladyTest {
             m >>= 1;
         }
     }
+
+    function testCountZeroBytesDifferential(uint256 x) public {
+        assertEq(LibBit.countZeroBytes(x), _countZeroBytesOriginal(x));
+    }
+
+    function testCountZeroBytes() public {
+        uint256 x = 0xff00ffffffffffffffffffffffffffffffffffffffffffffffffffffffff00ff;
+        x |= uint256(uint160(address(this))) << 16;
+        assertEq(LibBit.countZeroBytes(x), 2);
+    }
+
+    function _countZeroBytesOriginal(uint256 x) internal pure returns (uint256 c) {
+        unchecked {
+            for (uint256 i; i < 32; ++i) {
+                c += ((x & (0xff << (i * 8))) == 0 ? 1 : 0);
+            }
+            return c;
+        }
+    }
 }
