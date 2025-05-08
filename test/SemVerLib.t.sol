@@ -264,5 +264,8 @@ contract SemVerLibTest is SoladyTest {
 
         _checkEq("01.002.0003", "1.2.3");
         _checkEq("v01.2.03", "1.2.3");
+
+        _checkLt("", "1.0.0");
+        _checkEq("", "0.0.0");
     }
 }

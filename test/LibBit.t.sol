@@ -296,8 +296,16 @@ contract LibBitTest is SoladyTest {
         }
     }
 
+    function testCountZeroBytesDifferential(bytes32) public {
+        testCountZeroBytesDifferential(_randomSmallBytes());
+    }
+
     function testCountZeroBytesDifferential(bytes memory s) public {
         assertEq(LibBit.countZeroBytes(s), _countZeroBytesOriginal(s));
+    }
+
+    function testCountZeroBytesCalldataDifferential(bytes32) public {
+        this.testCountZeroBytesCalldataDifferential(_randomSmallBytes());
     }
 
     function testCountZeroBytesCalldataDifferential(bytes calldata s) public {
@@ -311,5 +319,20 @@ contract LibBitTest is SoladyTest {
             }
             return c;
         }
+    }
+
+    function _randomSmallBytes() internal returns (bytes memory) {
+        uint256 n = _bound(_random(), 0, 100);
+        uint256 r = _randomUniform();
+        uint256 x = r >> 248;
+        bytes memory s = new bytes(n);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, r)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                if and(1, shr(i, r)) { mstore8(add(add(s, 0x20), i), x) }
+            }
+        }
+        return s;
     }
 }
