@@ -6,14 +6,14 @@ import {SemVerLib} from "../src/utils/SemVerLib.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
 contract SemVerLibTest is SoladyTest {
-    function _checkEq(bytes32 a, bytes32 b) internal {
+    function _checkEq(bytes32 a, bytes32 b) public {
         assertEq(SemVerLib.cmp(a, b), 0);
         assertEq(SemVerLib.cmp(_addMeta(a), b), 0);
         assertEq(SemVerLib.cmp(a, _addMeta(b)), 0);
         assertEq(SemVerLib.cmp(_addMeta(a), _addMeta(b)), 0);
     }
 
-    function _checkLt(bytes32 a, bytes32 b) internal {
+    function _checkLt(bytes32 a, bytes32 b) public {
         assertEq(SemVerLib.cmp(a, b), -1);
         assertEq(SemVerLib.cmp(_addMeta(a), b), -1);
         assertEq(SemVerLib.cmp(a, _addMeta(b)), -1);
@@ -27,17 +27,14 @@ contract SemVerLibTest is SoladyTest {
 
     function _addMeta(bytes32 a) internal returns (bytes32) {
         bytes memory data = bytes(LibString.fromSmallString(a));
-        if (data.length < 20) {
-            data = abi.encodePacked(data, "+");
-            if (_randomChance(2)) {
-                data = abi.encodePacked(
-                    data, _truncateBytes(abi.encodePacked(_random()), _randomUniform() % 5)
-                );
-            }
-            return LibString.toSmallString(string(data));
-        } else {
-            return a;
+        if (data.length >= 20) return a;
+        data = abi.encodePacked(data, "+");
+        if (_randomChance(2)) {
+            data = abi.encodePacked(
+                data, _truncateBytes(abi.encodePacked(_random()), _randomUniform() % 5)
+            );
         }
+        return LibString.toSmallString(string(data));
     }
 
     function _s(uint256 x) internal pure returns (bytes memory) {
@@ -175,97 +172,99 @@ contract SemVerLibTest is SoladyTest {
     }
 
     function _lexoCmp(bytes memory a, bytes memory b) internal pure returns (int256) {
-        uint256 len = a.length < b.length ? a.length : b.length;
-        for (uint256 i; i < len; ++i) {
-            uint8 ac = uint8(a[i]);
-            uint8 bc = uint8(b[i]);
-            if (ac < bc) return -1;
-            if (ac > bc) return 1;
+        unchecked {
+            uint256 len = a.length < b.length ? a.length : b.length;
+            for (uint256 i; i < len; ++i) {
+                uint8 ac = uint8(a[i]);
+                uint8 bc = uint8(b[i]);
+                if (ac < bc) return -1;
+                if (ac > bc) return 1;
+            }
+            if (a.length < b.length) return -1;
+            if (a.length > b.length) return 1;
+            return 0;
         }
-        if (a.length < b.length) return -1;
-        if (a.length > b.length) return 1;
-        return 0;
     }
 
-    function testCmp() public {
-        // Compliant.
-        _checkEq("1.0.0", "1.0.0");
-        _checkLt("1.0.0", "1.0.1");
-        _checkLt("1.0.0", "1.1.0");
-        _checkLt("1.0.0", "1.1.1");
-        _checkLt("1.0.0", "2.0.1");
-        _checkLt("1.0.0", "2.1.0");
-        _checkLt("1.0.0", "2.1.1");
-        _checkLt("1.2.0", "2.1.1");
-        _checkLt("1.2.999999", "2.1.1");
-        _checkLt("1.9.999", "2.0.0");
+    function testCmpCompliant() public {
+        this._checkEq("1.0.0", "1.0.0");
+        this._checkLt("1.0.0", "1.0.1");
+        this._checkLt("1.0.0", "1.1.0");
+        this._checkLt("1.0.0", "1.1.1");
+        this._checkLt("1.0.0", "2.0.1");
+        this._checkLt("1.0.0", "2.1.0");
+        this._checkLt("1.0.0", "2.1.1");
+        this._checkLt("1.2.0", "2.1.1");
+        this._checkLt("1.2.999999", "2.1.1");
+        this._checkLt("1.9.999", "2.0.0");
+    }
 
-        // Forgiving.
-        _checkLt("a", "1");
-        _checkLt("a1", "1");
-        _checkLt("!", "1");
-        _checkEq("1", "1");
-        _checkLt("1", "2");
-        _checkLt("1a", "2");
-        _checkLt("1a", "2a");
-        _checkLt("1", "2a");
-        _checkLt("", "2a");
-        _checkEq("", "");
+    function testCmpForgiving() public {
+        this._checkLt("a", "1");
+        this._checkLt("a1", "1");
+        this._checkLt("!", "1");
+        this._checkEq("1", "1");
+        this._checkLt("1", "2");
+        this._checkLt("1a", "2");
+        this._checkLt("1a", "2a");
+        this._checkLt("1", "2a");
+        this._checkLt("", "2a");
+        this._checkEq("", "");
 
-        _checkEq("v1.2.3", "1.2.3");
-        _checkLt("v1.2.2", "1.2.3");
-        _checkLt("v1.2", "1.2.3");
-        _checkEq("v1.2", "1.2.0");
-        _checkEq("1.2.3", "v1.2.3");
-        _checkLt("1.2.2", "v1.2.3");
-        _checkLt("1.2", "v1.2.3");
-        _checkEq("1.2", "v1.2.0");
+        this._checkEq("v1.2.3", "1.2.3");
+        this._checkLt("v1.2.2", "1.2.3");
+        this._checkLt("v1.2", "1.2.3");
+        this._checkEq("v1.2", "1.2.0");
+        this._checkEq("1.2.3", "v1.2.3");
+        this._checkLt("1.2.2", "v1.2.3");
+        this._checkLt("1.2", "v1.2.3");
+        this._checkEq("1.2", "v1.2.0");
 
-        _checkEq("1.2", "1.2.0");
-        _checkLt("1.2.3-alpha", "1.2.3");
-        _checkLt("1.2-alpha", "1.2.3");
-        _checkEq("1.2.3-alpha", "1.2.3-alpha");
-        _checkLt("1.2.3-alpha", "1.2.3-alpha.123");
-        _checkLt("1.2.3-alpha.123", "1.2.3-alpha.124");
-        _checkLt("1.2.3-alpha.123.z", "1.2.3-alpha.124");
-        _checkLt("1.2.3-alpha.123.", "1.2.3-alpha.124");
-        _checkLt("1.2.3-alpha.124", "1.2.3-alpha.124a");
-        _checkLt("1.2.3-alpha.124", "1.2.3-alpha.12a");
-        _checkLt("1.2.3-thequickbrownfoxjumpsover", "1.2.3-thequickbrownfoxjumpsover1");
-        _checkLt("1.2.3-thequickbrownfoxjumpsover", "1.2.3-thequickbrownfoxjumpsover0");
-        _checkEq("1.2.3-thequickbrownfoxjumpsover0", "1.2.3-thequickbrownfoxjumpsover0");
-        _checkLt("1.2.3-99999999999999999999999999", "1.2.3-thequickbrownfoxjumpsover0");
-        _checkLt("1.2.3-99999999999999999999999999", "1.2.3-t");
-        _checkLt("1.2.3-alpha", "1.2.3-alpha.0");
-        _checkLt("1.2-alpha", "1.2.3-alpha");
+        this._checkEq("1.2", "1.2.0");
+        this._checkLt("1.2.3-alpha", "1.2.3");
+        this._checkLt("1.2-alpha", "1.2.3");
+        this._checkEq("1.2.3-alpha", "1.2.3-alpha");
+        this._checkLt("1.2.3-alpha", "1.2.3-alpha.123");
+        this._checkLt("1.2.3-alpha.123", "1.2.3-alpha.124");
+        this._checkLt("1.2.3-alpha.123.z", "1.2.3-alpha.124");
+        this._checkLt("1.2.3-alpha.123.", "1.2.3-alpha.124");
+        this._checkLt("1.2.3-alpha.124", "1.2.3-alpha.124a");
+        this._checkLt("1.2.3-alpha.124", "1.2.3-alpha.12a");
+        this._checkLt("1.2.3-thequickbrownfoxjumpsover", "1.2.3-thequickbrownfoxjumpsover1");
+        this._checkLt("1.2.3-thequickbrownfoxjumpsover", "1.2.3-thequickbrownfoxjumpsover0");
+        this._checkEq("1.2.3-thequickbrownfoxjumpsover0", "1.2.3-thequickbrownfoxjumpsover0");
+        this._checkLt("1.2.3-99999999999999999999999999", "1.2.3-thequickbrownfoxjumpsover0");
+        this._checkLt("1.2.3-99999999999999999999999999", "1.2.3-t");
+        this._checkLt("1.2.3-alpha", "1.2.3-alpha.0");
+        this._checkLt("1.2-alpha", "1.2.3-alpha");
 
-        _checkLt("1.2.3-1", "1.2.3-a");
-        _checkLt("1.2.3-1", "1.2.3-alpha");
-        _checkLt("1.2.3-1.0", "1.2.3-1.a");
+        this._checkLt("1.2.3-1", "1.2.3-a");
+        this._checkLt("1.2.3-1", "1.2.3-alpha");
+        this._checkLt("1.2.3-1.0", "1.2.3-1.a");
 
-        _checkLt("1.2.3-alpha", "1.2.3-alpha.0");
-        _checkLt("1.2.3-alpha.1", "1.2.3-alpha.1.1");
-        _checkLt("1.2.3-alpha.1.a", "1.2.3-alpha.1.a.0");
+        this._checkLt("1.2.3-alpha", "1.2.3-alpha.0");
+        this._checkLt("1.2.3-alpha.1", "1.2.3-alpha.1.1");
+        this._checkLt("1.2.3-alpha.1.a", "1.2.3-alpha.1.a.0");
 
-        _checkEq("1.2.3-alpha+build", "1.2.3-alpha");
-        _checkEq("1.2.3+build", "1.2.3");
-        _checkLt("1.2.3-alpha", "1.2.3+build");
+        this._checkEq("1.2.3-alpha+build", "1.2.3-alpha");
+        this._checkEq("1.2.3+build", "1.2.3");
+        this._checkLt("1.2.3-alpha", "1.2.3+build");
 
-        _checkLt("1..3", "1.1.3");
-        _checkLt("1..4", "1.1.3"); // `1.0.4` < `1.1.3`.
-        _checkEq("1.2.3a", "1.2.3a");
-        _checkLt("1.2.3a", "1.2.4");
+        this._checkLt("1..3", "1.1.3");
+        this._checkLt("1..4", "1.1.3"); // `1.0.4` < `1.1.3`.
+        this._checkEq("1.2.3a", "1.2.3a");
+        this._checkLt("1.2.3a", "1.2.4");
 
-        _checkEq("1..4", "1.0.4"); // confirm parsing is consistent
-        _checkLt("1..4", "1.0.5"); // `1.0.4` < `1.0.5`
-        _checkLt("1..4", "1.1"); // `1.0.4` < `1.1.0`
-        _checkLt("1..", "1.0.1"); // `1.0.0` < `1.0.1` if final component is missing
-        _checkEq("1.0.", "1.0.0"); // forgiving trailing dot
+        this._checkEq("1..4", "1.0.4"); // confirm parsing is consistent
+        this._checkLt("1..4", "1.0.5"); // `1.0.4` < `1.0.5`
+        this._checkLt("1..4", "1.1"); // `1.0.4` < `1.1.0`
+        this._checkLt("1..", "1.0.1"); // `1.0.0` < `1.0.1` if final component is missing
+        this._checkEq("1.0.", "1.0.0"); // forgiving trailing dot
 
-        _checkEq("01.002.0003", "1.2.3");
-        _checkEq("v01.2.03", "1.2.3");
+        this._checkEq("01.002.0003", "1.2.3");
+        this._checkEq("v01.2.03", "1.2.3");
 
-        _checkLt("", "1.0.0");
-        _checkEq("", "0.0.0");
+        this._checkLt("", "1.0.0");
+        this._checkEq("", "0.0.0");
     }
 }
