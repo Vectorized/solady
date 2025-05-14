@@ -258,8 +258,8 @@ library LibBit {
             z := iszero(lt(w, and(iszero(x), iszero(y))))
         }
     }
-    /// @dev Returns `v | w | x | y`.
 
+    /// @dev Returns `v | w | x | y`.
     function or(bool v, bool w, bool x, bool y) internal pure returns (bool z) {
         /// @solidity memory-safe-assembly
         assembly {
