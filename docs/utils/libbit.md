@@ -167,6 +167,25 @@ function and(bool x, bool y) internal pure returns (bool z)
 
 Returns `x & y`.
 
+### and(bool,bool,bool)
+
+```solidity
+function and(bool w, bool x, bool y) internal pure returns (bool z)
+```
+
+Returns `w & x & y`.
+
+### and(bool,bool,bool,bool)
+
+```solidity
+function and(bool v, bool w, bool x, bool y)
+    internal
+    pure
+    returns (bool z)
+```
+
+Returns `v & w & x & y`.
+
 ### rawOr(bool,bool)
 
 ```solidity
@@ -182,6 +201,25 @@ function or(bool x, bool y) internal pure returns (bool z)
 ```
 
 Returns `x | y`.
+
+### or(bool,bool,bool)
+
+```solidity
+function or(bool w, bool x, bool y) internal pure returns (bool z)
+```
+
+Returns `w | x | y`.
+
+### or(bool,bool,bool,bool)
+
+```solidity
+function or(bool v, bool w, bool x, bool y)
+    internal
+    pure
+    returns (bool z)
+```
+
+Returns `v | w | x | y`.
 
 ### rawToUint(bool)
 
