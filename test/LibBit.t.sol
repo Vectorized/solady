@@ -86,8 +86,10 @@ contract LibBitTest is SoladyTest {
         }
     }
 
-    function testAnd(bool x, bool y) public {
+    function testAnd(bool v, bool w, bool x, bool y) public {
         assertEq(LibBit.and(x, y), x && y);
+        assertEq(LibBit.and(w, x, y), w && x && y);
+        assertEq(LibBit.and(v, w, x, y), v && w && x && y);
         assertEq(LibBit.rawAnd(x, y), LibBit.and(x, y));
     }
 
@@ -104,8 +106,10 @@ contract LibBitTest is SoladyTest {
         }
     }
 
-    function testOr(bool x, bool y) public {
+    function testOr(bool v, bool w, bool x, bool y) public {
         assertEq(LibBit.or(x, y), x || y);
+        assertEq(LibBit.or(w, x, y), w || x || y);
+        assertEq(LibBit.or(v, w, x, y), v || w || x || y);
         assertEq(LibBit.rawOr(x, y), LibBit.or(x, y));
     }
 
