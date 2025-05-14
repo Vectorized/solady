@@ -219,6 +219,22 @@ library LibBit {
         }
     }
 
+    /// @dev Returns `w & x & y`.
+    function and(bool w, bool x, bool y) internal pure returns (bool z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := iszero(or(iszero(w), or(iszero(x), iszero(y))))
+        }
+    }
+    /// @dev Returns `v & w & x & y`.
+
+    function and(bool v, bool w, bool x, bool y) internal pure returns (bool z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := iszero(or(or(iszero(v), iszero(w)), or(iszero(x), iszero(y))))
+        }
+    }
+
     /// @dev Returns `x | y`. Inputs must be clean.
     function rawOr(bool x, bool y) internal pure returns (bool z) {
         /// @solidity memory-safe-assembly
@@ -232,6 +248,22 @@ library LibBit {
         /// @solidity memory-safe-assembly
         assembly {
             z := or(iszero(iszero(x)), iszero(iszero(y)))
+        }
+    }
+
+    /// @dev Returns `w | x | y`.
+    function or(bool w, bool x, bool y) internal pure returns (bool z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := iszero(and(iszero(w), and(iszero(x), iszero(y))))
+        }
+    }
+    /// @dev Returns `v | w | x | y`.
+
+    function or(bool v, bool w, bool x, bool y) internal pure returns (bool z) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := iszero(and(and(iszero(v), iszero(w)), and(iszero(x), iszero(y))))
         }
     }
 
