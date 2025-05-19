@@ -83,7 +83,9 @@ struct TStack {
 }
 ```
 
-Pointer struct to a stack pointer generator in transient storage.
+Pointer struct to a stack pointer generator in transient storage.   
+This stack does not directly take in values. Instead, it generates pointers   
+that can be casted to any of the other transient storage pointer struct.
 
 ## Custom Errors
 
