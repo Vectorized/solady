@@ -278,37 +278,37 @@ contract LibTransientTest is SoladyTest {
         }
         for (uint256 i; i < aValues.length; ++i) {
             aValues[i] = abi.encodePacked(keccak256(abi.encode(i, aStackSlot)), "hehe");
-        }
-        for (uint256 i; i < bValues.length; ++i) {
-            bValues[i] = abi.encodePacked(keccak256(abi.encode(i, bStackSlot)));
-        }
-        for (uint256 i; i < aValues.length; ++i) {
             LibTransient.tStack(aStackSlot).place().tBytes().set(aValues[i]);
         }
         for (uint256 i; i < bValues.length; ++i) {
+            bValues[i] = abi.encodePacked(keccak256(abi.encode(i, bStackSlot)));
             LibTransient.tStack(bStackSlot).place().tBytes().set(bValues[i]);
         }
         if (aValues.length > 0) {
-            assertEq(
-                LibTransient.tStack(aStackSlot).top().tBytes().get(), aValues[aValues.length - 1]
-            );
+            bytes memory expected = aValues[aValues.length - 1];
+            assertEq(LibTransient.tStack(aStackSlot).top().tBytes().get(), expected);
+            assertEq(LibTransient.tStack(aStackSlot).peek().tBytes().get(), expected);
+            assertGt(uint256(LibTransient.tStack(aStackSlot).peek()), 0);
+        } else {
+            assertEq(uint256(LibTransient.tStack(aStackSlot).peek()), 0);
+            assertEq(LibTransient.tStack(aStackSlot).peek().tBytes().get(), "");
         }
         if (bValues.length > 0) {
-            assertEq(
-                LibTransient.tStack(bStackSlot).top().tBytes().get(), bValues[bValues.length - 1]
-            );
+            bytes memory expected = bValues[bValues.length - 1];
+            assertEq(LibTransient.tStack(bStackSlot).top().tBytes().get(), expected);
+            assertEq(LibTransient.tStack(bStackSlot).peek().tBytes().get(), expected);
+            assertGt(uint256(LibTransient.tStack(bStackSlot).peek()), 0);
+        } else {
+            assertEq(uint256(LibTransient.tStack(bStackSlot).peek()), 0);
+            assertEq(LibTransient.tStack(bStackSlot).peek().tBytes().get(), "");
         }
         for (uint256 i; i < aValues.length; ++i) {
-            assertEq(
-                LibTransient.tStack(aStackSlot).pop().tBytes().get(),
-                aValues[aValues.length - 1 - i]
-            );
+            bytes memory expected = aValues[aValues.length - 1];
+            assertEq(LibTransient.tStack(aStackSlot).pop().tBytes().get(), expected);
         }
         for (uint256 i; i < bValues.length; ++i) {
-            assertEq(
-                LibTransient.tStack(bStackSlot).pop().tBytes().get(),
-                bValues[bValues.length - 1 - i]
-            );
+            bytes memory expected = bValues[bValues.length - 1];
+            assertEq(LibTransient.tStack(bStackSlot).pop().tBytes().get(), expected);
         }
     }
 

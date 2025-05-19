@@ -736,7 +736,7 @@ library LibTransient {
     function length(TStack storage ptr) internal view returns (uint256 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := shr(160, shl(128, tload(ptr.slot)))
+            result := shr(160, shl(128, tload(ptr.slot))) // Removes the base offset and stride.
         }
     }
 
@@ -745,6 +745,7 @@ library LibTransient {
     function clear(TStack storage ptr) internal {
         /// @solidity memory-safe-assembly
         assembly {
+            // Clears the length and increments the base pointer by `1 << 128`.
             tstore(ptr.slot, shl(128, add(1, shr(128, tload(ptr.slot)))))
         }
     }
@@ -755,7 +756,7 @@ library LibTransient {
     function place(TStack storage ptr) internal returns (bytes32 topPtr) {
         /// @solidity memory-safe-assembly
         assembly {
-            topPtr := add(0x100000000, tload(ptr.slot))
+            topPtr := add(0x100000000, tload(ptr.slot)) // Increments by a stride.
             tstore(ptr.slot, topPtr)
             topPtr := add(mul(_STACK_BASE_SALT, ptr.slot), topPtr)
         }
@@ -795,7 +796,7 @@ library LibTransient {
                 mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
                 revert(0x1c, 0x04)
             }
-            tstore(ptr.slot, sub(lastTopPtr, 0x100000000))
+            tstore(ptr.slot, sub(lastTopPtr, 0x100000000)) // Decrements by a stride.
             lastTopPtr := add(mul(_STACK_BASE_SALT, ptr.slot), lastTopPtr)
         }
     }
