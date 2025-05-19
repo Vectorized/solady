@@ -266,6 +266,89 @@ contract LibTransientTest is SoladyTest {
         LibTransient.tBytes(uint256(0)).setCalldataCompat(data);
     }
 
+    function testStackPlacePopBytes() public {
+        testStackPlacePopBytes(type(uint256).max, 0, 1);
+    }
+
+    function testStackPlacePopBytes(uint256 r, uint256 aStackSlot, uint256 bStackSlot) public {
+        bytes[] memory aValues = new bytes[]((r >> 8) & 0x7);
+        bytes[] memory bValues = new bytes[]((r >> 16) & 0x7);
+        if (aStackSlot == bStackSlot) {
+            bStackSlot = aStackSlot ^ 1;
+        }
+        for (uint256 i; i < aValues.length; ++i) {
+            aValues[i] = abi.encodePacked(keccak256(abi.encode(i, aStackSlot)), "hehe");
+        }
+        for (uint256 i; i < bValues.length; ++i) {
+            bValues[i] = abi.encodePacked(keccak256(abi.encode(i, bStackSlot)));
+        }
+        for (uint256 i; i < aValues.length; ++i) {
+            LibTransient.tStack(aStackSlot).place().tBytes().set(aValues[i]);
+        }
+        for (uint256 i; i < bValues.length; ++i) {
+            LibTransient.tStack(bStackSlot).place().tBytes().set(bValues[i]);
+        }
+        if (aValues.length > 0) {
+            assertEq(
+                LibTransient.tStack(aStackSlot).top().tBytes().get(), aValues[aValues.length - 1]
+            );
+        }
+        if (bValues.length > 0) {
+            assertEq(
+                LibTransient.tStack(bStackSlot).top().tBytes().get(), bValues[bValues.length - 1]
+            );
+        }
+        for (uint256 i; i < aValues.length; ++i) {
+            assertEq(
+                LibTransient.tStack(aStackSlot).pop().tBytes().get(),
+                aValues[aValues.length - 1 - i]
+            );
+        }
+        for (uint256 i; i < bValues.length; ++i) {
+            assertEq(
+                LibTransient.tStack(bStackSlot).pop().tBytes().get(),
+                bValues[bValues.length - 1 - i]
+            );
+        }
+    }
+
+    function testStackPlacePopClear(bytes32 stackSlot) public {
+        uint256 n = _randomUniform() & 7;
+        for (uint256 i; i < n; ++i) {
+            assertEq(LibTransient.tStack(stackSlot).length(), i);
+            bytes32 x = keccak256(abi.encode(i));
+            LibTransient.tStack(stackSlot).place().tBytes32().set(x);
+            assertEq(LibTransient.tStack(stackSlot).top().tBytes32().get(), x);
+        }
+        assertEq(LibTransient.tStack(stackSlot).length(), n);
+
+        LibTransient.tStack(stackSlot).clear();
+
+        assertEq(LibTransient.tStack(stackSlot).length(), 0);
+        for (uint256 i; i < n; ++i) {
+            assertEq(LibTransient.tStack(stackSlot).length(), i);
+            assertEq(LibTransient.tStack(stackSlot).place().tBytes32().get(), 0);
+        }
+    }
+
+    function testEmptyStackTopReverts() public {
+        vm.expectRevert(LibTransient.StackIsEmpty.selector);
+        this.stackTop(0);
+    }
+
+    function testEmptyStackPopReverts() public {
+        vm.expectRevert(LibTransient.StackIsEmpty.selector);
+        this.stackPop(0);
+    }
+
+    function stackTop(uint256 stackSlot) public view returns (bytes32) {
+        return LibTransient.tStack(stackSlot).top();
+    }
+
+    function stackPop(uint256 stackSlot) public returns (bytes32) {
+        return LibTransient.tStack(stackSlot).pop();
+    }
+
     function testRegistry(bytes32 key, bytes memory value) public {
         _etchTransientRegistry();
         if (_randomChance(2)) {
