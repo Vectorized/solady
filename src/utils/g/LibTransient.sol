@@ -777,8 +777,8 @@ library LibTransient {
     function peek(TStack storage ptr) internal view returns (bytes32 topPtr) {
         /// @solidity memory-safe-assembly
         assembly {
-            topPtr := tload(ptr.slot)
-            topPtr := mul(iszero(iszero(topPtr)), add(mul(_STACK_BASE_SALT, ptr.slot), topPtr))
+            let t := tload(ptr.slot)
+            topPtr := mul(iszero(iszero(shl(128, t))), add(mul(_STACK_BASE_SALT, ptr.slot), t))
         }
     }
 
