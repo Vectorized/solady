@@ -5,7 +5,6 @@ import "./utils/SoladyTest.sol";
 import {LibCWIA} from "../src/utils/legacy/LibCWIA.sol";
 import {CWIA} from "../src/utils/legacy/CWIA.sol";
 import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
-import {UpgradeableBeaconTestLib} from "./UpgradeableBeacon.t.sol";
 
 contract LibCWIATest is SoladyTest, CWIA {
     error CustomError(uint256 currentValue);
