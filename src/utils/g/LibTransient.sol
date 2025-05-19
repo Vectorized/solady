@@ -73,7 +73,8 @@ library LibTransient {
     /// `bytes4(keccak256("_LIB_TRANSIENT_COMPAT_SLOT_SEED"))`.
     uint256 private constant _LIB_TRANSIENT_COMPAT_SLOT_SEED = 0x5a0b45f2;
 
-    /// @dev Multiplier to spread the stack base. A prime.
+    /// @dev Multiplier to stack base slot, so that in the case where two stacks
+    /// share consecutive base slots, their pointers will likely not overlap. A prime.
     uint256 private constant _STACK_BASE_SALT = 0x9e076501211e1371b;
 
     /// @dev The canonical address of the transient registry.
@@ -769,6 +770,7 @@ library LibTransient {
     }
 
     /// @dev Returns a pointer to the top element. Returns zero if the stack is empty.
+    /// This method can help avoid an additional `TLOAD`.
     function peek(TStack storage ptr) internal view returns (bytes32 topPtr) {
         /// @solidity memory-safe-assembly
         assembly {
