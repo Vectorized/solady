@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {LibString} from "../src/utils/LibString.sol";
-import {SafeTransferLib} from "../src/utils/SafeTransferLib.sol";
 import {UpgradeableBeaconTestLib} from "./UpgradeableBeacon.t.sol";
 
 contract LibCloneTest is SoladyTest {
