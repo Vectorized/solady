@@ -758,6 +758,15 @@ library LibTransient {
         }
     }
 
+    /// @dev Returns a pointer to the top element. Returns zero if the stack is empty.
+    function peek(TStack storage ptr) internal view returns (bytes32 topPtr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            topPtr := tload(ptr.slot)
+            topPtr := mul(iszero(iszero(topPtr)), add(mul(_STACK_BASE_SALT, ptr.slot), topPtr))
+        }
+    }
+
     /// @dev Returns a pointer to the top element. Reverts if the stack is empty.
     function top(TStack storage ptr) internal view returns (bytes32 topPtr) {
         /// @solidity memory-safe-assembly

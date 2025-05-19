@@ -331,6 +331,18 @@ contract LibTransientTest is SoladyTest {
         }
     }
 
+    function testStackPeekTrick(uint256 base, uint256 n, uint256 r) public pure {
+        check_StackPeekTrick(base, n, r);
+    }
+
+    function check_StackPeekTrick(uint256 base, uint256 n, uint256 r) public pure {
+        n = (n & 0xffffffffffffffff) | 1;
+        unchecked {
+            uint256 s = base * 0x9e076501211e1371b + ((n * 0x100000000) | (r << 128));
+            assert(s != 0);
+        }
+    }
+
     function testEmptyStackTopReverts() public {
         vm.expectRevert(LibTransient.StackIsEmpty.selector);
         this.stackTop(0);
