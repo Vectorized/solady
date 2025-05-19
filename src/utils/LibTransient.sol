@@ -43,6 +43,20 @@ library LibTransient {
         uint256 _spacer;
     }
 
+    /// @dev Pointer struct to a stack pointer generator in transient storage.
+    /// This stack does not directly take in values. Instead, it generates pointers
+    /// that can be casted to any of the other transient storage pointer struct.
+    struct TStack {
+        uint256 _spacer;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The transient stack is empty.
+    error StackIsEmpty();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -50,6 +64,10 @@ library LibTransient {
     /// @dev The storage slot seed for converting a transient slot to a storage slot.
     /// `bytes4(keccak256("_LIB_TRANSIENT_COMPAT_SLOT_SEED"))`.
     uint256 private constant _LIB_TRANSIENT_COMPAT_SLOT_SEED = 0x5a0b45f2;
+
+    /// @dev Multiplier to stack base slot, so that in the case where two stacks
+    /// share consecutive base slots, their pointers will likely not overlap. A prime.
+    uint256 private constant _STACK_BASE_SALT = 0x9e076501211e1371b;
 
     /// @dev The canonical address of the transient registry.
     /// See: https://gist.github.com/Vectorized/4ab665d7a234ef5aaaff2e5091ec261f
@@ -692,6 +710,95 @@ library LibTransient {
     function clearCompat(TBytes storage ptr) internal {
         if (block.chainid == 1) return clear(ptr);
         _compat(ptr)._spacer = 0;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      STACK OPERATIONS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns a pointer to a stack in transient storage.
+    function tStack(bytes32 tSlot) internal pure returns (TStack storage ptr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            ptr.slot := tSlot
+        }
+    }
+
+    /// @dev Returns a pointer to a stack in transient storage.
+    function tStack(uint256 tSlot) internal pure returns (TStack storage ptr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            ptr.slot := tSlot
+        }
+    }
+
+    /// @dev Returns the number of elements in the stack.
+    function length(TStack storage ptr) internal view returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := shr(160, shl(128, tload(ptr.slot))) // Removes the base offset and stride.
+        }
+    }
+
+    /// @dev Clears the stack at `ptr`.
+    /// Note: Future usage of the stack will point to a fresh transient storage region.
+    function clear(TStack storage ptr) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Clears the length and increments the base pointer by `1 << 128`.
+            tstore(ptr.slot, shl(128, add(1, shr(128, tload(ptr.slot)))))
+        }
+    }
+
+    /// @dev Increments the stack length by 1, and returns a pointer to the top element.
+    /// We don't want to call this `push` as it does not take in an element value.
+    /// Note: The value pointed to might not be cleared from previous usage.
+    function place(TStack storage ptr) internal returns (bytes32 topPtr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            topPtr := add(0x100000000, tload(ptr.slot)) // Increments by a stride.
+            tstore(ptr.slot, topPtr)
+            topPtr := add(mul(_STACK_BASE_SALT, ptr.slot), topPtr)
+        }
+    }
+
+    /// @dev Returns a pointer to the top element. Returns zero if the stack is empty.
+    /// This method can help avoid an additional `TLOAD`.
+    function peek(TStack storage ptr) internal view returns (bytes32 topPtr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let t := tload(ptr.slot)
+            topPtr := mul(iszero(iszero(shl(128, t))), add(mul(_STACK_BASE_SALT, ptr.slot), t))
+        }
+    }
+
+    /// @dev Returns a pointer to the top element. Reverts if the stack is empty.
+    function top(TStack storage ptr) internal view returns (bytes32 topPtr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            topPtr := tload(ptr.slot)
+            if iszero(topPtr) {
+                mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
+                revert(0x1c, 0x04)
+            }
+            topPtr := add(mul(_STACK_BASE_SALT, ptr.slot), topPtr)
+        }
+    }
+
+    /// @dev Decrements the stack length by 1, returns a pointer to the top element
+    /// before the popping. Reverts if the stack is empty.
+    /// Note: Popping from the stack does NOT auto-clear the top value.
+    function pop(TStack storage ptr) internal returns (bytes32 lastTopPtr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            lastTopPtr := tload(ptr.slot)
+            if iszero(lastTopPtr) {
+                mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
+                revert(0x1c, 0x04)
+            }
+            tstore(ptr.slot, sub(lastTopPtr, 0x100000000)) // Decrements by a stride.
+            lastTopPtr := add(mul(_STACK_BASE_SALT, ptr.slot), lastTopPtr)
+        }
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -75,6 +75,28 @@ struct TBytes {
 
 Pointer struct to a `bytes` in transient storage.
 
+### TStack
+
+```solidity
+struct TStack {
+    uint256 _spacer;
+}
+```
+
+Pointer struct to a stack pointer generator in transient storage.   
+This stack does not directly take in values. Instead, it generates pointers   
+that can be casted to any of the other transient storage pointer struct.
+
+## Custom Errors
+
+### StackIsEmpty()
+
+```solidity
+error StackIsEmpty()
+```
+
+The transient stack is empty.
+
 ## Constants
 
 ### REGISTRY
@@ -755,6 +777,81 @@ function clearCompat(TBytes storage ptr) internal
 ```
 
 Clears the value at transient `ptr`.
+
+## Stack Operations
+
+### tStack(bytes32)
+
+```solidity
+function tStack(bytes32 tSlot) internal pure returns (TStack storage ptr)
+```
+
+Returns a pointer to a stack in transient storage.
+
+### tStack(uint256)
+
+```solidity
+function tStack(uint256 tSlot) internal pure returns (TStack storage ptr)
+```
+
+Returns a pointer to a stack in transient storage.
+
+### length(TStack)
+
+```solidity
+function length(TStack storage ptr)
+    internal
+    view
+    returns (uint256 result)
+```
+
+Returns the number of elements in the stack.
+
+### clear(TStack)
+
+```solidity
+function clear(TStack storage ptr) internal
+```
+
+Clears the stack at `ptr`.   
+Note: Future usage of the stack will point to a fresh transient storage region.
+
+### place(TStack)
+
+```solidity
+function place(TStack storage ptr) internal returns (bytes32 topPtr)
+```
+
+Increments the stack length by 1, and returns a pointer to the top element.   
+We don't want to call this `push` as it does not take in an element value.   
+Note: The value pointed to might not be cleared from previous usage.
+
+### peek(TStack)
+
+```solidity
+function peek(TStack storage ptr) internal view returns (bytes32 topPtr)
+```
+
+Returns a pointer to the top element. Returns zero if the stack is empty.   
+This method can help avoid an additional `TLOAD`.
+
+### top(TStack)
+
+```solidity
+function top(TStack storage ptr) internal view returns (bytes32 topPtr)
+```
+
+Returns a pointer to the top element. Reverts if the stack is empty.
+
+### pop(TStack)
+
+```solidity
+function pop(TStack storage ptr) internal returns (bytes32 lastTopPtr)
+```
+
+Decrements the stack length by 1, returns a pointer to the top element   
+before the popping. Reverts if the stack is empty.   
+Note: Popping from the stack does NOT auto-clear the top value.
 
 ## Transient Registry Operations
 
