@@ -275,6 +275,74 @@ library LibBytes {
     }
 
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right, starting from `from`. Optimized for byte needles.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    /// This uses the "Determine if a word has a byte equal to n" trick from
+    /// https://graphics.stanford.edu/%7Eseander/bithacks.html.
+    function indexOf(bytes memory subject, uint8 needle, uint256 from)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := not(0) // Initialize to `NOT_FOUND`.
+
+            for { let subjectLen := mload(subject) } 1 {} {
+                let subjectStart := add(subject, 0x20)
+                let end := add(subjectStart, subjectLen)
+                subject := add(subjectStart, from)
+
+                if iszero(gt(subjectLen, from)) { break }
+
+                // Build mask by replicating `needle` across all 32 bytes
+                // We mask needle to ensure it's a byte
+                // forgefmt: disable-next-item
+                let needleMask :=
+                    mul(and(needle, 0xff), 0x0101010101010101010101010101010101010101010101010101010101010101)
+
+                // Check for existing matches chunk by chunk
+                for {} lt(subject, end) { subject := add(subject, 0x20) } {
+                    let xored := xor(mload(subject), needleMask)
+
+                    // (x - 0x01010101...) & ~x & 0x80808080...
+                    // With this needle bytes are now set to 0x80, and the rest is zero
+                    // forgefmt: disable-next-item
+                    let flags :=
+                        and(and(sub(xored, 0x0101010101010101010101010101010101010101010101010101010101010101), not(xored)),
+                            0x8080808080808080808080808080808080808080808080808080808080808080
+                        )
+
+                    // If it's truthy then there are matches
+                    if flags {
+                        // Since 0x80 is simply a set MSB, we can use `clz(flags)` to find the
+                        // first match
+                        let lzc := shl(7, lt(0xffffffffffffffffffffffffffffffff, flags))
+                        lzc := or(lzc, shl(6, lt(0xffffffffffffffff, shr(lzc, flags))))
+                        lzc := or(lzc, shl(5, lt(0xffffffff, shr(lzc, flags))))
+                        lzc := or(lzc, shl(4, lt(0xffff, shr(lzc, flags))))
+                        lzc := or(lzc, shl(3, lt(0xff, shr(lzc, flags))))
+                        // forgefmt: disable-next-item
+                        lzc := add(xor(lzc, byte(and(0x1f, shr(shr(lzc, flags), 0x8421084210842108cc6318c6db6d54be)),
+                            0xf8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff)), 0) // iszero(zeroes) is 0
+                        // Then we add chunk offset to byte offset
+                        result := add(sub(subject, subjectStart), shr(3, lzc))
+                        break
+                    }
+                }
+                break
+            }
+        }
+    }
+
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right. Optimized for byte needles.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function indexOf(string memory subject, uint8 needle) internal pure returns (uint256 result) {
+        return indexOf(bytes(subject), needle, 0);
+    }
+
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
     /// needleing from right to left, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
     function lastIndexOf(bytes memory subject, bytes memory needle, uint256 from)
