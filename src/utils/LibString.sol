@@ -555,6 +555,24 @@ library LibString {
     }
 
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right, starting from `from`. Optimized for byte needles.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function indexOf(string memory subject, uint8 needle, uint256 from)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        return LibBytes.indexOf(bytes(subject), needle, from);
+    }
+
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right. Optimized for byte needles.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function indexOf(string memory subject, uint8 needle) internal pure returns (uint256 result) {
+        return LibBytes.indexOf(bytes(subject), needle, 0);
+    }
+
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
     /// needleing from right to left, starting from `from`.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
     function lastIndexOf(string memory subject, string memory needle, uint256 from)
