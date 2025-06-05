@@ -280,7 +280,7 @@ library LibBytes {
     /// This uses the first approach from "Determine if a word has a byte equal to n" trick of
     /// https://graphics.stanford.edu/%7Eseander/bithacks.html. The last suggested approach, as
     /// mentioned there, has less operations but can lead to false positives.
-    function indexOf(bytes memory subject, uint8 needle, uint256 from)
+    function indexOfByte(bytes memory subject, bytes1 needle, uint256 from)
         internal
         pure
         returns (uint256 result)
@@ -297,16 +297,17 @@ library LibBytes {
                 if iszero(gt(subjectLen, from)) { break }
 
                 // Build mask by replicating `needle` across all 32 bytes
-                // We mask needle to ensure it's a byte
+                // We shift needle to ensure it's a byte
                 // forgefmt: disable-next-item
                 let needleMask :=
-                    mul(and(needle, 0xff), 0x0101010101010101010101010101010101010101010101010101010101010101)
+                    mul(shr(248, needle), 0x0101010101010101010101010101010101010101010101010101010101010101)
 
                 // Check for existing matches chunk by chunk
                 for {} lt(subject, end) { subject := add(subject, 0x20) } {
+                    // Only matching bytes are set to 0x00
                     let xored := xor(mload(subject), needleMask)
 
-                    // ~((((v & 0x7F7F7F7F) + 0x7F7F7F7F) | v) | 0x7F7F7F7F)
+                    // haszero(v) = ~((((v & 0x7F7F7F7F) + 0x7F7F7F7F) | v) | 0x7F7F7F7F)
                     // With this needle bytes are now set to 0x80, and the rest is zero
                     // forgefmt: disable-next-item
                     let flags :=
@@ -341,8 +342,12 @@ library LibBytes {
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
     /// needleing from left to right. Optimized for byte needles.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
-    function indexOf(string memory subject, uint8 needle) internal pure returns (uint256 result) {
-        return indexOf(bytes(subject), needle, 0);
+    function indexOfByte(string memory subject, bytes1 needle)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        return indexOfByte(bytes(subject), needle, 0);
     }
 
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
