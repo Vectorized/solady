@@ -329,8 +329,12 @@ library LibBytes {
                         // forgefmt: disable-next-item
                         lzc := add(xor(lzc, byte(and(0x1f, shr(shr(lzc, flags), 0x8421084210842108cc6318c6db6d54be)),
                             0xf8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff)), 0) // iszero(zeroes) is 0
-                        // Then we add chunk offset to byte offset
-                        result := add(sub(subject, subjectStart), shr(3, lzc))
+
+                        // Then we add chunk offset to byte offset and ensure it's within bounds
+                        let offset := add(sub(subject, subjectStart), shr(3, lzc))
+                        if iszero(lt(offset, subjectLen)) { break }
+
+                        result := offset
                         break
                     }
                 }
