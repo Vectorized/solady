@@ -277,8 +277,9 @@ library LibBytes {
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
     /// needleing from left to right, starting from `from`. Optimized for byte needles.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
-    /// This uses the "Determine if a word has a byte equal to n" trick from
-    /// https://graphics.stanford.edu/%7Eseander/bithacks.html.
+    /// This uses the first approach from "Determine if a word has a byte equal to n" trick of
+    /// https://graphics.stanford.edu/%7Eseander/bithacks.html. The last suggested approach, as
+    /// mentioned there, has less operations but can lead to false positives.
     function indexOf(bytes memory subject, uint8 needle, uint256 from)
         internal
         pure
@@ -305,13 +306,15 @@ library LibBytes {
                 for {} lt(subject, end) { subject := add(subject, 0x20) } {
                     let xored := xor(mload(subject), needleMask)
 
-                    // (x - 0x01010101...) & ~x & 0x80808080...
+                    // ~((((v & 0x7F7F7F7F) + 0x7F7F7F7F) | v) | 0x7F7F7F7F)
                     // With this needle bytes are now set to 0x80, and the rest is zero
                     // forgefmt: disable-next-item
                     let flags :=
-                        and(and(sub(xored, 0x0101010101010101010101010101010101010101010101010101010101010101), not(xored)),
-                            0x8080808080808080808080808080808080808080808080808080808080808080
-                        )
+                        not(or(or(
+                            add(and(xored, 0x7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F), 
+                                0x7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F),
+                            xored
+                        ), 0x7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F))
 
                     // If it's truthy then there are matches
                     if flags {
