@@ -636,6 +636,22 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.indexOf("a", "bcd", 0), LibString.NOT_FOUND);
         assertEq(LibString.indexOf("accd", "bcd"), LibString.NOT_FOUND);
         assertEq(LibString.indexOf("", "bcd"), LibString.NOT_FOUND);
+
+        assertEq(LibString.indexOf("", uint8(bytes1("a"))), LibString.NOT_FOUND);
+        assertEq(LibString.indexOf("", uint8(bytes1("a")), 1), LibString.NOT_FOUND);
+        assertEq(LibString.indexOf(subject, uint8(bytes1("a")), 0), 0);
+        assertEq(LibString.indexOf(subject, uint8(bytes1("a")), 1), LibString.NOT_FOUND);
+        assertEq(LibString.indexOf(subject, uint8(bytes1("b"))), 1);
+        assertEq(LibString.indexOf(subject, uint8(bytes1("X"))), 49);
+        assertEq(LibString.indexOf(subject, uint8(bytes1("q"))), 16);
+        assertEq(LibString.indexOf(subject, uint8(bytes1("q")), 16), 16);
+        assertEq(LibString.indexOf(subject, uint8(bytes1("q")), 17), LibString.NOT_FOUND);
+        assertEq(
+            LibString.indexOf(subject, uint8(bytes1("q")), 17),
+            LibString.NOT_FOUND
+        );
+        assertEq(LibString.indexOf("abcabcabc", uint8(bytes1("a")), 0), 0);
+        assertEq(LibString.indexOf("abcabcabc", uint8(bytes1("a")), 1), 3);
     }
 
     function testStringLastIndexOf(uint256) public brutalizeMemory {
