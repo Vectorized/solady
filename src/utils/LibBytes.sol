@@ -297,10 +297,10 @@ library LibBytes {
                 if iszero(gt(subjectLen, from)) { break }
 
                 // Build mask by replicating `needle` across all 32 bytes
-                // We shift needle to ensure it's a byte
+                // We isolate the first byte of needle to ensure it's valid
                 // forgefmt: disable-next-item
                 let needleMask :=
-                    mul(shr(248, needle), 0x0101010101010101010101010101010101010101010101010101010101010101)
+                    mul(byte(0, needle), 0x0101010101010101010101010101010101010101010101010101010101010101)
 
                 // Check for existing matches chunk by chunk
                 for {} lt(subject, end) { subject := add(subject, 0x20) } {
