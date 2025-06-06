@@ -1357,4 +1357,58 @@ contract LibSortTest is SoladyTest {
             }
         }
     }
+
+    function testHasDuplicateGas() public {
+        for (uint256 i = 8; i < 1024; i = i * 2) {
+            this._testHasDuplicateGas(i - 1);
+            this._testHasDuplicateGas(i);
+        }
+    }
+
+    function testHasDuplicateOriginalGas() public {
+        for (uint256 i = 8; i < 1024; i = i * 2) {
+            this._testHasDuplicateOriginalGas(i - 1);
+            this._testHasDuplicateOriginalGas(i);
+        }
+    }
+
+    function _testHasDuplicateGas(uint256 n) public {
+        assertEq(LibSort.hasDuplicate(_getTestHasDuplicateGasArray(n)), false);
+    }
+
+    function _testHasDuplicateOriginalGas(uint256 n) public {
+        assertEq(_hasDuplicateOriginal(_getTestHasDuplicateGasArray(n)), false);
+    }
+
+    function _getTestHasDuplicateGasArray(uint256 n) internal returns (uint256[] memory a) {
+        vm.pauseGasMetering();
+        a = new uint256[](n);
+        for (uint256 i; i < n; ++i) {
+            a[i] = i;
+        }
+        vm.resumeGasMetering();
+    }
+
+    function testHasDuplicate(uint256[] memory a, uint256 r) public {
+        if (r & 1 != 0) _brutalizeMemory();
+        if (r & 2 != 0) _misalignFreeMemoryPointer();
+        bool computed = LibSort.hasDuplicate(a);
+        bool expected = _hasDuplicateOriginal(a);
+        assertEq(computed, expected);
+        if (r & 4 != 0) {
+            if (a.length >= 2) {
+                a[_randomUniform() % a.length] = a[_randomUniform() % a.length];
+            }
+            computed = LibSort.hasDuplicate(a);
+            expected = _hasDuplicateOriginal(a);
+            assertEq(computed, expected);
+        }
+    }
+
+    function _hasDuplicateOriginal(uint256[] memory a) internal pure returns (bool) {
+        uint256[] memory b = LibSort.copy(a);
+        LibSort.sort(b);
+        LibSort.uniquifySorted(b);
+        return b.length != a.length;
+    }
 }

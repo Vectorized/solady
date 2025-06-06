@@ -638,6 +638,54 @@ library LibSort {
         groupSum(_toUints(keys), values);
     }
 
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(uint256[] memory a) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(a)
+            if iszero(lt(n, 2)) {
+                let m := mload(0x40)
+                let c := shl(gt(n, 0x1f), 16)
+                for { let t := add(n, shr(1, n)) } iszero(lt(t, c)) {} { c := shl(1, c) }
+                calldatacopy(m, calldatasize(), shl(5, c)) // Zeroize open-addressing hash map.
+                c := shl(5, sub(c, 1))
+                let w := not(0x1f) // `-0x20`.
+                for { let i := add(a, shl(5, n)) } 1 {} {
+                    let r := mulmod(mload(i), 0x100000000000000000000000000000051, not(0xbc))
+                    for {} 1 { r := add(0x20, r) } {
+                        let o := add(m, and(r, c))
+                        if iszero(mload(o)) {
+                            mstore(o, i) // Store non-zero pointer into hash map.
+                            break
+                        }
+                        if eq(mload(mload(o)), mload(i)) {
+                            result := 1
+                            i := a
+                            break
+                        }
+                    }
+                    i := add(i, w)
+                    if iszero(lt(a, i)) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(address[] memory a) internal pure returns (bool) {
+        return hasDuplicate(_toUints(a));
+    }
+
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(bytes32[] memory a) internal pure returns (bool) {
+        return hasDuplicate(_toUints(a));
+    }
+
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(int256[] memory a) internal pure returns (bool) {
+        return hasDuplicate(_toUints(a));
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

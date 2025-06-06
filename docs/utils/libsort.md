@@ -559,3 +559,38 @@ function groupSum(int256[] memory keys, uint256[] memory values)
 ```
 
 Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
+
+### hasDuplicate(uint256[])
+
+```solidity
+function hasDuplicate(uint256[] memory a)
+    internal
+    pure
+    returns (bool result)
+```
+
+Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+
+### hasDuplicate(address[])
+
+```solidity
+function hasDuplicate(address[] memory a) internal pure returns (bool)
+```
+
+Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+
+### hasDuplicate(bytes32[])
+
+```solidity
+function hasDuplicate(bytes32[] memory a) internal pure returns (bool)
+```
+
+Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+
+### hasDuplicate(int256[])
+
+```solidity
+function hasDuplicate(int256[] memory a) internal pure returns (bool)
+```
+
+Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
