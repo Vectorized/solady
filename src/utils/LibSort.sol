@@ -644,27 +644,31 @@ library LibSort {
         assembly {
             let n := mload(a)
             if iszero(lt(n, 2)) {
-                let m := mload(0x40)
-                let c := shl(gt(n, 0x1f), 16) // Hashmap capacity.
-                for { let t := add(n, shr(1, n)) } iszero(lt(t, c)) {} { c := shl(1, c) }
-                calldatacopy(m, calldatasize(), shl(5, c)) // Zeroize open-addressing hash map.
-                c := shl(5, sub(c, 1)) // Turn the capacity into a modulo mask.
+                let m := mload(0x40) // Use free memory temporarily for hashmap.
+                let c := add(shr(1, n), n)
+                c := or(shr(1, c), c)
+                c := or(shr(2, c), c)
+                c := or(shr(4, c), c)
+                c := or(shr(8, c), c)
+                c := shl(5, or(shr(16, c), c))
+                calldatacopy(m, calldatasize(), add(c, 0x20)) // Zeroize hashmap.
                 let w := not(0x1f) // `-0x20`.
                 for { let i := add(a, shl(5, n)) } 1 {} {
                     let r := mulmod(mload(i), 0x100000000000000000000000000000051, not(0xbc))
-                    for {} 1 { r := add(0x20, r) } {
-                        let o := add(m, and(r, c))
+                    for {} 1 {} {
+                        let o := add(m, and(r, c)) // Pointer into hashmap.
                         if iszero(mload(o)) {
-                            mstore(o, i) // Store non-zero pointer into hash map.
+                            mstore(o, i) // Store non-zero pointer into hashmap.
                             break
                         }
                         if eq(mload(mload(o)), mload(i)) {
                             result := 1
-                            i := a
+                            i := a // To break the outer loop.
                             break
                         }
+                        r := add(0x20, r) // Linear probing.
                     }
-                    i := add(i, w)
+                    i := add(i, w) // Iterate `a` backwards.
                     if iszero(lt(a, i)) { break }
                 }
             }

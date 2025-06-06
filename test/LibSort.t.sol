@@ -1359,14 +1359,14 @@ contract LibSortTest is SoladyTest {
     }
 
     function testHasDuplicateGas() public {
-        for (uint256 i = 8; i < 1024; i = i * 2) {
+        for (uint256 i = 1; i < 1024; i = i * 2) {
             this._testHasDuplicateGas(i - 1);
             this._testHasDuplicateGas(i);
         }
     }
 
     function testHasDuplicateOriginalGas() public {
-        for (uint256 i = 8; i < 1024; i = i * 2) {
+        for (uint256 i = 1; i < 1024; i = i * 2) {
             this._testHasDuplicateOriginalGas(i - 1);
             this._testHasDuplicateOriginalGas(i);
         }
