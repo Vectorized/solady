@@ -320,4 +320,50 @@ contract LibBytesTest is SoladyTest {
         if (a.length > b.length) return 1;
         return 0;
     }
+
+    function testIndexOfByteDifferential(bytes memory subject, bytes1 needle, uint256 from)
+        public
+    {
+        if (_randomChance(2)) _brutalizeMemory();
+        if (_randomChance(2)) _misalignFreeMemoryPointer();
+        if (_randomChance(2)) {
+            bytes memory empty;
+            subject = empty;
+        }
+        from = _bound(from, 0, subject.length * 2);
+        uint256 computed = LibBytes.indexOfByte(subject, needle, from);
+        uint256 expected = _indexOfByteOriginal(subject, needle, from);
+        assertEq(computed, expected);
+    }
+
+    function testIndexOfByte() public {
+        bytes memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        assertEq(LibBytes.indexOfByte("", "a"), LibBytes.NOT_FOUND);
+        assertEq(LibBytes.indexOfByte("", "a", 1), LibBytes.NOT_FOUND);
+        assertEq(LibBytes.indexOfByte(subject, "a"), 0);
+        assertEq(LibBytes.indexOfByte(subject, "a", 1), LibBytes.NOT_FOUND);
+        assertEq(LibBytes.indexOfByte(subject, "b"), 1);
+        assertEq(LibBytes.indexOfByte(subject, "X"), 49);
+        assertEq(LibBytes.indexOfByte(subject, "q"), 16);
+        assertEq(LibBytes.indexOfByte(subject, "q", 16), 16);
+        assertEq(LibBytes.indexOfByte(subject, "q", 17), LibBytes.NOT_FOUND);
+        assertEq(LibBytes.indexOfByte(subject, "q", 17), LibBytes.NOT_FOUND);
+        assertEq(LibBytes.indexOfByte("abcabcabc", "a", 0), 0);
+        assertEq(LibBytes.indexOfByte("abcabcabc", "a", 1), 3);
+    }
+
+    function _indexOfByteOriginal(bytes memory subject, bytes1 needle, uint256 from)
+        internal
+        pure
+        returns (uint256)
+    {
+        unchecked {
+            for (uint256 i; i < subject.length; ++i) {
+                if (i >= from) {
+                    if (subject[i] == needle) return i;
+                }
+            }
+            return type(uint256).max;
+        }
+    }
 }

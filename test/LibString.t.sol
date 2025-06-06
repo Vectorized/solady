@@ -638,39 +638,6 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.indexOf("", "bcd"), LibString.NOT_FOUND);
     }
 
-    function testStringIndexOfByte(uint256) public brutalizeMemory {
-        string memory filler0 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        string memory filler1 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        bytes1 search = _generateByte("abcdefghijklmnopqrstuvwxyz");
-
-        string memory subject =
-            string(bytes.concat(bytes(filler0), abi.encodePacked(search), bytes(filler1)));
-
-        uint256 from = _generateFrom(subject);
-
-        if (from > bytes(filler0).length) {
-            assertEq(LibString.indexOfByte(subject, search, from), LibString.NOT_FOUND);
-        } else {
-            assertEq(LibString.indexOfByte(subject, search, from), bytes(filler0).length);
-        }
-    }
-
-    function testStringIndexOfByte() public {
-        string memory subject = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        assertEq(LibString.indexOfByte("", "a"), LibString.NOT_FOUND);
-        assertEq(LibString.indexOfByte("", "a", 1), LibString.NOT_FOUND);
-        assertEq(LibString.indexOfByte(subject, "a"), 0);
-        assertEq(LibString.indexOfByte(subject, "a", 1), LibString.NOT_FOUND);
-        assertEq(LibString.indexOfByte(subject, "b"), 1);
-        assertEq(LibString.indexOfByte(subject, "X"), 49);
-        assertEq(LibString.indexOfByte(subject, "q"), 16);
-        assertEq(LibString.indexOfByte(subject, "q", 16), 16);
-        assertEq(LibString.indexOfByte(subject, "q", 17), LibString.NOT_FOUND);
-        assertEq(LibString.indexOfByte(subject, "q", 17), LibString.NOT_FOUND);
-        assertEq(LibString.indexOfByte("abcabcabc", "a", 0), 0);
-        assertEq(LibString.indexOfByte("abcabcabc", "a", 1), 3);
-    }
-
     function testStringLastIndexOf(uint256) public brutalizeMemory {
         string memory filler0 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         string memory filler1 = _generateString("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -1851,20 +1818,6 @@ contract LibStringTest is SoladyTest {
                         mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
                     )
                 }
-            }
-        }
-    }
-
-    function _generateByte(string memory byteChoices) internal returns (bytes1 result) {
-        uint256 randomness = _random();
-        /// @solidity memory-safe-assembly
-        assembly {
-            if mload(byteChoices) {
-                mstore(0x00, randomness)
-                mstore(0x20, gas())
-                // forgefmt: disable-next-item
-                result := mload(add(add(byteChoices, 1), mod(keccak256(0x00, 0x40), mload(byteChoices))))
-                result := shl(248, result)
             }
         }
     }
