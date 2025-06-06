@@ -645,10 +645,10 @@ library LibSort {
             let n := mload(a)
             if iszero(lt(n, 2)) {
                 let m := mload(0x40)
-                let c := shl(gt(n, 0x1f), 16)
+                let c := shl(gt(n, 0x1f), 16) // Hashmap capacity.
                 for { let t := add(n, shr(1, n)) } iszero(lt(t, c)) {} { c := shl(1, c) }
                 calldatacopy(m, calldatasize(), shl(5, c)) // Zeroize open-addressing hash map.
-                c := shl(5, sub(c, 1))
+                c := shl(5, sub(c, 1)) // Turn the capacity into a modulo mask.
                 let w := not(0x1f) // `-0x20`.
                 for { let i := add(a, shl(5, n)) } 1 {} {
                     let r := mulmod(mload(i), 0x100000000000000000000000000000051, not(0xbc))
