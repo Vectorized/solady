@@ -1413,17 +1413,17 @@ contract LibSortTest is SoladyTest {
     }
 
     function testHasDuplicateHashmapCapacityTrick(uint256 n) public pure {
-        n = n & 0xffffffff;
+        n = n & 0x7fffffff;
         uint256 c;
         /// @solidity memory-safe-assembly
         assembly {
-            c := add(shr(1, n), n)
-            c := or(shr(1, c), c)
+            let w := not(0x1f) // `-0x20`.
+            let t := mul(0x30, n)
+            c := or(shr(1, t), t)
             c := or(shr(2, c), c)
             c := or(shr(4, c), c)
             c := or(shr(8, c), c)
-            c := or(shr(16, c), c)
-            c := shl(5, or(shr(32, c), c))
+            c := and(w, or(shr(16, c), c))
             c := add(0x20, c)
         }
         uint256 t = n + (n >> 1);

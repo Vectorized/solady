@@ -642,14 +642,16 @@ library LibSort {
     function hasDuplicate(uint256[] memory a) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
+            function p(i_, x_) -> _y {
+                _y := or(shr(i_, x_), x_)
+            }
             let n := mload(a)
             if iszero(lt(n, 2)) {
+                if shr(31, n) { invalid() }
                 let m := mload(0x40) // Use free memory temporarily for hashmap.
-                let c := shl(gt(n, 10), 16) // Initial capacity guess -> grow Po2 until >= 1.5 n.
-                for { let t := add(n, shr(1, n)) } iszero(lt(t, c)) {} { c := add(c, c) }
-                calldatacopy(m, calldatasize(), shl(5, c)) // Zeroize hashmap.
-                c := shl(5, sub(c, 1)) // Turn the capacity into a modulo mask.
                 let w := not(0x1f) // `-0x20`.
+                let c := and(w, p(16, p(8, p(4, p(2, p(1, mul(0x30, n)))))))
+                calldatacopy(m, calldatasize(), add(0x20, c)) // Zeroize hashmap.
                 for { let i := add(a, shl(5, n)) } 1 {} {
                     // See LibPRNG for explanation of this formula.
                     let r := mulmod(mload(i), 0x100000000000000000000000000000051, not(0xbc))
