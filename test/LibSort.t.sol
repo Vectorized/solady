@@ -1357,4 +1357,94 @@ contract LibSortTest is SoladyTest {
             }
         }
     }
+
+    function testHasDuplicateGas() public {
+        for (uint256 i = 1; i < 1024; i = i * 2) {
+            this._testHasDuplicateGas(i - 1);
+            this._testHasDuplicateGas(i);
+        }
+    }
+
+    function testHasDuplicateOriginalGas() public {
+        for (uint256 i = 1; i < 1024; i = i * 2) {
+            this._testHasDuplicateOriginalGas(i - 1);
+            this._testHasDuplicateOriginalGas(i);
+        }
+    }
+
+    function _testHasDuplicateGas(uint256 n) public {
+        assertEq(LibSort.hasDuplicate(_getTestHasDuplicateGasArray(n)), false);
+    }
+
+    function _testHasDuplicateOriginalGas(uint256 n) public {
+        assertEq(_hasDuplicateOriginal(_getTestHasDuplicateGasArray(n)), false);
+    }
+
+    function _getTestHasDuplicateGasArray(uint256 n) internal returns (uint256[] memory a) {
+        vm.pauseGasMetering();
+        a = new uint256[](n);
+        for (uint256 i; i < n; ++i) {
+            a[i] = i;
+        }
+        vm.resumeGasMetering();
+    }
+
+    function testHasDuplicate(uint256[] memory a, uint256 r) public {
+        if (r & 1 != 0) _brutalizeMemory();
+        if (r & 2 != 0) _misalignFreeMemoryPointer();
+        bool computed = LibSort.hasDuplicate(a);
+        bool expected = _hasDuplicateOriginal(a);
+        assertEq(computed, expected);
+        if (r & 4 != 0) {
+            if (a.length >= 2) {
+                a[_randomUniform() % a.length] = a[_randomUniform() % a.length];
+            }
+            computed = LibSort.hasDuplicate(a);
+            expected = _hasDuplicateOriginal(a);
+            assertEq(computed, expected);
+        }
+    }
+
+    function testHasDuplicate(bytes32) public {
+        testHasDuplicate(_randomUints(_randomArrayLength()), _randomUniform());
+    }
+
+    function _hasDuplicateOriginal(uint256[] memory a) internal pure returns (bool) {
+        uint256[] memory b = LibSort.copy(a);
+        LibSort.sort(b);
+        LibSort.uniquifySorted(b);
+        return b.length != a.length;
+    }
+
+    function testHasDuplicateHashmapCapacityTrick(uint256 n) public pure {
+        n = n & 0x7fffffff;
+        uint256 c;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let w := not(0x1f) // `-0x20`.
+            let t := mul(0x30, n)
+            c := or(shr(1, t), t)
+            c := or(shr(2, c), c)
+            c := or(shr(4, c), c)
+            c := or(shr(8, c), c)
+            c := and(w, or(shr(16, c), c))
+            c := add(0x20, c)
+        }
+        uint256 t = n + (n >> 1);
+        t |= t >> 1;
+        t |= t >> 2;
+        t |= t >> 4;
+        t |= t >> 8;
+        t |= t >> 16;
+        t |= t >> 32;
+        t |= t >> 64;
+        t |= t >> 128;
+        t += 1;
+        t = t << 5;
+        assert(c == t && n >> 31 == 0);
+    }
+
+    function check_HasDuplicateHashmapCapacityTrickEquivalence(uint256 n) public pure {
+        testHasDuplicateHashmapCapacityTrick(n);
+    }
 }

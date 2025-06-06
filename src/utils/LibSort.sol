@@ -638,6 +638,58 @@ library LibSort {
         groupSum(_toUints(keys), values);
     }
 
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(uint256[] memory a) internal pure returns (bool result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function p(i_, x_) -> _y {
+                _y := or(shr(i_, x_), x_)
+            }
+            let n := mload(a)
+            if iszero(lt(n, 2)) {
+                let m := mload(0x40) // Use free memory temporarily for hashmap.
+                let w := not(0x1f) // `-0x20`.
+                let c := and(w, p(16, p(8, p(4, p(2, p(1, mul(0x30, n)))))))
+                calldatacopy(m, calldatasize(), add(0x20, c)) // Zeroize hashmap.
+                for { let i := add(a, shl(5, n)) } 1 {} {
+                    // See LibPRNG for explanation of this formula.
+                    let r := mulmod(mload(i), 0x100000000000000000000000000000051, not(0xbc))
+                    // Linear probing.
+                    for {} 1 { r := add(0x20, r) } {
+                        let o := add(m, and(r, c)) // Non-zero pointer into hashmap.
+                        if iszero(mload(o)) {
+                            mstore(o, i) // Store non-zero pointer into hashmap.
+                            break
+                        }
+                        if eq(mload(mload(o)), mload(i)) {
+                            result := 1
+                            i := a // To break the outer loop.
+                            break
+                        }
+                    }
+                    i := add(i, w) // Iterate `a` backwards.
+                    if iszero(lt(a, i)) { break }
+                }
+                if shr(31, n) { invalid() } // Just in case.
+            }
+        }
+    }
+
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(address[] memory a) internal pure returns (bool) {
+        return hasDuplicate(_toUints(a));
+    }
+
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(bytes32[] memory a) internal pure returns (bool) {
+        return hasDuplicate(_toUints(a));
+    }
+
+    /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
+    function hasDuplicate(int256[] memory a) internal pure returns (bool) {
+        return hasDuplicate(_toUints(a));
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
