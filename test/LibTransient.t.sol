@@ -325,7 +325,9 @@ contract LibTransientTest is SoladyTest {
 
         LibTransient.tStack(stackSlot).clear();
         assertEq(LibTransient.tStack(stackSlot).peek(), 0);
-        assertEq(LibTransient.tStack(stackSlot).peek().tBytes32().get(), 0);
+        if (stackSlot != 0) {
+            assertEq(LibTransient.tStack(stackSlot).peek().tBytes32().get(), 0);
+        }
 
         assertEq(LibTransient.tStack(stackSlot).length(), 0);
         for (uint256 i; i < n; ++i) {

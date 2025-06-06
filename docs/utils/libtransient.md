@@ -832,8 +832,9 @@ Note: The value pointed to might not be cleared from previous usage.
 function peek(TStack storage ptr) internal view returns (bytes32 topPtr)
 ```
 
-Returns a pointer to the top element. Returns zero if the stack is empty.   
-This method can help avoid an additional `TLOAD`.
+Returns a pointer to the top element. Returns the zero pointer if the stack is empty.   
+This method can help avoid an additional `TLOAD`, but you MUST check if the   
+returned pointer is zero. And if it is, please DO NOT read / write to it.
 
 ### top(TStack)
 
