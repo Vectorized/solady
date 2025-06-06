@@ -272,6 +272,56 @@ library LibBytes {
     }
 
     /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right, starting from `from`. Optimized for byte needles.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function indexOfByte(bytes memory subject, bytes1 needle, uint256 from)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := not(0) // Initialize to `NOT_FOUND`.
+            if gt(mload(subject), from) {
+                let start := add(subject, 0x20)
+                let end := add(start, mload(subject))
+                let m := div(not(0), 255) // `0x0101 ... `.
+                let h := mul(byte(0, needle), m) // Replicating needle mask.
+                m := not(shl(7, m)) // `0x7f7f ... `.
+                for { let i := add(start, from) } 1 {} {
+                    let c := xor(mload(i), h) // Load 32-byte chunk and xor with mask.
+                    c := not(or(or(add(and(c, m), m), c), m)) // Each needle byte will be `0x80`.
+                    if c {
+                        c := and(not(shr(shl(3, sub(end, i)), not(0))), c) // Truncate bytes past the end.
+                        if c {
+                            let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c)) // Save bytecode.
+                            r := or(shl(6, lt(0xffffffffffffffff, shr(r, c))), r)
+                            // forgefmt: disable-next-item
+                            result := add(sub(i, start), shr(3, xor(byte(and(0x1f, shr(byte(24,
+                                mul(0x02040810204081, shr(r, c))), 0x8421084210842108cc6318c6db6d54be)),
+                                0xc0c8c8d0c8e8d0d8c8e8e0e8d0d8e0f0c8d0e8d0e0e0d8f0d0d0e0d8f8f8f8f8), r)))
+                            break
+                        }
+                    }
+                    i := add(i, 0x20)
+                    if iszero(lt(i, end)) { break }
+                }
+            }
+        }
+    }
+
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
+    /// needleing from left to right. Optimized for byte needles.
+    /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+    function indexOfByte(bytes memory subject, bytes1 needle)
+        internal
+        pure
+        returns (uint256 result)
+    {
+        return indexOfByte(subject, needle, 0);
+    }
+
+    /// @dev Returns the byte index of the first location of `needle` in `subject`,
     /// needleing from left to right.
     /// Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
     function indexOf(bytes memory subject, bytes memory needle) internal pure returns (uint256) {

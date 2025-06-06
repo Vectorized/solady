@@ -127,6 +127,32 @@ Returns the byte index of the first location of `needle` in `subject`,
 needleing from left to right, starting from `from`.   
 Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
 
+### indexOfByte(bytes,bytes1,uint256)
+
+```solidity
+function indexOfByte(bytes memory subject, bytes1 needle, uint256 from)
+    internal
+    pure
+    returns (uint256 result)
+```
+
+Returns the byte index of the first location of `needle` in `subject`,   
+needleing from left to right, starting from `from`. Optimized for byte needles.   
+Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+
+### indexOfByte(bytes,bytes1)
+
+```solidity
+function indexOfByte(bytes memory subject, bytes1 needle)
+    internal
+    pure
+    returns (uint256 result)
+```
+
+Returns the byte index of the first location of `needle` in `subject`,   
+needleing from left to right. Optimized for byte needles.   
+Returns `NOT_FOUND` (i.e. `type(uint256).max`) if the `needle` is not found.
+
 ### indexOf(bytes,bytes)
 
 ```solidity
