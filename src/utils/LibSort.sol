@@ -647,7 +647,6 @@ library LibSort {
             }
             let n := mload(a)
             if iszero(lt(n, 2)) {
-                if shr(31, n) { invalid() }
                 let m := mload(0x40) // Use free memory temporarily for hashmap.
                 let w := not(0x1f) // `-0x20`.
                 let c := and(w, p(16, p(8, p(4, p(2, p(1, mul(0x30, n)))))))
@@ -671,6 +670,7 @@ library LibSort {
                     i := add(i, w) // Iterate `a` backwards.
                     if iszero(lt(a, i)) { break }
                 }
+                if shr(31, n) { invalid() }
             }
         }
     }
