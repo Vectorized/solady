@@ -645,15 +645,17 @@ library LibSort {
             let n := mload(a)
             if iszero(lt(n, 2)) {
                 let m := mload(0x40) // Use free memory temporarily for hashmap.
-                let c := shl(gt(n, 10), 16) // Hashmap capacity.
+                let c := shl(gt(n, 10), 16) // Initial capacity guess -> grow Po2 until >= 1.5 n.
                 for { let t := add(n, shr(1, n)) } iszero(lt(t, c)) {} { c := add(c, c) }
                 calldatacopy(m, calldatasize(), shl(5, c)) // Zeroize hashmap.
                 c := shl(5, sub(c, 1)) // Turn the capacity into a modulo mask.
                 let w := not(0x1f) // `-0x20`.
                 for { let i := add(a, shl(5, n)) } 1 {} {
+                    // See LibPRNG for explanation of this formula.
                     let r := mulmod(mload(i), 0x100000000000000000000000000000051, not(0xbc))
-                    for {} 1 {} {
-                        let o := add(m, and(r, c)) // Pointer into hashmap.
+                    // Linear probing.
+                    for {} 1 { r := add(0x20, r) } {
+                        let o := add(m, and(r, c)) // Non-zero pointer into hashmap.
                         if iszero(mload(o)) {
                             mstore(o, i) // Store non-zero pointer into hashmap.
                             break
@@ -663,7 +665,6 @@ library LibSort {
                             i := a // To break the outer loop.
                             break
                         }
-                        r := add(0x20, r) // Linear probing.
                     }
                     i := add(i, w) // Iterate `a` backwards.
                     if iszero(lt(a, i)) { break }
