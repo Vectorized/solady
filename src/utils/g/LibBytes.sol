@@ -292,7 +292,7 @@ library LibBytes {
                     let c := xor(mload(i), h) // Load 32-byte chunk and xor with mask.
                     c := not(or(or(add(and(c, m), m), c), m)) // Each needle byte will be `0x80`.
                     if c {
-                        c := and(not(shr(shl(3, sub(end, i)), not(0))), c)
+                        c := and(not(shr(shl(3, sub(end, i)), not(0))), c) // Truncate bytes past the end.
                         if c {
                             let r := shl(7, lt(0x8421084210842108cc6318c6db6d54be, c)) // Save bytecode.
                             r := or(shl(6, lt(0xffffffffffffffff, shr(r, c))), r)
