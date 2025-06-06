@@ -1405,6 +1405,10 @@ contract LibSortTest is SoladyTest {
         }
     }
 
+    function testHasDuplicate(bytes32) public {
+        testHasDuplicate(_randomUints(_randomArrayLength()), _randomUniform());
+    }
+
     function _hasDuplicateOriginal(uint256[] memory a) internal pure returns (bool) {
         uint256[] memory b = LibSort.copy(a);
         LibSort.sort(b);
@@ -1437,7 +1441,7 @@ contract LibSortTest is SoladyTest {
         t |= t >> 128;
         t += 1;
         t = t << 5;
-        assert(c == t);
+        assert(c == t && n >> 31 == 0);
     }
 
     function check_HasDuplicateHashmapCapacityTrickEquivalence(uint256 n) public pure {

@@ -670,7 +670,7 @@ library LibSort {
                     i := add(i, w) // Iterate `a` backwards.
                     if iszero(lt(a, i)) { break }
                 }
-                if shr(31, n) { invalid() }
+                if shr(31, n) { invalid() } // Just in case.
             }
         }
     }
