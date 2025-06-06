@@ -1411,4 +1411,38 @@ contract LibSortTest is SoladyTest {
         LibSort.uniquifySorted(b);
         return b.length != a.length;
     }
+
+    function testHasDuplicateHashmapCapacityTrick(uint256 n) public pure {
+        n = n & 0xffffffffffff;
+        uint256 c;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let w := not(0x1f) // `-0x20`.
+            c := mul(0x30, n)
+            c := or(shr(1, c), c)
+            c := or(shr(2, c), c)
+            c := or(shr(4, c), c)
+            c := or(shr(8, c), c)
+            c := or(shr(16, c), c)
+            c := and(w, or(shr(32, c), c))
+            c := add(c, 0x20)
+        }
+        uint256 t = n + (n >> 1);
+        t |= t >> 1;
+        t |= t >> 2;
+        t |= t >> 4;
+        t |= t >> 6;
+        t |= t >> 8;
+        t |= t >> 16;
+        t |= t >> 32;
+        t |= t >> 64;
+        t |= t >> 128;
+        t += 1;
+        t = t << 5;
+        assert(c == t);
+    }
+
+    function check_HasDuplicateHashmapCapacityTrickEquivalence(uint256 n) public pure {
+        testHasDuplicateHashmapCapacityTrick(n);
+    }
 }

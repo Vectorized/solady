@@ -645,14 +645,14 @@ library LibSort {
             let n := mload(a)
             if iszero(lt(n, 2)) {
                 let m := mload(0x40) // Use free memory temporarily for hashmap.
+                let w := not(0x1f) // `-0x20`.
                 let c := add(shr(1, n), n)
                 c := or(shr(1, c), c)
                 c := or(shr(2, c), c)
                 c := or(shr(4, c), c)
                 c := or(shr(8, c), c)
                 c := shl(5, or(shr(16, c), c))
-                calldatacopy(m, calldatasize(), add(c, 0x20)) // Zeroize hashmap.
-                let w := not(0x1f) // `-0x20`.
+                calldatacopy(m, calldatasize(), add(0x20, c)) // Zeroize hashmap.
                 for { let i := add(a, shl(5, n)) } 1 {} {
                     let r := mulmod(mload(i), 0x100000000000000000000000000000051, not(0xbc))
                     for {} 1 {} {
