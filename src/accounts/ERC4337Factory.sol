@@ -27,6 +27,7 @@ contract ERC4337Factory {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     constructor(address erc4337) payable {
+        require(erc4337.code.length != 0);
         implementation = erc4337;
     }
 
