@@ -1390,23 +1390,34 @@ contract LibSortTest is SoladyTest {
     }
 
     function testHasDuplicate(uint256[] memory a, uint256 r) public {
+        bytes32 aHash = keccak256(abi.encode(a));
         if (r & 1 != 0) _brutalizeMemory();
         if (r & 2 != 0) _misalignFreeMemoryPointer();
         bool computed = LibSort.hasDuplicate(a);
+        _checkMemory(a);
         bool expected = _hasDuplicateOriginal(a);
+        _checkMemory(a);
         assertEq(computed, expected);
+        _checkMemory(a);
+        assertEq(keccak256(abi.encode(a)), aHash);
         if (r & 4 != 0) {
             if (a.length >= 2) {
                 a[_randomUniform() % a.length] = a[_randomUniform() % a.length];
+                aHash = keccak256(abi.encode(a));
             }
             computed = LibSort.hasDuplicate(a);
             expected = _hasDuplicateOriginal(a);
             assertEq(computed, expected);
+            assertEq(keccak256(abi.encode(a)), aHash);
         }
     }
 
-    function testHasDuplicate(bytes32) public {
-        testHasDuplicate(_randomUints(_randomArrayLength()), _randomUniform());
+    function testHasDuplicate(uint256 r) public {
+        uint256[] memory a;
+        if (r & 1 != 0) _brutalizeMemory();
+        if (r & 2 != 0) _misalignFreeMemoryPointer();
+        if (r & 0xff00 != 0) a = _randomUints(_randomArrayLength());
+        testHasDuplicate(a, _randomUniform());
     }
 
     function _hasDuplicateOriginal(uint256[] memory a) internal pure returns (bool) {
