@@ -1412,8 +1412,10 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function testHasDuplicate(bytes32) public {
-        testHasDuplicate(_randomUints(_randomArrayLength()), _randomUniform());
+    function testHasDuplicate(bytes32 x) public {
+        uint256[] memory a;
+        if (uint256(x) & 0xf > 0) a = _randomUints(_randomArrayLength());
+        testHasDuplicate(a, _randomUniform());
     }
 
     function _hasDuplicateOriginal(uint256[] memory a) internal pure returns (bool) {
