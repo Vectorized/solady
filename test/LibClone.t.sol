@@ -137,8 +137,7 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testDeployERC1967BeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
-        if (uint160(beacon) < 0xffff) return;
-        vm.etch(beacon, hex"00");
+        beacon = _makeHasCode(beacon);
         bytes memory args = _randomBytes();
         if (args.length > _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH) {
             if (_randomChance(2)) {
@@ -178,8 +177,7 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testDeployERC1967IBeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
-        if (uint160(beacon) < 0xffff) return;
-        vm.etch(beacon, hex"00");
+        beacon = _makeHasCode(beacon);
         bytes memory args = _randomBytes();
         if (args.length > _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH) {
             if (_randomChance(2)) {
@@ -236,9 +234,8 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testImplemenationOf(address implementation) public {
-        if (uint160(implementation) < 0xffff) return;
+        implementation = _makeHasCode(implementation);
         _maybeBrutalizeMemory();
-        vm.etch(implementation, hex"00");
         bytes memory args = _truncateBytes(_randomBytes(), _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH);
         address instance;
         if (_randomChance(8)) {
@@ -1732,5 +1729,11 @@ contract LibCloneTest is SoladyTest {
     function _maybeBrutalizeMemory() internal {
         if (_randomChance(2)) _misalignFreeMemoryPointer();
         if (_randomChance(16)) _brutalizeMemory();
+    }
+
+    function _makeHasCode(address x) internal returns (address) {
+        while (uint160(x) < 0xffff) x = address(uint160(_random()));
+        vm.etch(x, hex"00");
+        return x;
     }
 }
