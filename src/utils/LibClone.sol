@@ -189,7 +189,7 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create(value, 0x0c, 0x35)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -217,7 +217,7 @@ library LibClone {
             mstore(0x14, implementation)
             mstore(0x00, 0x602c3d8160093d39f33d3d3d3d363d3d37363d73)
             instance := create2(value, 0x0c, 0x35, salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -339,7 +339,7 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create(value, 0x0e, 0x36)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -367,7 +367,7 @@ library LibClone {
             mstore(0x14, implementation) // 20
             mstore(0x00, 0x602d5f8160095f39f35f5f365f5f37365f73) // 9 + 9
             instance := create2(value, 0x0e, 0x36, salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -491,7 +491,7 @@ library LibClone {
             mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(136, n)))
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             instance := create(value, add(m, add(0x0b, lt(n, 0xffd3))), add(n, 0x37))
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -525,7 +525,7 @@ library LibClone {
             mstore(m, add(0xfe61002d3d81600a3d39f3363d3d373d3d3d363d73, shl(136, n)))
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x2d = 0xffd2`.
             instance := create2(value, add(m, add(0x0b, lt(n, 0xffd3))), add(n, 0x37), salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -570,7 +570,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, add(m, 0x0c), add(n, 0x37), salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(implementation)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -792,7 +792,7 @@ library LibClone {
             mstore(0x1e, implementation)
             mstore(0x0a, 0x603d3d8160223d3973)
             instance := create(value, 0x21, 0x5f)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -824,7 +824,7 @@ library LibClone {
             mstore(0x1e, implementation)
             mstore(0x0a, 0x603d3d8160223d3973)
             instance := create2(value, 0x21, 0x5f, salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -868,7 +868,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, 0x21, 0x5f, salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(implementation)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -959,7 +959,7 @@ library LibClone {
             mstore(gt(n, 0xffc2), add(0xfe61003d3d8160233d3973, shl(56, n)))
             mstore(m, mload(0x16))
             instance := create(value, m, add(n, 0x60))
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -995,7 +995,7 @@ library LibClone {
             mstore(gt(n, 0xffc2), add(0xfe61003d3d8160233d3973, shl(56, n)))
             mstore(m, mload(0x16))
             instance := create2(value, m, add(n, 0x60), salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1043,7 +1043,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, m, add(n, 0x60), salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(implementation)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -1290,7 +1290,7 @@ library LibClone {
             mstore(0x20, 0x600f5155f3365814604357363d3d373d3d363d7f360894)
             mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, implementation))))
             instance := create(value, 0x0c, 0x74)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1321,7 +1321,7 @@ library LibClone {
             mstore(0x20, 0x600f5155f3365814604357363d3d373d3d363d7f360894)
             mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, implementation))))
             instance := create2(value, 0x0c, 0x74, salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1364,7 +1364,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, 0x0c, 0x74, salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(implementation)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -1454,7 +1454,7 @@ library LibClone {
 
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
             instance := create(value, add(m, add(0x15, lt(n, 0xffae))), add(0x75, n))
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1491,7 +1491,7 @@ library LibClone {
 
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
             instance := create2(value, add(m, add(0x15, lt(n, 0xffae))), add(0x75, n), salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(implementation)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1540,7 +1540,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, m, add(0x75, n), salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(implementation)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -1894,7 +1894,7 @@ library LibClone {
             mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
             mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
             instance := create(value, 0x0c, 0x74)
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1925,7 +1925,7 @@ library LibClone {
             mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da)
             mstore(0x09, or(shl(160, 0x60523d8160223d3973), shr(96, shl(96, beacon))))
             instance := create2(value, 0x0c, 0x74, salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -1968,7 +1968,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, 0x0c, 0x74, salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(beacon)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -2059,7 +2059,7 @@ library LibClone {
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
             mstore(add(m, gt(n, 0xffad)), add(0xfe6100523d8160233d3973, shl(56, n)))
             instance := create(value, add(m, 0x16), add(n, 0x75))
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -2094,7 +2094,7 @@ library LibClone {
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x52 = 0xffad`.
             mstore(add(m, gt(n, 0xffad)), add(0xfe6100523d8160233d3973, shl(56, n)))
             instance := create2(value, add(m, 0x16), add(n, 0x75), salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -2141,7 +2141,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, add(m, 0x16), add(n, 0x75), salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(beacon)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -2393,7 +2393,7 @@ library LibClone {
             mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36)
             mstore(0x04, or(shl(160, 0x60573d8160223d3973), shr(96, shl(96, beacon))))
             instance := create(value, 0x07, 0x79)
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -2424,7 +2424,7 @@ library LibClone {
             mstore(0x20, 0x60195155f3363d3d373d3d363d602036600436635c60da1b60e01b36)
             mstore(0x04, or(shl(160, 0x60573d8160223d3973), shr(96, shl(96, beacon))))
             instance := create2(value, 0x07, 0x79, salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -2467,7 +2467,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, 0x07, 0x79, salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(beacon)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }
@@ -2558,7 +2558,7 @@ library LibClone {
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x57 = 0xffa8`.
             mstore(add(m, gt(n, 0xffa8)), add(0xfe6100573d8160233d3973, shl(56, n)))
             instance := create(value, add(m, 0x16), add(n, 0x7a))
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -2593,7 +2593,7 @@ library LibClone {
             // Do a out-of-gas revert if `n` is greater than `0xffff - 0x57 = 0xffa8`.
             mstore(add(m, gt(n, 0xffa8)), add(0xfe6100573d8160233d3973, shl(56, n)))
             instance := create2(value, add(m, 0x16), add(n, 0x7a), salt)
-            if iszero(instance) {
+            if or(iszero(extcodesize(beacon)), iszero(instance)) {
                 mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                 revert(0x1c, 0x04)
             }
@@ -2640,7 +2640,7 @@ library LibClone {
             for {} 1 {} {
                 if iszero(extcodesize(instance)) {
                     instance := create2(value, add(m, 0x16), add(n, 0x7a), salt)
-                    if iszero(instance) {
+                    if or(iszero(extcodesize(beacon)), iszero(instance)) {
                         mstore(0x00, 0x30116425) // `DeploymentFailed()`.
                         revert(0x1c, 0x04)
                     }

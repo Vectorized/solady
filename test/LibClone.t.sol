@@ -137,6 +137,8 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testDeployERC1967BeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
+        if (uint160(beacon) < 0xffff) return;
+        vm.etch(beacon, hex"00");
         bytes memory args = _randomBytes();
         if (args.length > _ERC1967_BEACON_PROXY_ARGS_MAX_LENGTH) {
             if (_randomChance(2)) {
@@ -176,6 +178,8 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testDeployERC1967IBeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
+        if (uint160(beacon) < 0xffff) return;
+        vm.etch(beacon, hex"00");
         bytes memory args = _randomBytes();
         if (args.length > _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH) {
             if (_randomChance(2)) {
@@ -232,7 +236,9 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testImplemenationOf(address implementation) public {
+        if (uint160(implementation) < 0xffff) return;
         _maybeBrutalizeMemory();
+        vm.etch(implementation, hex"00");
         bytes memory args = _truncateBytes(_randomBytes(), _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH);
         address instance;
         if (_randomChance(8)) {
@@ -274,7 +280,8 @@ contract LibCloneTest is SoladyTest {
     }
 
     function testImplemenationOfGas() public {
-        address implementation = address(123);
+        address implementation = address(123456789);
+        vm.etch(implementation, hex"00");
         bytes memory args = "1234564789";
         address instance;
 
