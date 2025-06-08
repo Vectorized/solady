@@ -209,7 +209,7 @@ contract ERC1967Factory {
             case 0 { proxy := create(0, add(m, 0x13), 0x88) }
             default { proxy := create2(0, add(m, 0x13), 0x88, salt) }
             // Revert if the creation fails.
-            if iszero(proxy) {
+            if or(iszero(extcodesize(implementation)), iszero(proxy)) {
                 mstore(0x00, _DEPLOYMENT_FAILED_ERROR_SELECTOR)
                 revert(0x1c, 0x04)
             }
