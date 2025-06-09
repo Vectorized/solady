@@ -136,6 +136,13 @@ contract LibCloneTest is SoladyTest {
         testDeployERC1967IBeaconProxy(bytes32(0));
     }
 
+    function testZZZ() public {
+        this.testDeployERC1967BeaconProxyWithImmutableArgs(
+            0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496,
+            0x0000000000000000000000000000000000000000000000000000000000000cea
+        );
+    }
+
     function testDeployERC1967BeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
         beacon = _makeHasCode(beacon);
         bytes memory args = _randomBytes();
@@ -156,6 +163,7 @@ contract LibCloneTest is SoladyTest {
         }
         address instance = LibClone.deployERC1967BeaconProxy(beacon);
         bytes memory expected = abi.encodePacked(instance.code, args);
+        emit LogBytes(expected);
         if (_randomChance(2)) {
             instance = this.deployERC1967BeaconProxy(beacon, args);
             assertEq(instance.code, expected);
@@ -1733,7 +1741,7 @@ contract LibCloneTest is SoladyTest {
 
     function _makeHasCode(address x) internal returns (address) {
         while (uint160(x) < 0xffff) x = address(uint160(_random()));
-        vm.etch(x, hex"00");
+        if (x.code.length == 0) vm.etch(x, hex"00");
         return x;
     }
 }
