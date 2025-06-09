@@ -136,13 +136,6 @@ contract LibCloneTest is SoladyTest {
         testDeployERC1967IBeaconProxy(bytes32(0));
     }
 
-    function testZZZ() public {
-        this.testDeployERC1967BeaconProxyWithImmutableArgs(
-            0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496,
-            0x0000000000000000000000000000000000000000000000000000000000000cea
-        );
-    }
-
     function testDeployERC1967BeaconProxyWithImmutableArgs(address beacon, bytes32 salt) public {
         beacon = _makeHasCode(beacon);
         bytes memory args = _randomBytes();
