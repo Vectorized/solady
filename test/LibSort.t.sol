@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import "src/utils/LibSort.sol";
+import "src/utils/EfficientHashLib.sol";
 
 contract LibSortTest is SoladyTest {
     function testInsertionSortAddressesDifferential(uint256) public {
@@ -25,6 +26,24 @@ contract LibSortTest is SoladyTest {
         }
     }
 
+    function _getPsuedorandomBenchArraySmall() internal returns (uint256[] memory a) {
+        vm.pauseGasMetering();
+        a = new uint256[](32);
+        for (uint256 i; i < a.length; ++i) {
+            a[i] = uint256(EfficientHashLib.hash(i, 1));
+        }
+        vm.resumeGasMetering();
+    }
+
+    function _getPsuedorandomBenchArrayBig() internal returns (uint256[] memory a) {
+        vm.pauseGasMetering();
+        a = new uint256[](100);
+        for (uint256 i; i < a.length; ++i) {
+            a[i] = uint256(EfficientHashLib.hash(i, 2));
+        }
+        vm.resumeGasMetering();
+    }
+
     function testInsertionSortPsuedorandom(uint256) public {
         unchecked {
             uint256[] memory a = _randomUints(32);
@@ -33,8 +52,14 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function testInsertionSortPsuedorandom() public {
-        testInsertionSortPsuedorandom(123456789);
+    function testInsertionSortPsuedorandomGasSmall() public {
+        LibSort.insertionSort(_getPsuedorandomBenchArraySmall());
+        _checkMemory();
+    }
+
+    function testInsertionSortPsuedorandomGasBig() public {
+        LibSort.insertionSort(_getPsuedorandomBenchArrayBig());
+        _checkMemory();
     }
 
     function testSortChecksummed(uint256) public {
@@ -92,8 +117,14 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function testSortPsuedorandom() public {
-        testSortPsuedorandom(100);
+    function testSortPsuedorandomGasSmall() public {
+        LibSort.sort(_getPsuedorandomBenchArraySmall());
+        _checkMemory();
+    }
+
+    function testSortPsuedorandomGasBig() public {
+        LibSort.sort(_getPsuedorandomBenchArrayBig());
+        _checkMemory();
     }
 
     function testSimpSortPsuedorandom(uint256 n) public {
@@ -104,8 +135,14 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function testSimpSortPsuedorandom() public {
-        testSimpSortPsuedorandom(100);
+    function testSimpSortPsuedorandomGasSmall() public {
+        LibSort.simpSort(_getPsuedorandomBenchArraySmall());
+        _checkMemory();
+    }
+
+    function testSimpSortPsuedorandomGasBig() public {
+        LibSort.simpSort(_getPsuedorandomBenchArrayBig());
+        _checkMemory();
     }
 
     function testSortPsuedorandomNonuniform(uint256) public {
@@ -259,8 +296,14 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function testSortOriginalPsuedorandom() public {
-        testSortOriginalPsuedorandom(123456789);
+    function testSortOriginalPsuedorandomGasBig() public {
+        _sortOriginal(_getPsuedorandomBenchArrayBig());
+        _checkMemory();
+    }
+
+    function testSortOriginalPsuedorandomGasSmall() public {
+        _sortOriginal(_getPsuedorandomBenchArraySmall());
+        _checkMemory();
     }
 
     function testSortOriginalSorted() public {
@@ -1310,14 +1353,14 @@ contract LibSortTest is SoladyTest {
         assertEq(orAll >> 160, 0);
     }
 
-    function testGroupSum() public {
+    function testGroupSumGas() public {
         uint256 n = 32;
         uint256[] memory keys = new uint256[](n);
         uint256[] memory values = new uint256[](n);
         uint256 total;
         unchecked {
             for (uint256 i; i < n; ++i) {
-                keys[i] = (i + 1) % 7;
+                keys[i] = uint256(EfficientHashLib.hash((i + 1) % 7, 3));
                 values[i] = i;
                 total += i;
             }

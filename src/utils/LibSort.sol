@@ -194,8 +194,8 @@ library LibSort {
     /*                      SIMPLE-QUICKSORT                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    // - Optimized for smallest bytecode size.
-    // - A bit slower than intro-quicksort for big arrays.
+    // - A bit slower than intro-quicksort.
+    // - Great choice for balance between runtime speed and bytecode size.
 
     /// @dev Sorts the array in-place with simple-quicksort.
     function simpSort(uint256[] memory a) internal pure {
