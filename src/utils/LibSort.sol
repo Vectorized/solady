@@ -750,10 +750,10 @@ library LibSort {
     function _flipSign(int256[] memory a) private pure {
         /// @solidity memory-safe-assembly
         assembly {
-            let w := shl(255, 1)
-            for { let end := add(a, shl(5, mload(a))) } iszero(eq(a, end)) {} {
-                a := add(a, 0x20)
-                mstore(a, add(mload(a), w))
+            let q := shl(255, 1)
+            for { let i := add(a, shl(5, mload(a))) } iszero(eq(a, i)) {} {
+                mstore(i, add(mload(i), q))
+                i := sub(i, 0x20)
             }
         }
     }
