@@ -26,15 +26,14 @@ library LibSort {
                 if gt(i, h) { break }
                 let k := mload(i) // Key.
                 let j := add(i, w) // The slot before the current slot.
-                let v := mload(j) // The value of `j`.
-                if iszero(gt(v, k)) { continue }
-                for {} 1 {} {
-                    mstore(add(j, 0x20), v)
-                    j := add(j, w) // `sub(j, 0x20)`.
-                    v := mload(j)
-                    if iszero(gt(v, k)) { break }
+                if gt(mload(j), k) {
+                    for {} 1 {} {
+                        mstore(add(j, 0x20), mload(j))
+                        j := add(j, w) // `sub(j, 0x20)`.
+                        if iszero(gt(mload(j), k)) { break }
+                    }
+                    mstore(add(j, 0x20), k)
                 }
-                mstore(add(j, 0x20), k)
             }
             mstore(a, n) // Restore the length of `a`.
         }
