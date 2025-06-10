@@ -84,16 +84,28 @@ contract LibSortTest is SoladyTest {
         }
     }
 
-    function testSortPsuedorandom(uint256) public {
+    function testSortPsuedorandom(uint256 n) public {
         unchecked {
-            uint256[] memory a = _randomUints(100);
+            uint256[] memory a = _randomUints(n & 0x7f);
             LibSort.sort(a);
             assertTrue(_isSorted(a));
         }
     }
 
     function testSortPsuedorandom() public {
-        testSortPsuedorandom(123456789);
+        testSortPsuedorandom(100);
+    }
+
+    function testSimpSortPsuedorandom(uint256 n) public {
+        unchecked {
+            uint256[] memory a = _randomUints(n & 0x7f);
+            LibSort.simpSort(a);
+            assertTrue(_isSorted(a));
+        }
+    }
+
+    function testSimpSortPsuedorandom() public {
+        testSimpSortPsuedorandom(100);
     }
 
     function testSortPsuedorandomNonuniform(uint256) public {

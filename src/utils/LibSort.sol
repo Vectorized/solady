@@ -191,6 +191,60 @@ library LibSort {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      SIMPLE-QUICKSORT                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // - Optimized for smallest bytecode size.
+    // - A bit slower than intro-quicksort for big arrays.
+
+    /// @dev Sorts the array in-place with simple-quicksort.
+    function simpSort(uint256[] memory a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            function mswap(i_, j_) {
+                let t_ := mload(i_)
+                mstore(i_, mload(j_))
+                mstore(j_, t_)
+            }
+            function sortInner(l_, h_) {
+                if iszero(gt(add(0x40, l_), h_)) {
+                    let p_ := mload(l_)
+                    let j_ := l_
+                    for { let i_ := add(l_, 0x20) } 1 {} {
+                        if lt(mload(i_), p_) {
+                            j_ := add(j_, 0x20)
+                            mswap(i_, j_)
+                        }
+                        i_ := add(0x20, i_)
+                        if iszero(lt(i_, h_)) { break }
+                    }
+                    mswap(l_, j_)
+                    sortInner(l_, j_)
+                    sortInner(add(j_, 0x20), h_)
+                }
+            }
+            sortInner(add(a, 0x20), add(add(a, 0x20), shl(5, mload(a))))
+        }
+    }
+
+    /// @dev Sorts the array in-place with simple-quicksort.
+    function simpSort(int256[] memory a) internal pure {
+        _flipSign(a);
+        simpSort(_toUints(a));
+        _flipSign(a);
+    }
+
+    /// @dev Sorts the array in-place with simple-quicksort.
+    function simpSort(address[] memory a) internal pure {
+        simpSort(_toUints(a));
+    }
+
+    /// @dev Sorts the array in-place with simple-quicksort.
+    function simpSort(bytes32[] memory a) internal pure {
+        simpSort(_toUints(a));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                  OTHER USEFUL OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
