@@ -133,9 +133,9 @@ contract ERC6551Test is SoladyTest {
         assertEq(owner, t.owner);
         if (_randomChance(8)) {
             vm.prank(owner);
-            address newOnwer = _randomNonZeroAddress();
-            MockERC721(_erc721).transferFrom(owner, newOnwer, t.tokenId);
-            assertEq(t.account.owner(), newOnwer);
+            address newOwner = _randomNonZeroAddress();
+            MockERC721(_erc721).transferFrom(owner, newOwner, t.tokenId);
+            assertEq(t.account.owner(), newOwner);
         }
     }
 
