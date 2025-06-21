@@ -91,6 +91,7 @@ utils
 ├─ LibZip — "Library for compressing and decompressing bytes"
 ├─ Lifebuoy — "Class that allows for rescue of ETH, ERC20, ERC721 tokens"
 ├─ MerkleProofLib — "Library for verification of Merkle proofs"
+├─ MerkleTreeLib — "Library for generating Merkle trees"
 ├─ MetadataReaderLib — "Library for reading contract metadata robustly"
 ├─ MinHeapLib — "Library for managing a min-heap in storage or memory"
 ├─ Multicallable — "Contract that enables a single call to call multiple methods on itself"
