@@ -4,10 +4,13 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {MerkleTreeLib} from "../src/utils/MerkleTreeLib.sol";
 import {MerkleProofLib} from "../src/utils/MerkleProofLib.sol";
+import {LibSort} from "../src/utils/LibSort.sol";
+import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {EfficientHashLib} from "../src/utils/EfficientHashLib.sol";
 
 contract MerkleTreeLibTest is SoladyTest {
     using MerkleTreeLib for *;
+    using LibPRNG for *;
 
     function testBuildCompleteMerkleTree(bytes32[] memory leafs, bytes32 r) public {
         _maybeBrutalizeMemory(r);
@@ -71,6 +74,7 @@ contract MerkleTreeLibTest is SoladyTest {
 
     function testBuildAndGetLeaf(bytes32[] memory leafs, uint256 leafIndex) public {
         if (leafs.length == 0) return;
+
         if (leafIndex < leafs.length) {
             assertEq(this.buildAndGetLeaf(leafs, leafIndex), leafs[leafIndex]);
         } else {
@@ -156,5 +160,44 @@ contract MerkleTreeLibTest is SoladyTest {
     function getRootFromEmptyTree() public pure returns (bytes32) {
         MerkleTreeLib.MerkleTree memory t;
         return t.root();
+    }
+
+    function _generateUniqueLeafIndices(bytes32[] memory leafs)
+        internal
+        returns (uint256[] memory indices)
+    {
+        indices = new uint256[](leafs.length);
+        for (uint256 i; i < leafs.length; ++i) {
+            indices[i] = i;
+        }
+        LibPRNG.PRNG memory prng;
+        prng.seed(_randomUniform());
+        prng.shuffle(indices);
+        uint256 n = _bound(_random(), 0, indices.length);
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(indices, n)
+        }
+    }
+
+    function _gatherLeafs(bytes32[] memory leafs, uint256[] memory indices)
+        internal
+        pure
+        returns (bytes32[] memory gathered)
+    {
+        gathered = new bytes32[](indices.length);
+        for (uint256 i; i < indices.length; ++i) {
+            gathered[i] = leafs[indices[i]];
+        }
+    }
+
+    /// @dev Returns proof and corresponding flags for multiple leafs.
+    function leafsMultiProof(MerkleTreeLib.MerkleTree memory t, uint256[] memory leafIndices)
+        internal
+        pure
+        returns (bytes32[] memory proof, bool[] memory flags)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {}
     }
 }
