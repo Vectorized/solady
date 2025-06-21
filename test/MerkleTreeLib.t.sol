@@ -26,7 +26,7 @@ contract MerkleTreeLibTest is SoladyTest {
         assertEq(t.root(), t.nodes[0]);
         assertEq(leafs.length, t.numLeafs());
         assertEq(t.nodes.length, t.numLeafs() + t.numInternalNodes());
-        _checkMemory();
+        _checkMemory(t.nodes);
         if (leafs.length >= 1) {
             uint256 i = _randomUniform() % leafs.length;
             assertEq(t.leaf(i), leafs[i]);
