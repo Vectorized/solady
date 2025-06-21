@@ -191,13 +191,15 @@ contract MerkleTreeLibTest is SoladyTest {
         }
     }
 
-    /// @dev Returns proof and corresponding flags for multiple leafs.
-    function leafsMultiProof(MerkleTreeLib.MerkleTree memory t, uint256[] memory leafIndices)
-        internal
-        pure
-        returns (bytes32[] memory proof, bool[] memory flags)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {}
-    }
+    // TODO: complete this in MerkleTreeLib.sol
+
+    // /// @dev Returns proof and corresponding flags for multiple leafs.
+    // function leafsMultiProof(MerkleTree memory t, uint256[] memory leafIndices)
+    //     internal
+    //     pure
+    //     returns (bytes32[] memory proof, bool[] memory flags)
+    // {
+    //     /// @solidity memory-safe-assembly
+    //     assembly {}
+    // }
 }
