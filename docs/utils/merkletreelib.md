@@ -3,7 +3,17 @@
 Library for generating Merkle trees.
 
 
+<b>Note:</b>
 
+- Leafs are NOT auto hashed. Note that some libraries hash the leafs by default.
+We leave it up to you to decide if this is needed.
+If your leafs are 64 bytes long, do hash them first for safety.
+See: https://www.rareskills.io/post/merkle-tree-second-preimage-attack
+- Leafs are NOT auto globally sorted. Note that some libraries sort the leafs by default.
+- The pair hash is pair-sorted-keccak256, which works out-of-the-box with `MerkleProofLib`.
+- This library is NOT equivalent to OpenZeppelin or Murky.
+Equivalence is NOT required if you are just using this for pure Solidity testing.
+May be relevant for differential testing between Solidity vs external libraries.
 
 
 
@@ -133,3 +143,14 @@ function pad(bytes32[] memory leafs, bytes32 defaultFill)
 ```
 
 Returns a copy of leafs, with the length padded to a power of 2.
+
+### pad(bytes32[])
+
+```solidity
+function pad(bytes32[] memory leafs)
+    internal
+    pure
+    returns (bytes32[] memory result)
+```
+
+Equivalent to `pad(leafs, bytes32(0))`.

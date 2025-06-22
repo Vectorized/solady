@@ -4,6 +4,16 @@ pragma solidity ^0.8.4;
 /// @notice Library for generating Merkle trees.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MerkleTreeLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/merkle-tree/blob/master/src/core.ts)
+/// @dev Note:
+/// - Leafs are NOT auto hashed. Note that some libraries hash the leafs by default.
+///   We leave it up to you to decide if this is needed.
+///   If your leafs are 64 bytes long, do hash them first for safety.
+///   See: https://www.rareskills.io/post/merkle-tree-second-preimage-attack
+/// - Leafs are NOT auto globally sorted. Note that some libraries sort the leafs by default.
+/// - The pair hash is pair-sorted-keccak256, which works out-of-the-box with `MerkleProofLib`.
+/// - This library is NOT equivalent to OpenZeppelin or Murky.
+///   Equivalence is NOT required if you are just using this for pure Solidity testing.
+///   May be relevant for differential testing between Solidity vs external libraries.
 library MerkleTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
@@ -243,5 +253,10 @@ library MerkleTreeLib {
                 if eq(i, end) { break }
             }
         }
+    }
+
+    /// @dev Equivalent to `pad(leafs, bytes32(0))`.
+    function pad(bytes32[] memory leafs) internal pure returns (bytes32[] memory result) {
+        result = pad(leafs, bytes32(0));
     }
 }
