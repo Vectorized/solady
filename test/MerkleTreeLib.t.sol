@@ -9,7 +9,7 @@ import {LibPRNG} from "../src/utils/LibPRNG.sol";
 import {EfficientHashLib} from "../src/utils/EfficientHashLib.sol";
 
 contract MerkleTreeLibTest is SoladyTest {
-    using MerkleTreeLib for *;
+    using MerkleTreeLib for bytes32[];
     using LibPRNG for *;
 
     function testBuildCompleteMerkleTree(bytes32[] memory leafs, bytes32 r) public {
@@ -18,18 +18,17 @@ contract MerkleTreeLibTest is SoladyTest {
             leafs = new bytes32[](1);
             leafs[0] = r;
         }
-        MerkleTreeLib.MerkleTree memory t;
-        t.build(leafs);
-        assertEq(t.nodes.length, leafs.length * 2 - 1);
+        bytes32[] memory t = MerkleTreeLib.build(leafs);
+        assertEq(t.length, leafs.length * 2 - 1);
         if (leafs.length == 1) {
-            assertEq(t.nodes[0], r);
+            assertEq(t[0], r);
         } else {
-            assertNotEq(t.nodes[0], 0);
+            assertNotEq(t[0], 0);
         }
-        assertEq(t.root(), t.nodes[0]);
+        assertEq(t.root(), t[0]);
         assertEq(leafs.length, t.numLeafs());
-        assertEq(t.nodes.length, t.numLeafs() + t.numInternalNodes());
-        _checkMemory(t.nodes);
+        assertEq(t.length, t.numLeafs() + t.numInternalNodes());
+        _checkMemory(t);
         if (leafs.length >= 1) {
             uint256 i = _randomUniform() % leafs.length;
             assertEq(t.leaf(i), leafs[i]);
@@ -88,15 +87,12 @@ contract MerkleTreeLibTest is SoladyTest {
         pure
         returns (bytes32)
     {
-        MerkleTreeLib.MerkleTree memory t;
-        t.build(leafs);
-        return t.leaf(leafIndex);
+        return MerkleTreeLib.build(leafs).leaf(leafIndex);
     }
 
     function testBuildAndGetLeafProof(bytes32[] memory leafs, uint256 leafIndex) public {
         if (leafs.length == 0) return _testBuildAndGetRoot(leafs);
-        MerkleTreeLib.MerkleTree memory t;
-        t.build(leafs);
+        bytes32[] memory t = MerkleTreeLib.build(leafs);
         if (leafIndex < leafs.length) {
             bytes32[] memory proof = this.buildAndGetLeafProof(leafs, leafIndex);
             assertTrue(MerkleProofLib.verify(proof, t.root(), leafs[leafIndex]));
@@ -111,19 +107,17 @@ contract MerkleTreeLibTest is SoladyTest {
         pure
         returns (bytes32[] memory proof)
     {
-        MerkleTreeLib.MerkleTree memory t;
-        t.build(leafs);
+        bytes32[] memory t = MerkleTreeLib.build(leafs);
         proof = t.leafProof(leafIndex);
         _checkMemory();
     }
 
     function testBuildAndGetNodeProof(bytes32[] memory leafs, uint256 nodeIndex) public {
         if (leafs.length == 0) return _testBuildAndGetRoot(leafs);
-        MerkleTreeLib.MerkleTree memory t;
-        t.build(leafs);
-        if (nodeIndex < t.nodes.length) {
+        bytes32[] memory t = MerkleTreeLib.build(leafs);
+        if (nodeIndex < t.length) {
             bytes32[] memory proof = this.buildAndGetNodeProof(leafs, nodeIndex);
-            assertTrue(MerkleProofLib.verify(proof, t.root(), t.nodes[nodeIndex]));
+            assertTrue(MerkleProofLib.verify(proof, t.root(), t[nodeIndex]));
         } else {
             vm.expectRevert(MerkleTreeLib.MerkleTreeOutOfBoundsAccess.selector);
             this.buildAndGetNodeProof(leafs, nodeIndex);
@@ -135,8 +129,7 @@ contract MerkleTreeLibTest is SoladyTest {
         pure
         returns (bytes32[] memory proof)
     {
-        MerkleTreeLib.MerkleTree memory t;
-        t.build(leafs);
+        bytes32[] memory t = MerkleTreeLib.build(leafs);
         proof = t.nodeProof(nodeIndex);
         _checkMemory();
     }
@@ -147,9 +140,7 @@ contract MerkleTreeLibTest is SoladyTest {
     }
 
     function buildAndGetRoot(bytes32[] memory leafs) public pure returns (bytes32) {
-        MerkleTreeLib.MerkleTree memory t;
-        t.build(leafs);
-        return t.root();
+        return MerkleTreeLib.build(leafs).root();
     }
 
     function testGetRootFromEmptyTree() public {
@@ -158,8 +149,7 @@ contract MerkleTreeLibTest is SoladyTest {
     }
 
     function getRootFromEmptyTree() public pure returns (bytes32) {
-        MerkleTreeLib.MerkleTree memory t;
-        return t.root();
+        return (new bytes32[](0)).root();
     }
 
     function _generateUniqueLeafIndices(bytes32[] memory leafs)
@@ -190,16 +180,4 @@ contract MerkleTreeLibTest is SoladyTest {
             gathered[i] = leafs[indices[i]];
         }
     }
-
-    // TODO: complete this in MerkleTreeLib.sol
-
-    // /// @dev Returns proof and corresponding flags for multiple leafs.
-    // function leafsMultiProof(MerkleTree memory t, uint256[] memory leafIndices)
-    //     internal
-    //     pure
-    //     returns (bytes32[] memory proof, bool[] memory flags)
-    // {
-    //     /// @solidity memory-safe-assembly
-    //     assembly {}
-    // }
 }
