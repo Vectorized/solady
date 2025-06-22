@@ -1,6 +1,6 @@
 # MerkleTreeLib
 
-Gas optimized verification of proof of inclusion for a leaf in a Merkle tree.
+Library for generating Merkle trees.
 
 
 
