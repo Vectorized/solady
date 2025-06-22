@@ -152,6 +152,31 @@ contract MerkleTreeLibTest is SoladyTest {
         return (new bytes32[](0)).root();
     }
 
+    struct TestMultiProofTemps {
+        bytes32[] leafs;
+        uint256[] leafIndices;
+        bytes32[] gathered;
+        bytes32[] tree;
+        bytes32[] proof;
+        bool[] flags;
+    }
+
+    function testBuildAndGetLeafsMultiProof(bytes32) public {
+        TestMultiProofTemps memory t;
+        t.leafs = new bytes32[](_bound(_random(), 1, 32));
+        for (uint256 i; i < t.leafs.length; ++i) {
+            t.leafs[i] = bytes32(_randomUniform());
+        }
+        t.leafIndices = _generateUniqueLeafIndices(t.leafs);
+
+        t.tree = MerkleTreeLib.build(t.leafs);
+
+        (t.proof, t.flags) = t.tree.leafsMultiProof(t.leafIndices);
+        t.gathered = _gatherLeafs(t.leafs, t.leafIndices);
+
+        assertTrue(MerkleProofLib.verifyMultiProof(t.proof, t.tree.root(), t.gathered, t.flags));
+    }
+
     function _generateUniqueLeafIndices(bytes32[] memory leafs)
         internal
         returns (uint256[] memory indices)
@@ -163,11 +188,12 @@ contract MerkleTreeLibTest is SoladyTest {
         LibPRNG.PRNG memory prng;
         prng.seed(_randomUniform());
         prng.shuffle(indices);
-        uint256 n = _bound(_random(), 0, indices.length);
+        uint256 n = _bound(_random(), 1, indices.length);
         /// @solidity memory-safe-assembly
         assembly {
             mstore(indices, n)
         }
+        LibSort.sort(indices);
     }
 
     function _gatherLeafs(bytes32[] memory leafs, uint256[] memory indices)

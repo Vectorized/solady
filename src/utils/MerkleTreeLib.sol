@@ -17,6 +17,9 @@ library MerkleTreeLib {
     /// Check if the tree has been built and has sufficient leafs and nodes.
     error MerkleTreeOutOfBoundsAccess();
 
+    /// @dev Leaf indices for multi proof must be strictly ascending and not empty.
+    error MerkleTreeInvalidLeafIndices();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   MERKLE TREE OPERATIONS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -144,22 +147,74 @@ library MerkleTreeLib {
     }
 
     /// @dev Returns proof and corresponding flags for multiple leafs.
+    /// The `leafIndices` must be non-empty and sorted in strictly ascending order.
     function leafsMultiProof(bytes32[] memory t, uint256[] memory leafIndices)
         internal
         pure
         returns (bytes32[] memory proof, bool[] memory flags)
     {
-        // /// @solidity memory-safe-assembly
-        // assembly {
-        //     let nodes := mload(t)
-        //     let n := mload(nodes)
-        //     let m := mload(0x40)
-        //     let flagsMap := m
-        //     10000 / 256 * 32
-
-        //     let numIndices := mload(leafIndices)
-        //     proof := add(0x2000, flagsMap)
-        // }
+        /// @solidity memory-safe-assembly
+        assembly {
+            function gen(leafIndices_, t_, proof_, flags_) -> _flagsLen, _proofLen {
+                let e_ := mload(leafIndices_) // End index of circular buffer.
+                let c_ := add(1, e_) // Capacity of circular buffer.
+                let q_ := mload(0x40) // Circular buffer.
+                if iszero(e_) {
+                    mstore(0x00, 0xe9729976) // `MerkleTreeInvalidLeafIndices()`.
+                    revert(0x1c, 0x04)
+                }
+                for {
+                    let n_ := mload(t_) // Num nodes.
+                    let l_ := sub(n_, shr(1, n_)) // Num leafs.
+                    let p_ := 0
+                    let i_ := 0
+                } 1 {} {
+                    let j_ := mload(add(add(leafIndices_, 0x20), shl(5, i_))) // Leaf index.
+                    if flags_ {
+                        if iszero(lt(j_, l_)) {
+                            mstore(0x00, 0x7a856a38) // `MerkleTreeOutOfBoundsAccess()`.
+                            revert(0x1c, 0x04)
+                        }
+                        if iszero(or(iszero(i_), gt(j_, p_))) {
+                            mstore(0x00, 0xe9729976) // `MerkleTreeInvalidLeafIndices()`.
+                            revert(0x1c, 0x04)
+                        }
+                        p_ := j_
+                    }
+                    mstore(add(q_, shl(5, i_)), sub(n_, add(1, j_)))
+                    i_ := add(i_, 1)
+                    if eq(i_, e_) { break }
+                }
+                t_ := add(t_, 0x20)
+                let b_ := 0 // Start index of circular buffer.
+                for {} 1 {} {
+                    if iszero(lt(b_, e_)) { break }
+                    let j_ := mload(add(q_, shl(5, mod(b_, c_)))) // Current.
+                    if iszero(j_) { break }
+                    b_ := add(b_, 1)
+                    let s_ := sub(j_, sub(1, shl(1, and(j_, 1)))) // Sibling.
+                    _flagsLen := add(_flagsLen, 0x20)
+                    let f_ := and(eq(s_, mload(add(q_, shl(5, mod(b_, c_))))), lt(b_, e_))
+                    b_ := add(b_, f_)
+                    if flags_ { mstore(add(flags_, _flagsLen), f_) }
+                    if iszero(f_) {
+                        _proofLen := add(_proofLen, 0x20)
+                        if flags_ { mstore(add(proof_, _proofLen), mload(add(t_, shl(5, s_)))) }
+                    }
+                    mstore(add(q_, shl(5, mod(e_, c_))), shr(1, sub(j_, 1)))
+                    e_ := add(e_, 1)
+                }
+                _proofLen := shr(5, _proofLen)
+                _flagsLen := shr(5, _flagsLen)
+            }
+            let flagsLen, proofLen := gen(leafIndices, t, 0x00, 0x00)
+            proof := mload(0x40)
+            mstore(proof, proofLen)
+            flags := add(add(proof, 0x20), shl(5, proofLen))
+            mstore(flags, flagsLen)
+            mstore(0x40, add(add(flags, 0x20), shl(5, flagsLen)))
+            flagsLen, proofLen := gen(leafIndices, t, proof, flags)
+        }
     }
 
     /// @dev Returns a copy of leafs, with the length padded to a power of 2.
