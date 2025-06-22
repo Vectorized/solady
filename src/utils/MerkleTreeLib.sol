@@ -156,9 +156,10 @@ library MerkleTreeLib {
         /// @solidity memory-safe-assembly
         assembly {
             function gen(leafIndices_, t_, proof_, flags_) -> _flagsLen, _proofLen {
-                let e_ := mload(leafIndices_) // End index of circular buffer.
-                let c_ := add(1, e_) // Capacity of circular buffer.
                 let q_ := mload(0x40) // Circular buffer.
+                let c_ := mload(leafIndices_) // Capacity of circular buffer.
+                let e_ := mload(leafIndices_) // End index of circular buffer.
+                let b_ := 0 // Start index of circular buffer.
                 if iszero(e_) {
                     mstore(0x00, 0xe9729976) // `MerkleTreeInvalidLeafIndices()`.
                     revert(0x1c, 0x04)
@@ -185,16 +186,14 @@ library MerkleTreeLib {
                     i_ := add(i_, 1)
                     if eq(i_, e_) { break }
                 }
-                t_ := add(t_, 0x20)
-                let b_ := 0 // Start index of circular buffer.
                 for {} 1 {} {
                     if iszero(lt(b_, e_)) { break }
                     let j_ := mload(add(q_, shl(5, mod(b_, c_)))) // Current.
                     if iszero(j_) { break }
                     b_ := add(b_, 1)
-                    let s_ := sub(j_, sub(1, shl(1, and(j_, 1)))) // Sibling.
+                    let s_ := add(j_, shl(1, and(j_, 1))) // Sibling (+1).
                     _flagsLen := add(_flagsLen, 0x20)
-                    let f_ := and(eq(s_, mload(add(q_, shl(5, mod(b_, c_))))), lt(b_, e_))
+                    let f_ := and(eq(s_, add(1, mload(add(q_, shl(5, mod(b_, c_)))))), lt(b_, e_))
                     b_ := add(b_, f_)
                     if flags_ { mstore(add(flags_, _flagsLen), f_) }
                     if iszero(f_) {
@@ -212,7 +211,7 @@ library MerkleTreeLib {
             mstore(proof, proofLen)
             flags := add(add(proof, 0x20), shl(5, proofLen))
             mstore(flags, flagsLen)
-            mstore(0x40, add(add(flags, 0x20), shl(5, flagsLen)))
+            mstore(0x40, add(add(flags, 0x20), shl(5, flagsLen))) // Allocate memory.
             flagsLen, proofLen := gen(leafIndices, t, proof, flags)
         }
     }

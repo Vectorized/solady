@@ -163,17 +163,14 @@ contract MerkleTreeLibTest is SoladyTest {
 
     function testBuildAndGetLeafsMultiProof(bytes32) public {
         TestMultiProofTemps memory t;
-        t.leafs = new bytes32[](_bound(_random(), 1, 32));
+        t.leafs = new bytes32[](_bound(_random(), 1, 128));
         for (uint256 i; i < t.leafs.length; ++i) {
-            t.leafs[i] = bytes32(_randomUniform());
+            t.leafs[i] = bytes32(_random());
         }
         t.leafIndices = _generateUniqueLeafIndices(t.leafs);
-
         t.tree = MerkleTreeLib.build(t.leafs);
-
         (t.proof, t.flags) = t.tree.leafsMultiProof(t.leafIndices);
         t.gathered = _gatherLeafs(t.leafs, t.leafIndices);
-
         assertTrue(MerkleProofLib.verifyMultiProof(t.proof, t.tree.root(), t.gathered, t.flags));
     }
 
