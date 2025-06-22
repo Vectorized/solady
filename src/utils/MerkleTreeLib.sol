@@ -4,6 +4,13 @@ pragma solidity ^0.8.4;
 /// @notice Library for generating Merkle trees.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MerkleTreeLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/merkle-tree/blob/master/src/core.ts)
+/// @dev Note:
+/// - This library does NOT hash the leafs and does NOT sort the leafs.
+///   We leave it up to you to decide if this is needed.
+///   If your leafs are 64 bytes long, do hash them first for safety.
+///   See: https://www.rareskills.io/post/merkle-tree-second-preimage-attack
+/// - This library use the pair sort keccak256 hash, which works
+///   out-of-the-box with the accompanying `MerkleProofLib`.
 library MerkleTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
