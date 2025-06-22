@@ -5,12 +5,19 @@ Library for generating Merkle trees.
 
 <b>Note:</b>
 
-- This library does NOT hash the leafs and does NOT sort the leafs.
+- This library does NOT hash the leafs. Note that some libraries hash the leafs by default.
 We leave it up to you to decide if this is needed.
 If your leafs are 64 bytes long, do hash them first for safety.
 See: https://www.rareskills.io/post/merkle-tree-second-preimage-attack
+- This library does NOT sort the leafs. Note that some libraries sort the leafs by default.
 - This library use the pair sort keccak256 hash, which works
 out-of-the-box with the accompanying `MerkleProofLib`.
+- This library is NOT equivalent to OpenZeppelin's.
+If you are only concerned with using this library in your Foundry tests (e.g. to check
+that you have used MerkleProofLib correctly) you do NOT need to care about equivalence.
+This library is designed to be drop-in equivalent to any other library.
+This may be relevant if you want to test that generated proofs via Solidity vs
+some external library are equal.
 
 
 
