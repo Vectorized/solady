@@ -12,10 +12,9 @@ pragma solidity ^0.8.4;
 /// - This library does NOT sort the leafs. Note that some libraries sort the leafs by default.
 /// - This library use the pair sort keccak256 hash, which works
 ///   out-of-the-box with the accompanying `MerkleProofLib`.
-/// - This library is NOT equivalent to OpenZeppelin's.
+/// - This library is NOT equivalent to OpenZeppelin or Murky.
 ///   If you are only concerned with using this library in your Foundry tests (e.g. to check
 //    that you have used MerkleProofLib correctly) you do NOT need to care about equivalence.
-///   This library is designed to be drop-in equivalent to any other library.
 ///   This may be relevant if you want to test that generated proofs via Solidity vs
 ///   some external library are equal.
 library MerkleTreeLib {
