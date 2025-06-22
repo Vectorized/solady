@@ -244,4 +244,9 @@ library MerkleTreeLib {
             }
         }
     }
+
+    /// @dev Equivalent to `pad(leafs, bytes32(0))`.
+    function pad(bytes32[] memory leafs) internal pure returns (bytes32[] memory result) {
+        result = pad(leafs, bytes32(0));
+    }
 }

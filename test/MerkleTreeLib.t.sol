@@ -90,8 +90,19 @@ contract MerkleTreeLibTest is SoladyTest {
         return MerkleTreeLib.build(leafs).leaf(leafIndex);
     }
 
+    function _maybePad(bytes32[] memory leafs) internal returns (bytes32[] memory) {
+        if (_randomChance(2)) {
+            if (_randomChance(2)) {
+                return leafs.pad();
+            }
+            return leafs.pad(bytes32(_random()));
+        }
+        return leafs;
+    }
+
     function testBuildAndGetLeafProof(bytes32[] memory leafs, uint256 leafIndex) public {
         if (leafs.length == 0) return _testBuildAndGetRoot(leafs);
+        leafs = _maybePad(leafs);
         bytes32[] memory t = MerkleTreeLib.build(leafs);
         if (leafIndex < leafs.length) {
             bytes32[] memory proof = this.buildAndGetLeafProof(leafs, leafIndex);
@@ -161,12 +172,14 @@ contract MerkleTreeLibTest is SoladyTest {
         bool[] flags;
     }
 
-    function testBuildAndGetLeafsMultiProof(bytes32) public {
+    function testBuildAndGetLeafsMultiProof(bytes32 r) public {
+        _maybeBrutalizeMemory(r);
         TestMultiProofTemps memory t;
         t.leafs = new bytes32[](_bound(_random(), 1, 128));
         for (uint256 i; i < t.leafs.length; ++i) {
             t.leafs[i] = bytes32(_random());
         }
+        t.leafs = _maybePad(t.leafs);
         t.leafIndices = _generateUniqueLeafIndices(t.leafs);
         t.tree = MerkleTreeLib.build(t.leafs);
         (t.proof, t.flags) = t.tree.leafsMultiProof(t.leafIndices);
