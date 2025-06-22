@@ -5,18 +5,15 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MerkleTreeLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/merkle-tree/blob/master/src/core.ts)
 /// @dev Note:
-/// - This library does NOT hash the leafs. Note that some libraries hash the leafs by default.
+/// - Leafs are NOT auto hashed. Note that some libraries hash the leafs by default.
 ///   We leave it up to you to decide if this is needed.
 ///   If your leafs are 64 bytes long, do hash them first for safety.
 ///   See: https://www.rareskills.io/post/merkle-tree-second-preimage-attack
-/// - This library does NOT sort the leafs. Note that some libraries sort the leafs by default.
-/// - This library use the pair sort keccak256 hash, which works
-///   out-of-the-box with the accompanying `MerkleProofLib`.
+/// - Leafs are NOT auto globally sorted. Note that some libraries sort the leafs by default.
+/// - The pair hash is pair-sorted-keccak256, which works out-of-the-box with `MerkleProofLib`.
 /// - This library is NOT equivalent to OpenZeppelin or Murky.
-///   If you are only concerned with using this library in your Foundry tests (e.g. to check
-//    that you have used MerkleProofLib correctly) you do NOT need to care about equivalence.
-///   This may be relevant if you want to test that generated proofs via Solidity vs
-///   some external library are equal.
+///   Equivalence is NOT required if you are just using this for pure Solidity testing.
+///   May be relevant for differential testing between Solidity vs external libraries.
 library MerkleTreeLib {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
