@@ -423,7 +423,7 @@ contract MerkleProofLibTest is SoladyTest {
             MerkleProofLib.verifyMultiProofCalldata(
                 MerkleProofLib.emptyProof(),
                 bytes32(0),
-                MerkleProofLib.emptyLeaves(),
+                MerkleProofLib.emptyLeafs(),
                 MerkleProofLib.emptyFlags()
             )
         );
@@ -432,7 +432,7 @@ contract MerkleProofLibTest is SoladyTest {
             MerkleProofLib.verifyMultiProof(
                 MerkleProofLib.emptyProof(),
                 bytes32(0),
-                MerkleProofLib.emptyLeaves(),
+                MerkleProofLib.emptyLeafs(),
                 MerkleProofLib.emptyFlags()
             )
         );

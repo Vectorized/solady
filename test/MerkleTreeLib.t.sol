@@ -31,7 +31,7 @@ contract MerkleTreeLibTest is SoladyTest {
         _checkMemory(t);
         if (leafs.length >= 1) {
             uint256 i = _randomUniform() % leafs.length;
-            assertEq(t.leaf(i), leafs[i]);
+            assertEq(t.leafAt(i), leafs[i]);
         }
     }
 
@@ -87,7 +87,7 @@ contract MerkleTreeLibTest is SoladyTest {
         pure
         returns (bytes32)
     {
-        return MerkleTreeLib.build(leafs).leaf(leafIndex);
+        return MerkleTreeLib.build(leafs).leafAt(leafIndex);
     }
 
     function _maybePad(bytes32[] memory leafs) internal returns (bytes32[] memory) {
@@ -183,7 +183,7 @@ contract MerkleTreeLibTest is SoladyTest {
         t.leafIndices = _generateUniqueLeafIndices(t.leafs);
         t.tree = MerkleTreeLib.build(t.leafs);
         (t.proof, t.flags) = t.tree.leafsMultiProof(t.leafIndices);
-        t.gathered = _gatherLeafs(t.leafs, t.leafIndices);
+        t.gathered = t.tree.leafsAt(t.leafIndices);
         assertTrue(MerkleProofLib.verifyMultiProof(t.proof, t.tree.root(), t.gathered, t.flags));
     }
 
@@ -204,17 +204,6 @@ contract MerkleTreeLibTest is SoladyTest {
             mstore(indices, n)
         }
         LibSort.sort(indices);
-    }
-
-    function _gatherLeafs(bytes32[] memory leafs, uint256[] memory indices)
-        internal
-        pure
-        returns (bytes32[] memory gathered)
-    {
-        gathered = new bytes32[](indices.length);
-        for (uint256 i; i < indices.length; ++i) {
-            gathered[i] = leafs[indices[i]];
-        }
     }
 
     function testMultiProofRevertsForEmptyLeafs() public {
