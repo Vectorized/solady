@@ -31,7 +31,7 @@ contract MerkleTreeLibTest is SoladyTest {
         _checkMemory(t);
         if (leaves.length >= 1) {
             uint256 i = _randomUniform() % leaves.length;
-            assertEq(t.leafAt(i), leaves[i]);
+            assertEq(t.leaf(i), leaves[i]);
         }
     }
 
@@ -87,7 +87,7 @@ contract MerkleTreeLibTest is SoladyTest {
         pure
         returns (bytes32)
     {
-        return MerkleTreeLib.build(leaves).leafAt(leafIndex);
+        return MerkleTreeLib.build(leaves).leaf(leafIndex);
     }
 
     function _maybePad(bytes32[] memory leaves) internal returns (bytes32[] memory) {
@@ -183,7 +183,7 @@ contract MerkleTreeLibTest is SoladyTest {
         t.leafIndices = _generateUniqueLeafIndices(t.leaves);
         t.tree = MerkleTreeLib.build(t.leaves);
         (t.proof, t.flags) = t.tree.leavesMultiProof(t.leafIndices);
-        t.gathered = t.tree.leavesAt(t.leafIndices);
+        t.gathered = t.tree.gatherLeaves(t.leafIndices);
         assertTrue(MerkleProofLib.verifyMultiProof(t.proof, t.tree.root(), t.gathered, t.flags));
     }
 

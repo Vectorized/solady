@@ -90,10 +90,10 @@ function numInternalNodes(bytes32[] memory tree)
 
 Returns the number of internal nodes.
 
-### leafAt(bytes32[],uint256)
+### leaf(bytes32[],uint256)
 
 ```solidity
-function leafAt(bytes32[] memory tree, uint256 leafIndex)
+function leaf(bytes32[] memory tree, uint256 leafIndex)
     internal
     pure
     returns (bytes32 result)
@@ -101,10 +101,10 @@ function leafAt(bytes32[] memory tree, uint256 leafIndex)
 
 Returns the leaf at `leafIndex`.
 
-### leavesAt(bytes32[],uint256[])
+### gatherLeaves(bytes32[],uint256[])
 
 ```solidity
-function leavesAt(bytes32[] memory tree, uint256[] memory leafIndices)
+function gatherLeaves(bytes32[] memory tree, uint256[] memory leafIndices)
     internal
     pure
     returns (bytes32[] memory result)

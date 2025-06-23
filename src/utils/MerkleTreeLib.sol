@@ -95,7 +95,7 @@ library MerkleTreeLib {
     }
 
     /// @dev Returns the leaf at `leafIndex`.
-    function leafAt(bytes32[] memory tree, uint256 leafIndex)
+    function leaf(bytes32[] memory tree, uint256 leafIndex)
         internal
         pure
         returns (bytes32 result)
@@ -112,7 +112,7 @@ library MerkleTreeLib {
     }
 
     /// @dev Returns the leaves at `leafIndices`.
-    function leavesAt(bytes32[] memory tree, uint256[] memory leafIndices)
+    function gatherLeaves(bytes32[] memory tree, uint256[] memory leafIndices)
         internal
         pure
         returns (bytes32[] memory result)
