@@ -12,48 +12,48 @@ contract MerkleTreeLibTest is SoladyTest {
     using MerkleTreeLib for bytes32[];
     using LibPRNG for *;
 
-    function testBuildCompleteMerkleTree(bytes32[] memory leafs, bytes32 r) public {
+    function testBuildCompleteMerkleTree(bytes32[] memory leaves, bytes32 r) public {
         _maybeBrutalizeMemory(r);
-        if (leafs.length <= 1) {
-            leafs = new bytes32[](1);
-            leafs[0] = r;
+        if (leaves.length <= 1) {
+            leaves = new bytes32[](1);
+            leaves[0] = r;
         }
-        bytes32[] memory t = MerkleTreeLib.build(leafs);
-        assertEq(t.length, leafs.length * 2 - 1);
-        if (leafs.length == 1) {
+        bytes32[] memory t = MerkleTreeLib.build(leaves);
+        assertEq(t.length, leaves.length * 2 - 1);
+        if (leaves.length == 1) {
             assertEq(t[0], r);
         } else {
             assertNotEq(t[0], 0);
         }
         assertEq(t.root(), t[0]);
-        assertEq(leafs.length, t.numLeafs());
-        assertEq(t.length, t.numLeafs() + t.numInternalNodes());
+        assertEq(leaves.length, t.numLeaves());
+        assertEq(t.length, t.numLeaves() + t.numInternalNodes());
         _checkMemory(t);
-        if (leafs.length >= 1) {
-            uint256 i = _randomUniform() % leafs.length;
-            assertEq(t.leaf(i), leafs[i]);
+        if (leaves.length >= 1) {
+            uint256 i = _randomUniform() % leaves.length;
+            assertEq(t.leaf(i), leaves[i]);
         }
     }
 
-    function testPad(bytes32[] memory leafs, bytes32 defaultFill, uint256 r) public {
+    function testPad(bytes32[] memory leaves, bytes32 defaultFill, uint256 r) public {
         _maybeBrutalizeMemory(r);
-        if (leafs.length == 0) return;
-        assertEq(MerkleTreeLib.pad(leafs, defaultFill), _padOriginal(leafs, defaultFill));
+        if (leaves.length == 0) return;
+        assertEq(MerkleTreeLib.pad(leaves, defaultFill), _padOriginal(leaves, defaultFill));
         _checkMemory();
     }
 
-    function _padOriginal(bytes32[] memory leafs, bytes32 defaultFill)
+    function _padOriginal(bytes32[] memory leaves, bytes32 defaultFill)
         internal
         pure
         returns (bytes32[] memory result)
     {
         unchecked {
             uint256 p = 1;
-            while (p < leafs.length) p = p << 1;
+            while (p < leaves.length) p = p << 1;
             result = new bytes32[](p);
             for (uint256 i; i < p; ++i) {
-                if (i < leafs.length) {
-                    result[i] = leafs[i];
+                if (i < leaves.length) {
+                    result[i] = leaves[i];
                 } else {
                     result[i] = defaultFill;
                 }
@@ -71,87 +71,87 @@ contract MerkleTreeLibTest is SoladyTest {
         if (h & 0x0f == 0) _brutalizeMemory();
     }
 
-    function testBuildAndGetLeaf(bytes32[] memory leafs, uint256 leafIndex) public {
-        if (leafs.length == 0) return;
+    function testBuildAndGetLeaf(bytes32[] memory leaves, uint256 leafIndex) public {
+        if (leaves.length == 0) return;
 
-        if (leafIndex < leafs.length) {
-            assertEq(this.buildAndGetLeaf(leafs, leafIndex), leafs[leafIndex]);
+        if (leafIndex < leaves.length) {
+            assertEq(this.buildAndGetLeaf(leaves, leafIndex), leaves[leafIndex]);
         } else {
             vm.expectRevert(MerkleTreeLib.MerkleTreeOutOfBoundsAccess.selector);
-            this.buildAndGetLeaf(leafs, leafIndex);
+            this.buildAndGetLeaf(leaves, leafIndex);
         }
     }
 
-    function buildAndGetLeaf(bytes32[] memory leafs, uint256 leafIndex)
+    function buildAndGetLeaf(bytes32[] memory leaves, uint256 leafIndex)
         public
         pure
         returns (bytes32)
     {
-        return MerkleTreeLib.build(leafs).leaf(leafIndex);
+        return MerkleTreeLib.build(leaves).leaf(leafIndex);
     }
 
-    function _maybePad(bytes32[] memory leafs) internal returns (bytes32[] memory) {
+    function _maybePad(bytes32[] memory leaves) internal returns (bytes32[] memory) {
         if (_randomChance(2)) {
             if (_randomChance(2)) {
-                return leafs.pad();
+                return leaves.pad();
             }
-            return leafs.pad(bytes32(_random()));
+            return leaves.pad(bytes32(_random()));
         }
-        return leafs;
+        return leaves;
     }
 
-    function testBuildAndGetLeafProof(bytes32[] memory leafs, uint256 leafIndex) public {
-        if (leafs.length == 0) return _testBuildAndGetRoot(leafs);
-        leafs = _maybePad(leafs);
-        bytes32[] memory t = MerkleTreeLib.build(leafs);
-        if (leafIndex < leafs.length) {
-            bytes32[] memory proof = this.buildAndGetLeafProof(leafs, leafIndex);
-            assertTrue(MerkleProofLib.verify(proof, t.root(), leafs[leafIndex]));
+    function testBuildAndGetLeafProof(bytes32[] memory leaves, uint256 leafIndex) public {
+        if (leaves.length == 0) return _testBuildAndGetRoot(leaves);
+        leaves = _maybePad(leaves);
+        bytes32[] memory t = MerkleTreeLib.build(leaves);
+        if (leafIndex < leaves.length) {
+            bytes32[] memory proof = this.buildAndGetLeafProof(leaves, leafIndex);
+            assertTrue(MerkleProofLib.verify(proof, t.root(), leaves[leafIndex]));
         } else {
             vm.expectRevert(MerkleTreeLib.MerkleTreeOutOfBoundsAccess.selector);
-            this.buildAndGetLeafProof(leafs, leafIndex);
+            this.buildAndGetLeafProof(leaves, leafIndex);
         }
     }
 
-    function buildAndGetLeafProof(bytes32[] memory leafs, uint256 leafIndex)
+    function buildAndGetLeafProof(bytes32[] memory leaves, uint256 leafIndex)
         public
         pure
         returns (bytes32[] memory proof)
     {
-        bytes32[] memory t = MerkleTreeLib.build(leafs);
+        bytes32[] memory t = MerkleTreeLib.build(leaves);
         proof = t.leafProof(leafIndex);
         _checkMemory();
     }
 
-    function testBuildAndGetNodeProof(bytes32[] memory leafs, uint256 nodeIndex) public {
-        if (leafs.length == 0) return _testBuildAndGetRoot(leafs);
-        bytes32[] memory t = MerkleTreeLib.build(leafs);
+    function testBuildAndGetNodeProof(bytes32[] memory leaves, uint256 nodeIndex) public {
+        if (leaves.length == 0) return _testBuildAndGetRoot(leaves);
+        bytes32[] memory t = MerkleTreeLib.build(leaves);
         if (nodeIndex < t.length) {
-            bytes32[] memory proof = this.buildAndGetNodeProof(leafs, nodeIndex);
+            bytes32[] memory proof = this.buildAndGetNodeProof(leaves, nodeIndex);
             assertTrue(MerkleProofLib.verify(proof, t.root(), t[nodeIndex]));
         } else {
             vm.expectRevert(MerkleTreeLib.MerkleTreeOutOfBoundsAccess.selector);
-            this.buildAndGetNodeProof(leafs, nodeIndex);
+            this.buildAndGetNodeProof(leaves, nodeIndex);
         }
     }
 
-    function buildAndGetNodeProof(bytes32[] memory leafs, uint256 nodeIndex)
+    function buildAndGetNodeProof(bytes32[] memory leaves, uint256 nodeIndex)
         public
         pure
         returns (bytes32[] memory proof)
     {
-        bytes32[] memory t = MerkleTreeLib.build(leafs);
+        bytes32[] memory t = MerkleTreeLib.build(leaves);
         proof = t.nodeProof(nodeIndex);
         _checkMemory();
     }
 
-    function _testBuildAndGetRoot(bytes32[] memory leafs) internal {
-        vm.expectRevert(MerkleTreeLib.MerkleTreeLeafsEmpty.selector);
-        this.buildAndGetRoot(leafs);
+    function _testBuildAndGetRoot(bytes32[] memory leaves) internal {
+        vm.expectRevert(MerkleTreeLib.MerkleTreeLeavesEmpty.selector);
+        this.buildAndGetRoot(leaves);
     }
 
-    function buildAndGetRoot(bytes32[] memory leafs) public pure returns (bytes32) {
-        return MerkleTreeLib.build(leafs).root();
+    function buildAndGetRoot(bytes32[] memory leaves) public pure returns (bytes32) {
+        return MerkleTreeLib.build(leaves).root();
     }
 
     function testGetRootFromEmptyTree() public {
@@ -164,7 +164,7 @@ contract MerkleTreeLibTest is SoladyTest {
     }
 
     struct TestMultiProofTemps {
-        bytes32[] leafs;
+        bytes32[] leaves;
         uint256[] leafIndices;
         bytes32[] gathered;
         bytes32[] tree;
@@ -175,24 +175,24 @@ contract MerkleTreeLibTest is SoladyTest {
     function testBuildAndGetLeafsMultiProof(bytes32 r) public {
         _maybeBrutalizeMemory(r);
         TestMultiProofTemps memory t;
-        t.leafs = new bytes32[](_bound(_random(), 1, 128));
-        for (uint256 i; i < t.leafs.length; ++i) {
-            t.leafs[i] = bytes32(_random());
+        t.leaves = new bytes32[](_bound(_random(), 1, 128));
+        for (uint256 i; i < t.leaves.length; ++i) {
+            t.leaves[i] = bytes32(_random());
         }
-        t.leafs = _maybePad(t.leafs);
-        t.leafIndices = _generateUniqueLeafIndices(t.leafs);
-        t.tree = MerkleTreeLib.build(t.leafs);
-        (t.proof, t.flags) = t.tree.leafsMultiProof(t.leafIndices);
-        t.gathered = _gatherLeafs(t.leafs, t.leafIndices);
+        t.leaves = _maybePad(t.leaves);
+        t.leafIndices = _generateUniqueLeafIndices(t.leaves);
+        t.tree = MerkleTreeLib.build(t.leaves);
+        (t.proof, t.flags) = t.tree.multiProofForLeaves(t.leafIndices);
+        t.gathered = t.tree.gatherLeaves(t.leafIndices);
         assertTrue(MerkleProofLib.verifyMultiProof(t.proof, t.tree.root(), t.gathered, t.flags));
     }
 
-    function _generateUniqueLeafIndices(bytes32[] memory leafs)
+    function _generateUniqueLeafIndices(bytes32[] memory leaves)
         internal
         returns (uint256[] memory indices)
     {
-        indices = new uint256[](leafs.length);
-        for (uint256 i; i < leafs.length; ++i) {
+        indices = new uint256[](leaves.length);
+        for (uint256 i; i < leaves.length; ++i) {
             indices[i] = i;
         }
         LibPRNG.PRNG memory prng;
@@ -206,23 +206,12 @@ contract MerkleTreeLibTest is SoladyTest {
         LibSort.sort(indices);
     }
 
-    function _gatherLeafs(bytes32[] memory leafs, uint256[] memory indices)
-        internal
-        pure
-        returns (bytes32[] memory gathered)
-    {
-        gathered = new bytes32[](indices.length);
-        for (uint256 i; i < indices.length; ++i) {
-            gathered[i] = leafs[indices[i]];
-        }
-    }
-
     function testMultiProofRevertsForEmptyLeafs() public {
         vm.expectRevert(MerkleTreeLib.MerkleTreeInvalidLeafIndices.selector);
         this.multiProofRevertsForEmptyLeafs();
     }
 
     function multiProofRevertsForEmptyLeafs() public pure {
-        (new bytes32[](1)).leafsMultiProof(new uint256[](0));
+        (new bytes32[](1)).multiProofForLeaves(new uint256[](0));
     }
 }

@@ -5,11 +5,11 @@ pragma solidity ^0.8.4;
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/MerkleTreeLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/merkle-tree/blob/master/src/core.ts)
 /// @dev Note:
-/// - Leafs are NOT auto hashed. Note that some libraries hash the leafs by default.
+/// - Leaves are NOT auto hashed. Note that some libraries hash the leaves by default.
 ///   We leave it up to you to decide if this is needed.
-///   If your leafs are 64 bytes long, do hash them first for safety.
+///   If your leaves are 64 bytes long, do hash them first for safety.
 ///   See: https://www.rareskills.io/post/merkle-tree-second-preimage-attack
-/// - Leafs are NOT auto globally sorted. Note that some libraries sort the leafs by default.
+/// - Leaves are NOT auto globally sorted. Note that some libraries sort the leaves by default.
 /// - The pair hash is pair-sorted-keccak256, which works out-of-the-box with `MerkleProofLib`.
 /// - This library is NOT equivalent to OpenZeppelin or Murky.
 ///   Equivalence is NOT required if you are just using this for pure Solidity testing.
@@ -20,10 +20,10 @@ library MerkleTreeLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev At least 1 leaf is required to build the tree.
-    error MerkleTreeLeafsEmpty();
+    error MerkleTreeLeavesEmpty();
 
     /// @dev Attempt to access a node with an out-of-bounds index.
-    /// Check if the tree has been built and has sufficient leafs and nodes.
+    /// Check if the tree has been built and has sufficient leaves and nodes.
     error MerkleTreeOutOfBoundsAccess();
 
     /// @dev Leaf indices for multi proof must be strictly ascending and not empty.
@@ -34,24 +34,24 @@ library MerkleTreeLib {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Builds and return a complete Merkle tree.
-    /// To make it a full Merkle tree, use `build(pad(leafs))`.
-    function build(bytes32[] memory leafs) internal pure returns (bytes32[] memory result) {
+    /// To make it a full Merkle tree, use `build(pad(leaves))`.
+    function build(bytes32[] memory leaves) internal pure returns (bytes32[] memory tree) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40) // `nodes`.
-            let l := mload(leafs)
+            tree := mload(0x40) // `nodes`.
+            let l := mload(leaves)
             if iszero(l) {
-                mstore(0x00, 0x089aff6e) // `MerkleTreeLeafsEmpty()`.
+                mstore(0x00, 0xe7171dc4) // `MerkleTreeLeavesEmpty()`.
                 revert(0x1c, 0x04)
             }
             let n := sub(add(l, l), 1)
-            mstore(result, n) // `.length`.
-            let nodes := add(result, 0x20)
+            mstore(tree, n) // `.length`.
+            let nodes := add(tree, 0x20)
             let f := add(nodes, shl(5, n))
             mstore(0x40, f) // Allocate memory.
             let e := add(0x20, shl(5, l))
             for { let i := 0x20 } 1 {} {
-                mstore(sub(f, i), mload(add(leafs, i)))
+                mstore(sub(f, i), mload(add(leaves, i)))
                 i := add(i, 0x20)
                 if eq(i, e) { break }
             }
@@ -71,61 +71,48 @@ library MerkleTreeLib {
     }
 
     /// @dev Returns the root.
-    function root(bytes32[] memory t) internal pure returns (bytes32 result) {
+    function root(bytes32[] memory tree) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(add(0x20, t))
-            if iszero(mload(t)) {
+            result := mload(add(0x20, tree))
+            if iszero(mload(tree)) {
                 mstore(0x00, 0x7a856a38) // `MerkleTreeOutOfBoundsAccess()`.
                 revert(0x1c, 0x04)
             }
         }
     }
 
-    /// @dev Returns the number of leafs.
-    function numLeafs(bytes32[] memory t) internal pure returns (uint256) {
+    /// @dev Returns the number of leaves.
+    function numLeaves(bytes32[] memory tree) internal pure returns (uint256) {
         unchecked {
-            return t.length - (t.length >> 1);
+            return tree.length - (tree.length >> 1);
         }
     }
 
     /// @dev Returns the number of internal nodes.
-    function numInternalNodes(bytes32[] memory t) internal pure returns (uint256) {
-        return t.length >> 1;
+    function numInternalNodes(bytes32[] memory tree) internal pure returns (uint256) {
+        return tree.length >> 1;
     }
 
     /// @dev Returns the leaf at `leafIndex`.
-    function leaf(bytes32[] memory t, uint256 leafIndex) internal pure returns (bytes32 result) {
+    function leaf(bytes32[] memory tree, uint256 leafIndex)
+        internal
+        pure
+        returns (bytes32 result)
+    {
         /// @solidity memory-safe-assembly
         assembly {
-            let n := mload(t)
+            let n := mload(tree)
             if iszero(lt(leafIndex, sub(n, shr(1, n)))) {
                 mstore(0x00, 0x7a856a38) // `MerkleTreeOutOfBoundsAccess()`.
                 revert(0x1c, 0x04)
             }
-            result := mload(add(t, shl(5, sub(n, leafIndex))))
+            result := mload(add(tree, shl(5, sub(n, leafIndex))))
         }
     }
 
-    /// @dev Returns the proof for the leaf at `leafIndex`.
-    function leafProof(bytes32[] memory t, uint256 leafIndex)
-        internal
-        pure
-        returns (bytes32[] memory result)
-    {
-        uint256 nodeIndex;
-        /// @solidity memory-safe-assembly
-        assembly {
-            let n := mload(t)
-            nodeIndex := sub(n, add(1, leafIndex))
-            if iszero(lt(leafIndex, sub(n, shr(1, n)))) { nodeIndex := not(0) }
-        }
-        result = nodeProof(t, nodeIndex);
-    }
-
-    /// @dev Returns the proof for the node at `nodeIndex`.
-    /// This function can be used to prove the existence of internal nodes.
-    function nodeProof(bytes32[] memory t, uint256 nodeIndex)
+    /// @dev Returns the leaves at `leafIndices`.
+    function gatherLeaves(bytes32[] memory tree, uint256[] memory leafIndices)
         internal
         pure
         returns (bytes32[] memory result)
@@ -133,13 +120,57 @@ library MerkleTreeLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            if iszero(lt(nodeIndex, mload(t))) {
+            let l := mload(leafIndices)
+            mstore(result, l) // `.length`.
+            let d := sub(leafIndices, result)
+            let n := mload(tree)
+            let o := add(result, 0x20)
+            for { let i := 0 } iszero(eq(i, l)) { i := add(i, 1) } {
+                let j := add(o, shl(5, i))
+                let leafIndex := mload(add(j, d))
+                if iszero(lt(leafIndex, sub(n, shr(1, n)))) {
+                    mstore(0x00, 0x7a856a38) // `MerkleTreeOutOfBoundsAccess()`.
+                    revert(0x1c, 0x04)
+                }
+                mstore(j, mload(add(tree, shl(5, sub(n, leafIndex)))))
+            }
+            mstore(0x40, add(o, shl(5, l))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the proof for the leaf at `leafIndex`.
+    function leafProof(bytes32[] memory tree, uint256 leafIndex)
+        internal
+        pure
+        returns (bytes32[] memory result)
+    {
+        uint256 nodeIndex;
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(tree)
+            nodeIndex := sub(n, add(1, leafIndex))
+            if iszero(lt(leafIndex, sub(n, shr(1, n)))) { nodeIndex := not(0) }
+        }
+        result = nodeProof(tree, nodeIndex);
+    }
+
+    /// @dev Returns the proof for the node at `nodeIndex`.
+    /// This function can be used to prove the existence of internal nodes.
+    function nodeProof(bytes32[] memory tree, uint256 nodeIndex)
+        internal
+        pure
+        returns (bytes32[] memory result)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            if iszero(lt(nodeIndex, mload(tree))) {
                 mstore(0x00, 0x7a856a38) // `MerkleTreeOutOfBoundsAccess()`.
                 revert(0x1c, 0x04)
             }
             let o := add(result, 0x20)
             for { let i := nodeIndex } i { i := shr(1, sub(i, 1)) } {
-                mstore(o, mload(add(t, shl(5, add(i, shl(1, and(1, i)))))))
+                mstore(o, mload(add(tree, shl(5, add(i, shl(1, and(1, i)))))))
                 o := add(o, 0x20)
             }
             mstore(0x40, o) // Allocate memory.
@@ -147,9 +178,9 @@ library MerkleTreeLib {
         }
     }
 
-    /// @dev Returns proof and corresponding flags for multiple leafs.
+    /// @dev Returns proof and corresponding flags for multiple leaves.
     /// The `leafIndices` must be non-empty and sorted in strictly ascending order.
-    function leafsMultiProof(bytes32[] memory t, uint256[] memory leafIndices)
+    function multiProofForLeaves(bytes32[] memory tree, uint256[] memory leafIndices)
         internal
         pure
         returns (bytes32[] memory proof, bool[] memory flags)
@@ -163,7 +194,7 @@ library MerkleTreeLib {
                 let b_ := 0 // Start index of circular buffer.
                 for {
                     let n_ := mload(t_) // Num nodes.
-                    let l_ := sub(n_, shr(1, n_)) // Num leafs.
+                    let l_ := sub(n_, shr(1, n_)) // Num leaves.
                     let p_ := not(0)
                     let i_ := 0
                 } 1 {} {
@@ -207,18 +238,18 @@ library MerkleTreeLib {
                 mstore(0x00, 0xe9729976) // `MerkleTreeInvalidLeafIndices()`.
                 revert(0x1c, 0x04)
             }
-            let flagsLen, proofLen := gen(leafIndices, t, 0x00, 0x00)
+            let flagsLen, proofLen := gen(leafIndices, tree, 0x00, 0x00)
             proof := mload(0x40)
             mstore(proof, proofLen)
             flags := add(add(proof, 0x20), shl(5, proofLen))
             mstore(flags, flagsLen)
             mstore(0x40, add(add(flags, 0x20), shl(5, flagsLen))) // Allocate memory.
-            flagsLen, proofLen := gen(leafIndices, t, proof, flags)
+            flagsLen, proofLen := gen(leafIndices, tree, proof, flags)
         }
     }
 
-    /// @dev Returns a copy of leafs, with the length padded to a power of 2.
-    function pad(bytes32[] memory leafs, bytes32 defaultFill)
+    /// @dev Returns a copy of leaves, with the length padded to a power of 2.
+    function pad(bytes32[] memory leaves, bytes32 defaultFill)
         internal
         pure
         returns (bytes32[] memory result)
@@ -226,20 +257,20 @@ library MerkleTreeLib {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
-            let l := mload(leafs)
+            let l := mload(leaves)
             if iszero(l) {
-                mstore(0x00, 0x089aff6e) // `MerkleTreeLeafsEmpty()`.
+                mstore(0x00, 0xe7171dc4) // `MerkleTreeLeavesEmpty()`.
                 revert(0x1c, 0x04)
             }
             let p := 1 // Padded length.
             for {} lt(p, l) {} { p := add(p, p) }
             mstore(result, p) // Store length.
             mstore(0x40, add(result, add(0x20, shl(5, p)))) // Allocate memory.
-            let d := sub(result, leafs)
-            let copyEnd := add(add(leafs, 0x20), shl(5, l))
-            let end := add(add(leafs, 0x20), shl(5, p))
+            let d := sub(result, leaves)
+            let copyEnd := add(add(leaves, 0x20), shl(5, l))
+            let end := add(add(leaves, 0x20), shl(5, p))
             mstore(0x00, defaultFill)
-            for { let i := add(leafs, 0x20) } 1 {} {
+            for { let i := add(leaves, 0x20) } 1 {} {
                 mstore(add(i, d), mload(mul(i, lt(i, copyEnd))))
                 i := add(i, 0x20)
                 if eq(i, end) { break }
@@ -247,8 +278,8 @@ library MerkleTreeLib {
         }
     }
 
-    /// @dev Equivalent to `pad(leafs, bytes32(0))`.
-    function pad(bytes32[] memory leafs) internal pure returns (bytes32[] memory result) {
-        result = pad(leafs, bytes32(0));
+    /// @dev Equivalent to `pad(leaves, bytes32(0))`.
+    function pad(bytes32[] memory leaves) internal pure returns (bytes32[] memory result) {
+        result = pad(leaves, bytes32(0));
     }
 }
