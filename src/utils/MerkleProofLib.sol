@@ -74,24 +74,24 @@ library MerkleProofLib {
         }
     }
 
-    /// @dev Returns whether all `leafs` exist in the Merkle tree with `root`,
+    /// @dev Returns whether all `leaves` exist in the Merkle tree with `root`,
     /// given `proof` and `flags`.
     ///
     /// Note:
-    /// - Breaking the invariant `flags.length == (leafs.length - 1) + proof.length`
+    /// - Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`
     ///   will always return false.
-    /// - The sum of the lengths of `proof` and `leafs` must never overflow.
+    /// - The sum of the lengths of `proof` and `leaves` must never overflow.
     /// - Any non-zero word in the `flags` array is treated as true.
     /// - The memory offset of `proof` must be non-zero
     ///   (i.e. `proof` is not pointing to the scratch space).
     function verifyMultiProof(
         bytes32[] memory proof,
         bytes32 root,
-        bytes32[] memory leafs,
+        bytes32[] memory leaves,
         bool[] memory flags
     ) internal pure returns (bool isValid) {
         // Rebuilds the root by consuming and producing values on a queue.
-        // The queue starts with the `leafs` array, and goes into a `hashes` array.
+        // The queue starts with the `leaves` array, and goes into a `hashes` array.
         // After the process, the last element on the queue is verified
         // to be equal to the `root`.
         //
@@ -101,21 +101,21 @@ library MerkleProofLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Cache the lengths of the arrays.
-            let leavesLength := mload(leafs)
+            let leavesLength := mload(leaves)
             let proofLength := mload(proof)
             let flagsLength := mload(flags)
 
             // Advance the pointers of the arrays to point to the data.
-            leafs := add(0x20, leafs)
+            leaves := add(0x20, leaves)
             proof := add(0x20, proof)
             flags := add(0x20, flags)
 
             // If the number of flags is correct.
             for {} eq(add(leavesLength, proofLength), add(flagsLength, 1)) {} {
-                // For the case where `proof.length + leafs.length == 1`.
+                // For the case where `proof.length + leaves.length == 1`.
                 if iszero(flagsLength) {
-                    // `isValid = (proof.length == 1 ? proof[0] : leafs[0]) == root`.
-                    isValid := eq(mload(xor(leafs, mul(xor(proof, leafs), proofLength))), root)
+                    // `isValid = (proof.length == 1 ? proof[0] : leaves[0]) == root`.
+                    isValid := eq(mload(xor(leaves, mul(xor(proof, leaves), proofLength))), root)
                     break
                 }
 
@@ -124,12 +124,12 @@ library MerkleProofLib {
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
                 let hashesFront := mload(0x40)
-                // Copy the leafs into the hashes.
+                // Copy the leaves into the hashes.
                 // Sometimes, a little memory expansion costs less than branching.
                 // Should cost less, even with a high free memory offset of 0x7d00.
                 leavesLength := shl(5, leavesLength)
                 for { let i := 0 } iszero(eq(i, leavesLength)) { i := add(i, 0x20) } {
-                    mstore(add(hashesFront, i), mload(add(leafs, i)))
+                    mstore(add(hashesFront, i), mload(add(leaves, i)))
                 }
                 // Compute the back of the hashes.
                 let hashesBack := add(hashesFront, leavesLength)
@@ -179,11 +179,11 @@ library MerkleProofLib {
         }
     }
 
-    /// @dev Returns whether all `leafs` exist in the Merkle tree with `root`,
+    /// @dev Returns whether all `leaves` exist in the Merkle tree with `root`,
     /// given `proof` and `flags`.
     ///
     /// Note:
-    /// - Breaking the invariant `flags.length == (leafs.length - 1) + proof.length`
+    /// - Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`
     ///   will always return false.
     /// - Any non-zero word in the `flags` array is treated as true.
     /// - The calldata offset of `proof` must be non-zero
@@ -191,11 +191,11 @@ library MerkleProofLib {
     function verifyMultiProofCalldata(
         bytes32[] calldata proof,
         bytes32 root,
-        bytes32[] calldata leafs,
+        bytes32[] calldata leaves,
         bool[] calldata flags
     ) internal pure returns (bool isValid) {
         // Rebuilds the root by consuming and producing values on a queue.
-        // The queue starts with the `leafs` array, and goes into a `hashes` array.
+        // The queue starts with the `leaves` array, and goes into a `hashes` array.
         // After the process, the last element on the queue is verified
         // to be equal to the `root`.
         //
@@ -205,14 +205,14 @@ library MerkleProofLib {
         /// @solidity memory-safe-assembly
         assembly {
             // If the number of flags is correct.
-            for {} eq(add(leafs.length, proof.length), add(flags.length, 1)) {} {
-                // For the case where `proof.length + leafs.length == 1`.
+            for {} eq(add(leaves.length, proof.length), add(flags.length, 1)) {} {
+                // For the case where `proof.length + leaves.length == 1`.
                 if iszero(flags.length) {
-                    // `isValid = (proof.length == 1 ? proof[0] : leafs[0]) == root`.
+                    // `isValid = (proof.length == 1 ? proof[0] : leaves[0]) == root`.
                     // forgefmt: disable-next-item
                     isValid := eq(
                         calldataload(
-                            xor(leafs.offset, mul(xor(proof.offset, leafs.offset), proof.length))
+                            xor(leaves.offset, mul(xor(proof.offset, leaves.offset), proof.length))
                         ),
                         root
                     )
@@ -224,12 +224,12 @@ library MerkleProofLib {
                 // We can use the free memory space for the queue.
                 // We don't need to allocate, since the queue is temporary.
                 let hashesFront := mload(0x40)
-                // Copy the leafs into the hashes.
+                // Copy the leaves into the hashes.
                 // Sometimes, a little memory expansion costs less than branching.
                 // Should cost less, even with a high free memory offset of 0x7d00.
-                calldatacopy(hashesFront, leafs.offset, shl(5, leafs.length))
+                calldatacopy(hashesFront, leaves.offset, shl(5, leaves.length))
                 // Compute the back of the hashes.
-                let hashesBack := add(hashesFront, shl(5, leafs.length))
+                let hashesBack := add(hashesFront, shl(5, leaves.length))
                 // This is the end of the memory for the queue.
                 // We recycle `flagsLength` to save on stack variables (sometimes save gas).
                 flags.length := add(hashesBack, shl(5, flags.length))
@@ -292,10 +292,10 @@ library MerkleProofLib {
     }
 
     /// @dev Returns an empty calldata bytes32 array.
-    function emptyLeafs() internal pure returns (bytes32[] calldata leafs) {
+    function emptyLeaves() internal pure returns (bytes32[] calldata leaves) {
         /// @solidity memory-safe-assembly
         assembly {
-            leafs.length := 0
+            leaves.length := 0
         }
     }
 

@@ -40,19 +40,19 @@ Returns whether `leaf` exists in the Merkle tree with `root`, given `proof`.
 function verifyMultiProof(
     bytes32[] memory proof,
     bytes32 root,
-    bytes32[] memory leafs,
+    bytes32[] memory leaves,
     bool[] memory flags
 ) internal pure returns (bool isValid)
 ```
 
-Returns whether all `leafs` exist in the Merkle tree with `root`,   
+Returns whether all `leaves` exist in the Merkle tree with `root`,   
 given `proof` and `flags`.   
 
 <b>Note:</b>
 
-- Breaking the invariant `flags.length == (leafs.length - 1) + proof.length`   
+- Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`   
   will always return false.   
-- The sum of the lengths of `proof` and `leafs` must never overflow.   
+- The sum of the lengths of `proof` and `leaves` must never overflow.   
 - Any non-zero word in the `flags` array is treated as true.   
 - The memory offset of `proof` must be non-zero   
   (i.e. `proof` is not pointing to the scratch space).
@@ -63,17 +63,17 @@ given `proof` and `flags`.
 function verifyMultiProofCalldata(
     bytes32[] calldata proof,
     bytes32 root,
-    bytes32[] calldata leafs,
+    bytes32[] calldata leaves,
     bool[] calldata flags
 ) internal pure returns (bool isValid)
 ```
 
-Returns whether all `leafs` exist in the Merkle tree with `root`,   
+Returns whether all `leaves` exist in the Merkle tree with `root`,   
 given `proof` and `flags`.   
 
 <b>Note:</b>
 
-- Breaking the invariant `flags.length == (leafs.length - 1) + proof.length`   
+- Breaking the invariant `flags.length == (leaves.length - 1) + proof.length`   
   will always return false.   
 - Any non-zero word in the `flags` array is treated as true.   
 - The calldata offset of `proof` must be non-zero   
@@ -89,10 +89,10 @@ function emptyProof() internal pure returns (bytes32[] calldata proof)
 
 Returns an empty calldata bytes32 array.
 
-### emptyLeafs()
+### emptyLeaves()
 
 ```solidity
-function emptyLeafs() internal pure returns (bytes32[] calldata leafs)
+function emptyLeaves() internal pure returns (bytes32[] calldata leaves)
 ```
 
 Returns an empty calldata bytes32 array.

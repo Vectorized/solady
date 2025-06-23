@@ -5,11 +5,11 @@ Library for generating Merkle trees.
 
 <b>Note:</b>
 
-- Leafs are NOT auto hashed. Note that some libraries hash the leafs by default.
+- Leaves are NOT auto hashed. Note that some libraries hash the leaves by default.
 We leave it up to you to decide if this is needed.
-If your leafs are 64 bytes long, do hash them first for safety.
+If your leaves are 64 bytes long, do hash them first for safety.
 See: https://www.rareskills.io/post/merkle-tree-second-preimage-attack
-- Leafs are NOT auto globally sorted. Note that some libraries sort the leafs by default.
+- Leaves are NOT auto globally sorted. Note that some libraries sort the leaves by default.
 - The pair hash is pair-sorted-keccak256, which works out-of-the-box with `MerkleProofLib`.
 - This library is NOT equivalent to OpenZeppelin or Murky.
 Equivalence is NOT required if you are just using this for pure Solidity testing.
@@ -21,10 +21,10 @@ May be relevant for differential testing between Solidity vs external libraries.
 
 ## Custom Errors
 
-### MerkleTreeLeafsEmpty()
+### MerkleTreeLeavesEmpty()
 
 ```solidity
-error MerkleTreeLeafsEmpty()
+error MerkleTreeLeavesEmpty()
 ```
 
 At least 1 leaf is required to build the tree.
@@ -36,7 +36,7 @@ error MerkleTreeOutOfBoundsAccess()
 ```
 
 Attempt to access a node with an out-of-bounds index.   
-Check if the tree has been built and has sufficient leafs and nodes.
+Check if the tree has been built and has sufficient leaves and nodes.
 
 ### MerkleTreeInvalidLeafIndices()
 
@@ -51,14 +51,14 @@ Leaf indices for multi proof must be strictly ascending and not empty.
 ### build(bytes32[])
 
 ```solidity
-function build(bytes32[] memory leafs)
+function build(bytes32[] memory leaves)
     internal
     pure
     returns (bytes32[] memory tree)
 ```
 
 Builds and return a complete Merkle tree.   
-To make it a full Merkle tree, use `build(pad(leafs))`.
+To make it a full Merkle tree, use `build(pad(leaves))`.
 
 ### root(bytes32[])
 
@@ -71,13 +71,13 @@ function root(bytes32[] memory tree)
 
 Returns the root.
 
-### numLeafs(bytes32[])
+### numLeaves(bytes32[])
 
 ```solidity
-function numLeafs(bytes32[] memory tree) internal pure returns (uint256)
+function numLeaves(bytes32[] memory tree) internal pure returns (uint256)
 ```
 
-Returns the number of leafs.
+Returns the number of leaves.
 
 ### numInternalNodes(bytes32[])
 
@@ -101,16 +101,16 @@ function leafAt(bytes32[] memory tree, uint256 leafIndex)
 
 Returns the leaf at `leafIndex`.
 
-### leafsAt(bytes32[],uint256[])
+### leavesAt(bytes32[],uint256[])
 
 ```solidity
-function leafsAt(bytes32[] memory tree, uint256[] memory leafIndices)
+function leavesAt(bytes32[] memory tree, uint256[] memory leafIndices)
     internal
     pure
     returns (bytes32[] memory result)
 ```
 
-Returns the leafs at `leafIndices`.
+Returns the leaves at `leafIndices`.
 
 ### leafProof(bytes32[],uint256)
 
@@ -135,36 +135,36 @@ function nodeProof(bytes32[] memory tree, uint256 nodeIndex)
 Returns the proof for the node at `nodeIndex`.   
 This function can be used to prove the existence of internal nodes.
 
-### leafsMultiProof(bytes32[],uint256[])
+### leavesMultiProof(bytes32[],uint256[])
 
 ```solidity
-function leafsMultiProof(
+function leavesMultiProof(
     bytes32[] memory tree,
     uint256[] memory leafIndices
 ) internal pure returns (bytes32[] memory proof, bool[] memory flags)
 ```
 
-Returns proof and corresponding flags for multiple leafs.   
+Returns proof and corresponding flags for multiple leaves.   
 The `leafIndices` must be non-empty and sorted in strictly ascending order.
 
 ### pad(bytes32[],bytes32)
 
 ```solidity
-function pad(bytes32[] memory leafs, bytes32 defaultFill)
+function pad(bytes32[] memory leaves, bytes32 defaultFill)
     internal
     pure
     returns (bytes32[] memory result)
 ```
 
-Returns a copy of leafs, with the length padded to a power of 2.
+Returns a copy of leaves, with the length padded to a power of 2.
 
 ### pad(bytes32[])
 
 ```solidity
-function pad(bytes32[] memory leafs)
+function pad(bytes32[] memory leaves)
     internal
     pure
     returns (bytes32[] memory result)
 ```
 
-Equivalent to `pad(leafs, bytes32(0))`.
+Equivalent to `pad(leaves, bytes32(0))`.
