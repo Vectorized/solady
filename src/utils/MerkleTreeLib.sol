@@ -113,22 +113,14 @@ library MerkleTreeLib {
         pure
         returns (bytes32[] memory result)
     {
+        uint256 nodeIndex;
         /// @solidity memory-safe-assembly
         assembly {
-            result := mload(0x40)
             let n := mload(t)
-            if iszero(lt(leafIndex, sub(n, shr(1, n)))) {
-                mstore(0x00, 0x7a856a38) // `MerkleTreeOutOfBoundsAccess()`.
-                revert(0x1c, 0x04)
-            }
-            let o := add(result, 0x20)
-            for { let i := sub(n, add(1, leafIndex)) } i { i := shr(1, sub(i, 1)) } {
-                mstore(o, mload(add(t, shl(5, add(i, shl(1, and(1, i)))))))
-                o := add(o, 0x20)
-            }
-            mstore(0x40, o) // Allocate memory.
-            mstore(result, shr(5, sub(o, add(result, 0x20)))) // Store length.
+            nodeIndex := sub(n, add(1, leafIndex))
+            if iszero(lt(leafIndex, sub(n, shr(1, n)))) { nodeIndex := not(0) }
         }
+        result = nodeProof(t, nodeIndex);
     }
 
     /// @dev Returns the proof for the node at `nodeIndex`.
