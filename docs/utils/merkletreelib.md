@@ -54,7 +54,7 @@ Leaf indices for multi proof must be strictly ascending and not empty.
 function build(bytes32[] memory leafs)
     internal
     pure
-    returns (bytes32[] memory result)
+    returns (bytes32[] memory tree)
 ```
 
 Builds and return a complete Merkle tree.   
@@ -63,7 +63,10 @@ To make it a full Merkle tree, use `build(pad(leafs))`.
 ### root(bytes32[])
 
 ```solidity
-function root(bytes32[] memory t) internal pure returns (bytes32 result)
+function root(bytes32[] memory tree)
+    internal
+    pure
+    returns (bytes32 result)
 ```
 
 Returns the root.
@@ -71,7 +74,7 @@ Returns the root.
 ### numLeafs(bytes32[])
 
 ```solidity
-function numLeafs(bytes32[] memory t) internal pure returns (uint256)
+function numLeafs(bytes32[] memory tree) internal pure returns (uint256)
 ```
 
 Returns the number of leafs.
@@ -79,7 +82,7 @@ Returns the number of leafs.
 ### numInternalNodes(bytes32[])
 
 ```solidity
-function numInternalNodes(bytes32[] memory t)
+function numInternalNodes(bytes32[] memory tree)
     internal
     pure
     returns (uint256)
@@ -87,10 +90,10 @@ function numInternalNodes(bytes32[] memory t)
 
 Returns the number of internal nodes.
 
-### leaf(bytes32[],uint256)
+### leafAt(bytes32[],uint256)
 
 ```solidity
-function leaf(bytes32[] memory t, uint256 leafIndex)
+function leafAt(bytes32[] memory tree, uint256 leafIndex)
     internal
     pure
     returns (bytes32 result)
@@ -98,10 +101,21 @@ function leaf(bytes32[] memory t, uint256 leafIndex)
 
 Returns the leaf at `leafIndex`.
 
+### leafsAt(bytes32[],uint256[])
+
+```solidity
+function leafsAt(bytes32[] memory tree, uint256[] memory leafIndices)
+    internal
+    pure
+    returns (bytes32[] memory result)
+```
+
+Returns the leafs at `leafIndices`.
+
 ### leafProof(bytes32[],uint256)
 
 ```solidity
-function leafProof(bytes32[] memory t, uint256 leafIndex)
+function leafProof(bytes32[] memory tree, uint256 leafIndex)
     internal
     pure
     returns (bytes32[] memory result)
@@ -112,7 +126,7 @@ Returns the proof for the leaf at `leafIndex`.
 ### nodeProof(bytes32[],uint256)
 
 ```solidity
-function nodeProof(bytes32[] memory t, uint256 nodeIndex)
+function nodeProof(bytes32[] memory tree, uint256 nodeIndex)
     internal
     pure
     returns (bytes32[] memory result)
@@ -124,10 +138,10 @@ This function can be used to prove the existence of internal nodes.
 ### leafsMultiProof(bytes32[],uint256[])
 
 ```solidity
-function leafsMultiProof(bytes32[] memory t, uint256[] memory leafIndices)
-    internal
-    pure
-    returns (bytes32[] memory proof, bool[] memory flags)
+function leafsMultiProof(
+    bytes32[] memory tree,
+    uint256[] memory leafIndices
+) internal pure returns (bytes32[] memory proof, bool[] memory flags)
 ```
 
 Returns proof and corresponding flags for multiple leafs.   
