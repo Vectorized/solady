@@ -182,7 +182,7 @@ contract MerkleTreeLibTest is SoladyTest {
         t.leaves = _maybePad(t.leaves);
         t.leafIndices = _generateUniqueLeafIndices(t.leaves);
         t.tree = MerkleTreeLib.build(t.leaves);
-        (t.proof, t.flags) = t.tree.leavesMultiProof(t.leafIndices);
+        (t.proof, t.flags) = t.tree.multiProofForLeaves(t.leafIndices);
         t.gathered = t.tree.gatherLeaves(t.leafIndices);
         assertTrue(MerkleProofLib.verifyMultiProof(t.proof, t.tree.root(), t.gathered, t.flags));
     }
@@ -212,6 +212,6 @@ contract MerkleTreeLibTest is SoladyTest {
     }
 
     function multiProofRevertsForEmptyLeafs() public pure {
-        (new bytes32[](1)).leavesMultiProof(new uint256[](0));
+        (new bytes32[](1)).multiProofForLeaves(new uint256[](0));
     }
 }

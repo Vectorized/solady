@@ -135,10 +135,10 @@ function nodeProof(bytes32[] memory tree, uint256 nodeIndex)
 Returns the proof for the node at `nodeIndex`.   
 This function can be used to prove the existence of internal nodes.
 
-### leavesMultiProof(bytes32[],uint256[])
+### multiProofForLeaves(bytes32[],uint256[])
 
 ```solidity
-function leavesMultiProof(
+function multiProofForLeaves(
     bytes32[] memory tree,
     uint256[] memory leafIndices
 ) internal pure returns (bytes32[] memory proof, bool[] memory flags)

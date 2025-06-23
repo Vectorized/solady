@@ -180,7 +180,7 @@ library MerkleTreeLib {
 
     /// @dev Returns proof and corresponding flags for multiple leaves.
     /// The `leafIndices` must be non-empty and sorted in strictly ascending order.
-    function leavesMultiProof(bytes32[] memory tree, uint256[] memory leafIndices)
+    function multiProofForLeaves(bytes32[] memory tree, uint256[] memory leafIndices)
         internal
         pure
         returns (bytes32[] memory proof, bool[] memory flags)
