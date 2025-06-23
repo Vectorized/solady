@@ -216,4 +216,13 @@ contract MerkleTreeLibTest is SoladyTest {
             gathered[i] = leafs[indices[i]];
         }
     }
+
+    function testMultiProofRevertsForEmptyLeafs() public {
+        vm.expectRevert(MerkleTreeLib.MerkleTreeInvalidLeafIndices.selector);
+        this.multiProofRevertsForEmptyLeafs();
+    }
+
+    function multiProofRevertsForEmptyLeafs() public pure {
+        (new bytes32[](1)).leafsMultiProof(new uint256[](0));
+    }
 }
