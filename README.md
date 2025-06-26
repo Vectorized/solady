@@ -60,6 +60,7 @@ tokens
 ├─ ERC721 — "Simple ERC721 implementation with storage hitchhiking"
 ├─ WETH — "Simple Wrapped Ether implementation"
 utils
+├─ Base58 — "Library for Base58 encoding and decoding"
 ├─ Base64 — "Library for Base64 encoding and decoding"
 ├─ CallContextChecker — "Call context checker mixin"
 ├─ CREATE3 — "Deterministic deployments agnostic to the initialization code"
