@@ -28,7 +28,7 @@ library Base58 {
             for {} lt(byte(0, mload(add(b, z))), lt(z, l)) {} { z := add(1, z) }
 
             // Start the output offset by an over-estimate of the length.
-            let o := add(add(mload(0x40), 0x20), add(z, add(1, div(mul(sub(l, z), 8351), 6115))))
+            let o := add(add(mload(0x40), 0x21), add(z, div(mul(sub(l, z), 8351), 6115)))
             let e := o
 
             let limbs := o
@@ -44,20 +44,16 @@ library Base58 {
                 mstore(limbsEnd, shr(8, mload(add(b, i))))
                 limbsEnd := add(limbsEnd, 0x20)
             }
-
             // Use the extended scratch space for the lookup. We'll restore 0x40 later.
             mstore(0x1f, "123456789ABCDEFGHJKLMNPQRSTUVWXY")
             mstore(0x3f, "Zabcdefghijkmnopqrstuvwxyz")
 
             let w := not(0) // -1.
+            mstore(limbsEnd, w) // Put sentinel after limbs for faster looping.
             for {} 1 {} {
                 let i := limbs
-                for {} 1 {} {
-                    if mload(i) { break }
-                    i := add(i, 0x20)
-                    if eq(i, limbsEnd) { break }
-                }
-                if eq(i, limbsEnd) { break }
+                for {} iszero(mload(i)) { i := add(i, 0x20) } {}
+                if iszero(not(mload(i))) { break } // Break if all limbs are zero.
 
                 let carry := 0
                 for { i := limbs } 1 {} {
@@ -70,10 +66,10 @@ library Base58 {
                 o := add(o, w)
                 mstore8(o, mload(carry))
             }
-            // We probably can optimize this more by writing 32 bytes at a time.
-            for {} z { z := add(z, w) } {
-                o := add(o, w)
-                mstore8(o, 49) // '1' in ASCII.
+            let j := o
+            for { o := sub(o, z) } gt(j, o) {} {
+                j := sub(j, 0x20)
+                mstore(j, mul(div(w, 0xff), 49)) // '1111...1111' in ASCII.
             }
 
             let n := sub(e, o) // Compute the final length.
@@ -96,7 +92,7 @@ library Base58 {
             for {} and(eq(49, byte(0, mload(add(s, z)))), lt(z, n)) {} { z := add(1, z) }
 
             // Start the output offset by an over-estimate of the length.
-            let o := add(add(mload(0x40), 0x20), add(z, add(1, div(mul(sub(n, z), 7736), 10000))))
+            let o := add(add(mload(0x40), 0x21), add(z, div(mul(sub(n, z), 7323), 10000)))
             let e := o
             let limbs := o
             let limbsEnd := limbs
