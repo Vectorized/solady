@@ -80,7 +80,7 @@ library Base58 {
         }
     }
 
-    /// @dev Encodes `data` into a Base58 string.
+    /// @dev Encodes the `data` word into a Base58 string.
     function encodeWord(bytes32 data) internal pure returns (string memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -172,7 +172,7 @@ library Base58 {
         }
     }
 
-    /// @dev Decodes `encoded`, a Base58 string, into the original bytes.
+    /// @dev Decodes `encoded`, a Base58 string, into the original word.
     function decodeWord(string memory encoded) internal pure returns (bytes32 result) {
         // Specializing and optimizing this is left as an exercise to the frontrunner.
         bytes memory t = decode(encoded);

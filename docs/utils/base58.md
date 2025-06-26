@@ -41,7 +41,7 @@ function encodeWord(bytes32 data)
     returns (string memory result)
 ```
 
-Encodes `data` into a Base58 string.
+Encodes the `data` word into a Base58 string.
 
 ### decode(string)
 
@@ -63,4 +63,4 @@ function decodeWord(string memory encoded)
     returns (bytes32 result)
 ```
 
-Decodes `encoded`, a Base58 string, into the original bytes.
+Decodes `encoded`, a Base58 string, into the original word.
