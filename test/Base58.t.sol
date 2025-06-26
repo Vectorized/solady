@@ -6,6 +6,27 @@ import {Base58} from "../src/utils/Base58.sol";
 import {LibString} from "../src/utils/LibString.sol";
 
 contract Base58Test is SoladyTest {
+    function testBase58DecodeRevertsIfInvalidCharacter(bytes1 c) public {
+        if (isValidBase58Character(c)) {
+            this.base58DecodeRevertsIfInvalidCharacter(c);
+        } else {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.base58DecodeRevertsIfInvalidCharacter(c);
+        }
+    }
+
+    function isValidBase58Character(bytes1 c) internal pure returns (bool) {
+        bytes memory allowed = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        for (uint256 i; i < allowed.length; ++i) {
+            if (allowed[i] == c) return true;
+        }
+        return false;
+    }
+
+    function base58DecodeRevertsIfInvalidCharacter(bytes1 c) public {
+        emit LogBytes(Base58.decode(string(abi.encodePacked(c))));
+    }
+
     function testBase58EncodeDecode(bytes memory data, uint256 r) public {
         if (r & 0x00f == 0) {
             _brutalizeMemory();
@@ -195,5 +216,16 @@ contract Base58Test is SoladyTest {
 
     function check_CarryBoundsTrick(uint248 limb, uint8 carry) public pure {
         testCarryBoundsTrick(limb, carry);
+    }
+
+    function testEncodeWordDifferential(bytes32 word) public {
+        string memory expected = Base58.encode(abi.encodePacked(word));
+        string memory computed = Base58.encodeWord(word);
+        assertEq(computed, expected);
+    }
+
+    function testEncodeDecodeWord(bytes32 word) public {
+        string memory encoded = Base58.encodeWord(word);
+        assertEq(Base58.decodeWord(encoded), word);
     }
 }
