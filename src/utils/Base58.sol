@@ -9,7 +9,7 @@ library Base58 {
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev An unrecognized character was encountered or the carry has overflowed.
+    /// @dev An unrecognized character was encountered during decoding.
     error Base58DecodingError();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -109,6 +109,7 @@ library Base58 {
 
             for { let j := 0 } 1 {} {
                 let c := sub(byte(0, mload(add(s, j))), 49)
+                // Check if the input character is valid.
                 if iszero(and(shl(c, 1), 0x3fff7ff03ffbeff01ff)) {
                     mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
                     revert(0x1c, 0x04)
@@ -119,11 +120,8 @@ library Base58 {
                     mstore(i, shr(8, shl(8, acc)))
                     carry := shr(248, acc)
                 }
+                // Carry will always be < 58.
                 if carry {
-                    if iszero(lt(carry, 58)) {
-                        mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
-                        revert(0x1c, 0x04)
-                    }
                     mstore(limbsEnd, carry)
                     limbsEnd := add(limbsEnd, 0x20)
                 }

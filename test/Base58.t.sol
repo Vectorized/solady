@@ -185,4 +185,15 @@ contract Base58Test is SoladyTest {
         bytes memory decoded = Base58.decode(encoded);
         assertEq(data, decoded);
     }
+
+    function testCarryBoundsTrick(uint248 limb, uint8 carry) public pure {
+        if (carry < 58) {
+            uint256 acc = uint256(limb) * 58 + uint256(carry);
+            assert((acc >> 248) < 58);
+        }
+    }
+
+    function check_CarryBoundsTrick(uint248 limb, uint8 carry) public pure {
+        testCarryBoundsTrick(limb, carry);
+    }
 }
