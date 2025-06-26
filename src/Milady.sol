@@ -23,6 +23,7 @@ import "./tokens/ERC4626.sol";
 import "./tokens/ERC6909.sol";
 import "./tokens/ERC721.sol";
 import "./tokens/WETH.sol";
+import "./utils/Base58.sol";
 import "./utils/Base64.sol";
 import "./utils/CREATE3.sol";
 import "./utils/CallContextChecker.sol";
