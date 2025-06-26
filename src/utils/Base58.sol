@@ -49,6 +49,7 @@ library Base58 {
             mstore(0x1f, "123456789ABCDEFGHJKLMNPQRSTUVWXY")
             mstore(0x3f, "Zabcdefghijkmnopqrstuvwxyz")
 
+            let w := not(0) // -1.
             for {} 1 {} {
                 let i := limbs
                 for {} 1 {} {
@@ -66,12 +67,12 @@ library Base58 {
                     i := add(i, 0x20)
                     if eq(i, limbsEnd) { break }
                 }
-                o := sub(o, 1)
+                o := add(o, w)
                 mstore8(o, mload(carry))
             }
             // We probably can optimize this more by writing 32 bytes at a time.
-            for { let i := 0 } iszero(eq(i, z)) { i := add(i, 1) } {
-                o := sub(o, 1)
+            for {} z { z := add(z, w) } {
+                o := add(o, w)
                 mstore8(o, 49) // '1' in ASCII.
             }
 
