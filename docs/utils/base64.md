@@ -9,7 +9,7 @@ Library to encode strings in Base64.
 
 <!-- customintro:start --><!-- customintro:end -->
 
-## Functions
+## Encoding / Decoding
 
 ### encode(bytes,bool,bool)
 
