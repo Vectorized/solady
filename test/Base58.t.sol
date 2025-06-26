@@ -249,6 +249,11 @@ contract Base58Test is SoladyTest {
         this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFJ");
     }
 
+    function testDecodeWordInvalidCharacterReverts() public {
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFH@");
+    }
+
     function decodeWord(string memory encoded) public pure returns (bytes32) {
         return Base58.decodeWord(encoded);
     }
