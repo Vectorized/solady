@@ -80,6 +80,37 @@ library Base58 {
         }
     }
 
+    /// @dev Encodes the `data` word into a Base58 string.
+    function encodeWord(bytes32 data) internal pure returns (string memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let o := add(mload(0x40), 0x4c) // 32 for word, 44 for maximum possible length.
+            let e := o
+
+            // Use the extended scratch space for the lookup. We'll restore 0x40 later.
+            mstore(0x1f, "123456789ABCDEFGHJKLMNPQRSTUVWXY")
+            mstore(0x3f, "Zabcdefghijkmnopqrstuvwxyz")
+
+            let w := not(0) // -1.
+            let z := shl(5, iszero(data)) // Number of leading zeroes in `data`.
+            if iszero(z) {
+                for { let v := data } v { v := div(v, 58) } {
+                    o := add(o, w)
+                    mstore8(o, mload(mod(v, 58)))
+                }
+                for {} iszero(byte(z, data)) { z := add(z, 1) } {} // Just loop, `z` is often tiny.
+            }
+            if z { mstore(sub(o, 0x20), mul(div(w, 0xff), 49)) } // '1111...1111' in ASCII.
+            o := sub(o, z)
+
+            let n := sub(e, o) // Compute the final length.
+            result := sub(o, 0x20) // Move back one word for the length.
+            mstore(result, n) // Store the length.
+            mstore(add(add(result, 0x20), n), 0) // Zeroize the slot after the bytes.
+            mstore(0x40, add(add(result, 0x40), n)) // Allocate memory.
+        }
+    }
+
     /// @dev Decodes `encoded`, a Base58 string, into the original bytes.
     function decode(string memory encoded) internal pure returns (bytes memory result) {
         uint256 n = bytes(encoded).length;
@@ -138,6 +169,21 @@ library Base58 {
             mstore(result, l) // Store the length.
             mstore(add(add(result, 0x20), l), 0) // Zeroize the slot after the bytes.
             mstore(0x40, add(add(result, 0x40), l)) // Allocate memory.
+        }
+    }
+
+    /// @dev Decodes `encoded`, a Base58 string, into the original word.
+    function decodeWord(string memory encoded) internal pure returns (bytes32 result) {
+        // Specializing and optimizing this for bytes32 is left as an exercise to the reader.
+        bytes memory t = decode(encoded);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(t)
+            if iszero(lt(n, 0x21)) {
+                mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
+                revert(0x1c, 0x04)
+            }
+            result := mload(add(t, n))
         }
     }
 }
