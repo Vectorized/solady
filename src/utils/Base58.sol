@@ -174,7 +174,7 @@ library Base58 {
 
     /// @dev Decodes `encoded`, a Base58 string, into the original word.
     function decodeWord(string memory encoded) internal pure returns (bytes32 result) {
-        // Specializing and optimizing this is left as an exercise to the frontrunner.
+        // Specializing and optimizing this for bytes32 is left as an exercise to the reader.
         bytes memory t = decode(encoded);
         /// @solidity memory-safe-assembly
         assembly {
