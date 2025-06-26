@@ -17,7 +17,7 @@ Library to encode strings in Base58.
 error Base58DecodingError()
 ```
 
-An unrecognized character was encountered during decoding.
+An unrecognized character or overflow was encountered during decoding.
 
 ## Encoding / Decoding
 

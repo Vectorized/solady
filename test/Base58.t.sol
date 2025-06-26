@@ -228,4 +228,56 @@ contract Base58Test is SoladyTest {
         string memory encoded = Base58.encodeWord(word);
         assertEq(Base58.decodeWord(encoded), word);
     }
+
+    function testDecodeWordDifferential(bytes32 word) public {
+        string memory encoded = Base58.encodeWord(word);
+        bytes32 expected = _decodeWordOriginal(encoded);
+        bytes32 computed = Base58.decodeWord(encoded);
+        _checkMemory();
+        assertEq(computed, expected);
+    }
+
+    function testDecodeWordOverflowsReverts() public {
+        bytes32 expected = bytes32(type(uint256).max);
+        assertEq(this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG"), expected);
+        assertEq(this.decodeWord("1JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG"), expected);
+        assertEq(this.decodeWord("11JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG"), expected);
+
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFH");
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFJ");
+    }
+
+    function testDecodeWordInvalidCharacterReverts() public {
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFH@");
+    }
+
+    function decodeWord(string memory encoded) public pure returns (bytes32) {
+        return Base58.decodeWord(encoded);
+    }
+
+    function _decodeWordOriginal(string memory encoded) internal pure returns (bytes32 result) {
+        bytes memory t = Base58.decode(encoded);
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := mload(t)
+            if iszero(lt(n, 0x21)) {
+                mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
+                revert(0x1c, 0x04)
+            }
+            result := mload(add(t, n))
+        }
+    }
+
+    function testDecodeWordGas() public {
+        bytes32 expected = bytes32(type(uint256).max);
+        assertEq(Base58.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG"), expected);
+    }
+
+    function testDecodeGas() public {
+        bytes memory expected = abi.encodePacked(type(uint256).max);
+        assertEq(Base58.decode("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFG"), expected);
+    }
 }

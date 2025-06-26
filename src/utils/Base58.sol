@@ -9,7 +9,7 @@ library Base58 {
     /*                        CUSTOM ERRORS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev An unrecognized character was encountered during decoding.
+    /// @dev An unrecognized character or overflow was encountered during decoding.
     error Base58DecodingError();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -174,16 +174,32 @@ library Base58 {
 
     /// @dev Decodes `encoded`, a Base58 string, into the original word.
     function decodeWord(string memory encoded) internal pure returns (bytes32 result) {
-        // Specializing and optimizing this for bytes32 is left as an exercise to the reader.
-        bytes memory t = decode(encoded);
+        uint256 n = bytes(encoded).length;
+        if (n == uint256(0)) return result;
         /// @solidity memory-safe-assembly
         assembly {
-            let n := mload(t)
-            if iszero(lt(n, 0x21)) {
-                mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
-                revert(0x1c, 0x04)
+            let m := mload(0x40) // Cache the free memory pointer.
+            let s := add(encoded, 0x20)
+            let t := add(1, div(not(0), 58)) // Overflow threshold for multiplication.
+            // Use the extended scratch space for the lookup. We'll restore 0x40 later.
+            mstore(0x2a, 0x30313233343536373839)
+            mstore(0x20, 0x1718191a1b1c1d1e1f20ffffffffffff2122232425262728292a2bff2c2d2e2f)
+            mstore(0x00, 0x000102030405060708ffffffffffffff090a0b0c0d0e0f10ff1112131415ff16)
+
+            for { let j := 0 } 1 {} {
+                let c := sub(byte(0, mload(add(s, j))), 49)
+                let p := mul(result, 58)
+                let acc := add(byte(0, mload(c)), p)
+                // Check if the input character is valid.
+                if iszero(and(0x3fff7ff03ffbeff01ff, shl(c, lt(lt(acc, p), lt(result, t))))) {
+                    mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
+                    revert(0x1c, 0x04)
+                }
+                result := acc
+                j := add(j, 1)
+                if eq(j, n) { break }
             }
-            result := mload(add(t, n))
+            mstore(0x40, m) // Restore the free memory pointer.
         }
     }
 }
