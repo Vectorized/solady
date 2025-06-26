@@ -50,19 +50,16 @@ library Base58 {
             mstore(0x3f, "Zabcdefghijkmnopqrstuvwxyz")
 
             for {} 1 {} {
-                let anyNonZero := 0
-                for { let i := limbs } 1 {} {
-                    if mload(i) {
-                        anyNonZero := 1
-                        break
-                    }
+                let i := limbs
+                for {} 1 {} {
+                    if mload(i) { break }
                     i := add(i, 0x20)
                     if eq(i, limbsEnd) { break }
                 }
-                if iszero(anyNonZero) { break }
+                if eq(i, limbsEnd) { break }
 
                 let carry := 0
-                for { let i := limbs } 1 {} {
+                for { i := limbs } 1 {} {
                     let acc := add(shl(248, carry), mload(i))
                     mstore(i, div(acc, 58))
                     carry := mod(acc, 58)
@@ -102,6 +99,7 @@ library Base58 {
             let e := o
             let limbs := o
             let limbsEnd := limbs
+            let limbMask := shr(8, not(0))
             // Use the extended scratch space for the lookup. We'll restore 0x40 later.
             mstore(0x2a, 0x30313233343536373839)
             mstore(0x20, 0x1718191a1b1c1d1e1f20ffffffffffff2122232425262728292a2bff2c2d2e2f)
@@ -117,7 +115,7 @@ library Base58 {
                 let carry := byte(0, mload(c))
                 for { let i := limbs } iszero(eq(i, limbsEnd)) { i := add(i, 0x20) } {
                     let acc := add(carry, mul(58, mload(i)))
-                    mstore(i, shr(8, shl(8, acc)))
+                    mstore(i, and(limbMask, acc))
                     carry := shr(248, acc)
                 }
                 // Carry will always be < 58.
