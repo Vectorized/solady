@@ -92,10 +92,8 @@ contract EnumerableMapLibTest is SoladyTest {
         vm.expectRevert(bytes4(keccak256("ExceedsCapacity()")));
         this.update(address(uint160(cap)), _random(), true, cap);
 
-        if (_randomChance(2)) {
-            for (uint256 i; i < cap; ++i) {
-                this.update(address(uint160(i)), i, true, cap);
-            }
+        for (uint256 i; i < cap; ++i) {
+            this.update(address(uint160(i)), i, true, cap);
         }
 
         for (uint256 i; i < cap; ++i) {
