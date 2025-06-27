@@ -79,8 +79,13 @@ contract EnumerableMapLibTest is SoladyTest {
         return map.get(key);
     }
 
-    function testMapUpdate(bytes32) public {
-        uint256 cap = _bound(_random(), 0, 5);
+    function testMapUpdate() public {
+        for (uint256 i; i < 10; ++i) {
+            _testMapUpdate(i);
+        }
+    }
+
+    function _testMapUpdate(uint256 cap) internal {
         for (uint256 i; i < cap; ++i) {
             this.update(address(uint160(i)), i, true, cap);
         }
@@ -98,7 +103,11 @@ contract EnumerableMapLibTest is SoladyTest {
         }
         for (uint256 i; i < cap; ++i) {
             this.update(address(uint160(i)), i, false, cap);
-            assertEq(map.keys().length, cap - 1 - i);
+            address[] memory keys = map.keys();
+            assertEq(keys.length, cap - 1 - i);
+            for (uint256 j; j < keys.length; ++j) {
+                assertEq(map.get(keys[j]), uint160(keys[j]));
+            }
         }
     }
 
