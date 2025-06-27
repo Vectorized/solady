@@ -133,6 +133,21 @@ function set(Bytes32ToBytes32Map storage map, bytes32 key, bytes32 value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(Bytes32ToBytes32Map,bytes32,bytes32,uint256)
+
+```solidity
+function set(
+    Bytes32ToBytes32Map storage map,
+    bytes32 key,
+    bytes32 value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(Bytes32ToBytes32Map,bytes32)
 
 ```solidity
@@ -143,6 +158,20 @@ function remove(Bytes32ToBytes32Map storage map, bytes32 key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(Bytes32ToBytes32Map,bytes32,bytes32,bool,uint256)
+
+```solidity
+function update(
+    Bytes32ToBytes32Map storage map,
+    bytes32 key,
+    bytes32 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Bytes32ToBytes32Map,bytes32)
 
@@ -221,6 +250,21 @@ function set(Bytes32ToUint256Map storage map, bytes32 key, uint256 value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(Bytes32ToUint256Map,bytes32,uint256,uint256)
+
+```solidity
+function set(
+    Bytes32ToUint256Map storage map,
+    bytes32 key,
+    uint256 value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(Bytes32ToUint256Map,bytes32)
 
 ```solidity
@@ -231,6 +275,20 @@ function remove(Bytes32ToUint256Map storage map, bytes32 key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(Bytes32ToUint256Map,bytes32,uint256,bool,uint256)
+
+```solidity
+function update(
+    Bytes32ToUint256Map storage map,
+    bytes32 key,
+    uint256 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Bytes32ToUint256Map,bytes32)
 
@@ -309,6 +367,21 @@ function set(Bytes32ToAddressMap storage map, bytes32 key, address value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(Bytes32ToAddressMap,bytes32,address,uint256)
+
+```solidity
+function set(
+    Bytes32ToAddressMap storage map,
+    bytes32 key,
+    address value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(Bytes32ToAddressMap,bytes32)
 
 ```solidity
@@ -319,6 +392,20 @@ function remove(Bytes32ToAddressMap storage map, bytes32 key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(Bytes32ToAddressMap,bytes32,address,bool,uint256)
+
+```solidity
+function update(
+    Bytes32ToAddressMap storage map,
+    bytes32 key,
+    address value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Bytes32ToAddressMap,bytes32)
 
@@ -397,6 +484,21 @@ function set(Uint256ToBytes32Map storage map, uint256 key, bytes32 value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(Uint256ToBytes32Map,uint256,bytes32,uint256)
+
+```solidity
+function set(
+    Uint256ToBytes32Map storage map,
+    uint256 key,
+    bytes32 value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(Uint256ToBytes32Map,uint256)
 
 ```solidity
@@ -407,6 +509,20 @@ function remove(Uint256ToBytes32Map storage map, uint256 key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(Uint256ToBytes32Map,uint256,bytes32,bool,uint256)
+
+```solidity
+function update(
+    Uint256ToBytes32Map storage map,
+    uint256 key,
+    bytes32 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Uint256ToBytes32Map,uint256)
 
@@ -485,6 +601,21 @@ function set(Uint256ToUint256Map storage map, uint256 key, uint256 value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(Uint256ToUint256Map,uint256,uint256,uint256)
+
+```solidity
+function set(
+    Uint256ToUint256Map storage map,
+    uint256 key,
+    uint256 value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(Uint256ToUint256Map,uint256)
 
 ```solidity
@@ -495,6 +626,20 @@ function remove(Uint256ToUint256Map storage map, uint256 key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(Uint256ToUint256Map,uint256,uint256,bool,uint256)
+
+```solidity
+function update(
+    Uint256ToUint256Map storage map,
+    uint256 key,
+    uint256 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Uint256ToUint256Map,uint256)
 
@@ -573,6 +718,21 @@ function set(Uint256ToAddressMap storage map, uint256 key, address value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(Uint256ToAddressMap,uint256,address,uint256)
+
+```solidity
+function set(
+    Uint256ToAddressMap storage map,
+    uint256 key,
+    address value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(Uint256ToAddressMap,uint256)
 
 ```solidity
@@ -583,6 +743,20 @@ function remove(Uint256ToAddressMap storage map, uint256 key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(Uint256ToAddressMap,uint256,address,bool,uint256)
+
+```solidity
+function update(
+    Uint256ToAddressMap storage map,
+    uint256 key,
+    address value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Uint256ToAddressMap,uint256)
 
@@ -661,6 +835,21 @@ function set(AddressToBytes32Map storage map, address key, bytes32 value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(AddressToBytes32Map,address,bytes32,uint256)
+
+```solidity
+function set(
+    AddressToBytes32Map storage map,
+    address key,
+    bytes32 value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(AddressToBytes32Map,address)
 
 ```solidity
@@ -671,6 +860,20 @@ function remove(AddressToBytes32Map storage map, address key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(AddressToBytes32Map,address,bytes32,bool,uint256)
+
+```solidity
+function update(
+    AddressToBytes32Map storage map,
+    address key,
+    bytes32 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(AddressToBytes32Map,address)
 
@@ -749,6 +952,21 @@ function set(AddressToUint256Map storage map, address key, uint256 value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(AddressToUint256Map,address,uint256,uint256)
+
+```solidity
+function set(
+    AddressToUint256Map storage map,
+    address key,
+    uint256 value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(AddressToUint256Map,address)
 
 ```solidity
@@ -759,6 +977,20 @@ function remove(AddressToUint256Map storage map, address key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(AddressToUint256Map,address,uint256,bool,uint256)
+
+```solidity
+function update(
+    AddressToUint256Map storage map,
+    address key,
+    uint256 value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(AddressToUint256Map,address)
 
@@ -837,6 +1069,21 @@ function set(AddressToAddressMap storage map, address key, address value)
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.
 
+### set(AddressToAddressMap,address,address,uint256)
+
+```solidity
+function set(
+    AddressToAddressMap storage map,
+    address key,
+    address value,
+    uint256 cap
+) internal returns (bool)
+```
+
+Adds a key-value pair to the map, or updates the value for an existing key.   
+Returns true if `key` was added to the map, that is if it was not already present.   
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
+
 ### remove(AddressToAddressMap,address)
 
 ```solidity
@@ -847,6 +1094,20 @@ function remove(AddressToAddressMap storage map, address key)
 
 Removes a key-value pair from the map.   
 Returns true if `key` was removed from the map, that is if it was present.
+
+### update(AddressToAddressMap,address,address,bool,uint256)
+
+```solidity
+function update(
+    AddressToAddressMap storage map,
+    address key,
+    address value,
+    bool isAdd,
+    uint256 cap
+) internal returns (bool)
+```
+
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(AddressToAddressMap,address)
 

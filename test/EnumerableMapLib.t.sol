@@ -78,4 +78,38 @@ contract EnumerableMapLibTest is SoladyTest {
     function get(address key) public view returns (uint256) {
         return map.get(key);
     }
+
+    function testMapUpdate() public {
+        for (uint256 i; i < 10; ++i) {
+            _testMapUpdate(i);
+        }
+    }
+
+    function _testMapUpdate(uint256 cap) internal {
+        for (uint256 i; i < cap; ++i) {
+            this.update(address(uint160(i)), i, true, cap);
+        }
+        vm.expectRevert(bytes4(keccak256("ExceedsCapacity()")));
+        this.update(address(uint160(cap)), _random(), true, cap);
+
+        for (uint256 i; i < cap; ++i) {
+            this.update(address(uint160(i)), i, true, cap);
+        }
+
+        for (uint256 i; i < cap; ++i) {
+            assertEq(map.get(address(uint160(i))), i);
+        }
+        for (uint256 i; i < cap; ++i) {
+            this.update(address(uint160(i)), i, false, cap);
+            address[] memory keys = map.keys();
+            assertEq(keys.length, cap - 1 - i);
+            for (uint256 j; j < keys.length; ++j) {
+                assertEq(map.get(keys[j]), uint160(keys[j]));
+            }
+        }
+    }
+
+    function update(address key, uint256 value, bool isAdd, uint256 cap) public {
+        map.update(key, value, isAdd, cap);
+    }
 }
