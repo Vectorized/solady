@@ -88,7 +88,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(Bytes32ToBytes32Map storage map, bytes32 key, bytes32 value, uint256 cap)
         internal
         returns (bool)
@@ -104,7 +104,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         Bytes32ToBytes32Map storage map,
         bytes32 key,
@@ -169,7 +169,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(Bytes32ToUint256Map storage map, bytes32 key, uint256 value, uint256 cap)
         internal
         returns (bool)
@@ -185,7 +185,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         Bytes32ToUint256Map storage map,
         bytes32 key,
@@ -250,7 +250,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(Bytes32ToAddressMap storage map, bytes32 key, address value, uint256 cap)
         internal
         returns (bool)
@@ -266,7 +266,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         Bytes32ToAddressMap storage map,
         bytes32 key,
@@ -331,7 +331,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(Uint256ToBytes32Map storage map, uint256 key, bytes32 value, uint256 cap)
         internal
         returns (bool)
@@ -347,7 +347,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         Uint256ToBytes32Map storage map,
         uint256 key,
@@ -412,7 +412,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(Uint256ToUint256Map storage map, uint256 key, uint256 value, uint256 cap)
         internal
         returns (bool)
@@ -428,7 +428,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         Uint256ToUint256Map storage map,
         uint256 key,
@@ -493,7 +493,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(Uint256ToAddressMap storage map, uint256 key, address value, uint256 cap)
         internal
         returns (bool)
@@ -509,7 +509,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         Uint256ToAddressMap storage map,
         uint256 key,
@@ -574,7 +574,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(AddressToBytes32Map storage map, address key, bytes32 value, uint256 cap)
         internal
         returns (bool)
@@ -590,7 +590,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         AddressToBytes32Map storage map,
         address key,
@@ -655,7 +655,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(AddressToUint256Map storage map, address key, uint256 value, uint256 cap)
         internal
         returns (bool)
@@ -671,7 +671,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         AddressToUint256Map storage map,
         address key,
@@ -736,7 +736,7 @@ library EnumerableMapLib {
 
     /// @dev Adds a key-value pair to the map, or updates the value for an existing key.
     /// Returns true if `key` was added to the map, that is if it was not already present.
-    /// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+    /// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
     function set(AddressToAddressMap storage map, address key, address value, uint256 cap)
         internal
         returns (bool)
@@ -752,7 +752,7 @@ library EnumerableMapLib {
         return EnumerableSetLib.remove(map._keys, key);
     }
 
-    /// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+    /// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
     function update(
         AddressToAddressMap storage map,
         address key,

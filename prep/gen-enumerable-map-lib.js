@@ -28,7 +28,7 @@ async function main() {
 
     s += '/// @dev Adds a key-value pair to the map, or updates the value for an existing key.\n';
     s += '/// Returns true if `key` was added to the map, that is if it was not already present.\n';
-    s += '/// Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.\n';
+    s += '/// Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.\n';
     s += 'function set(' + mt + ' storage map, ' + f + ' key, ' + t + ' value, uint256 cap) internal returns (bool) {\n';
     s += 'map._values[key] = value;\nreturn EnumerableSetLib.add(map._keys, key, cap);\n}\n\n';
 
@@ -37,7 +37,7 @@ async function main() {
     s += 'function remove(' + mt + ' storage map, ' + f + ' key) internal returns (bool) {\n';
     s += 'delete map._values[key];\nreturn EnumerableSetLib.remove(map._keys, key);\n}\n\n';
 
-    s += '/// @dev Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.\n'
+    s += '/// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.\n'
     s += 'function update(' + mt+ ' storage map, ' + f + ' key, ' + t + ' value, bool isAdd, uint256 cap) internal returns (bool) {\n';
     s += 'return isAdd ? set(map, key, value, cap) : remove(map, key);\n}\n\n';
 

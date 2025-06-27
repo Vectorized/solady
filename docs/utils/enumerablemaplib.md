@@ -146,7 +146,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(Bytes32ToBytes32Map,bytes32)
 
@@ -171,7 +171,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Bytes32ToBytes32Map,bytes32)
 
@@ -263,7 +263,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(Bytes32ToUint256Map,bytes32)
 
@@ -288,7 +288,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Bytes32ToUint256Map,bytes32)
 
@@ -380,7 +380,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(Bytes32ToAddressMap,bytes32)
 
@@ -405,7 +405,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Bytes32ToAddressMap,bytes32)
 
@@ -497,7 +497,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(Uint256ToBytes32Map,uint256)
 
@@ -522,7 +522,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Uint256ToBytes32Map,uint256)
 
@@ -614,7 +614,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(Uint256ToUint256Map,uint256)
 
@@ -639,7 +639,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Uint256ToUint256Map,uint256)
 
@@ -731,7 +731,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(Uint256ToAddressMap,uint256)
 
@@ -756,7 +756,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(Uint256ToAddressMap,uint256)
 
@@ -848,7 +848,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(AddressToBytes32Map,address)
 
@@ -873,7 +873,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(AddressToBytes32Map,address)
 
@@ -965,7 +965,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(AddressToUint256Map,address)
 
@@ -990,7 +990,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(AddressToUint256Map,address)
 
@@ -1082,7 +1082,7 @@ function set(
 
 Adds a key-value pair to the map, or updates the value for an existing key.   
 Returns true if `key` was added to the map, that is if it was not already present.   
-Reverts if the set grows bigger than the custom on-the-fly capacity `cap`.
+Reverts if the map grows bigger than the custom on-the-fly capacity `cap`.
 
 ### remove(AddressToAddressMap,address)
 
@@ -1107,7 +1107,7 @@ function update(
 ) internal returns (bool)
 ```
 
-Shorthand for `isAdd ? map.set(value, cap) : map.remove(value)`.
+Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.
 
 ### contains(AddressToAddressMap,address)
 
