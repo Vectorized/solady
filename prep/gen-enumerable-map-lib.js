@@ -38,7 +38,7 @@ async function main() {
     s += 'delete map._values[key];\nreturn EnumerableSetLib.remove(map._keys, key);\n}\n\n';
 
     s += '/// @dev Shorthand for `isAdd ? map.set(key, value, cap) : map.remove(key)`.\n'
-    s += 'function update(' + mt+ ' storage map, ' + f + ' key, ' + t + ' value, bool isAdd, uint256 cap) internal returns (bool) {\n';
+    s += 'function update(' + mt + ' storage map, ' + f + ' key, ' + t + ' value, bool isAdd, uint256 cap) internal returns (bool) {\n';
     s += 'return isAdd ? set(map, key, value, cap) : remove(map, key);\n}\n\n';
 
     s += '/// @dev Returns true if the key is in the map.\n';
