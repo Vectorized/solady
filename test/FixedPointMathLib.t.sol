@@ -2340,17 +2340,15 @@ contract FixedPointMathLibTest is SoladyTest {
     function _mulSqrtOriginal(uint256 x, uint256 y) internal pure returns (uint256 z) {
         if (x == 0 || y == 0) return 0;
         if (x == y) return x;
-        unchecked {
-            uint256 p = x * y;
-            if (y == p / x) return FixedPointMathLib.sqrt(p);
-            uint256 sqrtX = FixedPointMathLib.sqrt(x);
-            uint256 sqrtY = FixedPointMathLib.sqrt(y);
-            for (z = FixedPointMathLib.saturatingMul(sqrtX + 1, sqrtY + 1);;) {
-                uint256 zNext = FixedPointMathLib.fullMulDivUnchecked(x, y, z);
-                zNext = FixedPointMathLib.avg(z, zNext);
-                if (zNext >= z) break;
-                z = zNext;
-            }
+        uint256 p = FixedPointMathLib.rawMul(x, y);
+        if (y == p / x) return FixedPointMathLib.sqrt(p);
+        uint256 sqrtX = FixedPointMathLib.sqrt(x);
+        uint256 sqrtY = FixedPointMathLib.sqrt(y);
+        for (z = FixedPointMathLib.saturatingMul(sqrtX + 1, sqrtY + 1);;) {
+            uint256 zNext = FixedPointMathLib.fullMulDivUnchecked(x, y, z);
+            zNext = FixedPointMathLib.avg(z, zNext);
+            if (zNext >= z) break;
+            z = zNext;
         }
     }
 
