@@ -235,8 +235,8 @@ contract ERC7821 is Receiver {
         assembly {
             let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
             // Replaces `to` with `address(this)` if `address(0)` is provided.
-            // We'll skip cleaning the upper 96 bits of `to` as it is ignored in `call`.
-            to := or(mul(address(), iszero(calldataload(c))), calldataload(c))
+            let t := shr(96, shl(96, calldataload(c)))
+            to := or(mul(address(), iszero(t)), t)
             value := calldataload(add(c, 0x20))
             let o := add(c, calldataload(add(c, 0x40)))
             data.offset := add(o, 0x20)
