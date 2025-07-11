@@ -901,8 +901,8 @@ library FixedPointMathLib {
         uint256 p = rawMul(x, y);
         if (y == rawDiv(p, x)) return sqrt(p);
         for (z = saturatingMul(rawAdd(sqrt(x), 1), rawAdd(sqrt(y), 1));;) {
-            uint256 q = fullMulDivUnchecked(x, y, z);
-            uint256 zNext = avg(z, q);
+            uint256 zNext = fullMulDivUnchecked(x, y, z);
+            zNext = avg(z, zNext);
             if (zNext >= z) break;
             z = zNext;
         }
