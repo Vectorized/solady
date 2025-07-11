@@ -536,6 +536,14 @@ Returns the cube root of `x`, denominated in `WAD`, rounded down.
 Formally verified by xuwinnie:   
 https://github.com/vectorized/solady/blob/main/audits/xuwinnie-solady-cbrt-proof.pdf
 
+### mulSqrt(uint256,uint256)
+
+```solidity
+function mulSqrt(uint256 x, uint256 y) internal pure returns (uint256 z)
+```
+
+Returns `sqrt(x * y)`. Also called the geometric mean.
+
 ### factorial(uint256)
 
 ```solidity
