@@ -897,7 +897,7 @@ library FixedPointMathLib {
 
     /// @dev Returns `sqrt(x * y)`. Also called the geometric mean.
     function mulSqrt(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        if (x == y) return x; // Identity.
+        if (x == y) return x;
         uint256 p = rawMul(x, y);
         if (y == rawDiv(p, x)) return sqrt(p);
         for (z = saturatingMul(rawAdd(sqrt(x), 1), rawAdd(sqrt(y), 1));;) {
@@ -906,7 +906,6 @@ library FixedPointMathLib {
             if (zNext >= z) break;
             z = zNext;
         }
-        // No need for flooring correction, as we have started from overestimate.
     }
 
     /// @dev Returns the factorial of `x`.
