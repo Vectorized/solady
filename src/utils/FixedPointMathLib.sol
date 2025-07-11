@@ -897,14 +897,33 @@ library FixedPointMathLib {
 
     /// @dev Returns `sqrt(x * y)`. Also called the geometric mean.
     function mulSqrt(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        if (x == y) return x;
-        uint256 p = rawMul(x, y);
-        if (y == rawDiv(p, x)) return sqrt(p);
-        for (z = saturatingMul(rawAdd(sqrt(x), 1), rawAdd(sqrt(y), 1));;) {
-            uint256 zNext = fullMulDivUnchecked(x, y, z);
-            zNext = avg(z, zNext);
-            if (zNext >= z) break;
-            z = zNext;
+        if (x == y) return x; // Identity.
+        uint256 p0 = rawMul(x, y); // Lower 256 bits of `x * y`.
+        if (y == rawDiv(p0, x)) return sqrt(p0);
+        z = saturatingMul(rawAdd(sqrt(x), 1), rawAdd(sqrt(y), 1)); // Initial over-estimate.
+        /// @solidity memory-safe-assembly
+        assembly {
+            let mm := mulmod(x, y, not(0))
+            let p1 := sub(mm, add(p0, lt(mm, p0))) // Upper 256 bits of `x * y`.
+            // Babylonian with inlined `fullMulDiv`.
+            for {} 1 {} {
+                let t := and(z, sub(0, z))
+                let r := mulmod(x, y, z)
+                let d := div(z, t)
+                let inv := xor(2, mul(3, d))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                let q :=
+                    mul(
+                        or(mul(sub(p1, gt(r, p0)), add(div(sub(0, t), t), 1)), div(sub(p0, r), t)),
+                        mul(sub(2, mul(d, inv)), inv)
+                    )
+                if iszero(lt(q, z)) { break }
+                z := add(and(z, q), shr(1, xor(z, q))) // Non-overflowing average.
+            }
         }
     }
 
