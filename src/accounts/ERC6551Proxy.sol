@@ -48,7 +48,7 @@ contract ERC6551Proxy {
         bytes32 implementation;
         /// @solidity memory-safe-assembly
         assembly {
-            mstore(0x40, returndatasize()) // Optimization trick to change `6040608052` into `3d604052`.
+            mstore(0x40, returndatasize()) // Optimization trick to change `6080604052` into `3d604052`.
             implementation := sload(_ERC1967_IMPLEMENTATION_SLOT)
         }
         if (implementation == bytes32(0)) {
