@@ -895,6 +895,43 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns `sqrt(x * y)`. Also called the geometric mean.
+    function mulSqrt(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        if (x == y) return x; // Identity.
+        if (x == uint256(0)) return 0;
+        uint256 p0 = rawMul(x, y); // Lower 256 bits of `x * y`.
+        if (y == rawDiv(p0, x)) return sqrt(p0);
+        z = rawAdd(log2(x), log2(y)) >> 1;
+        /// @solidity memory-safe-assembly
+        assembly {
+            z := or(sub(0, gt(z, 253)), or(0xf, shl(z, 4))) // Initial overestimate.
+            // Babylonian with inlined `fullMulDiv`.
+            let mm := mulmod(x, y, not(0))
+            let p1 := sub(mm, add(p0, lt(mm, p0)))
+            for {} 1 {} {
+                let t := and(z, sub(0, z))
+                let r := mulmod(x, y, z)
+                let d := div(z, t)
+                let inv := xor(2, mul(3, d))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                inv := mul(inv, sub(2, mul(d, inv)))
+                let q :=
+                    mul(
+                        or(mul(sub(p1, gt(r, p0)), add(div(sub(0, t), t), 1)), div(sub(p0, r), t)),
+                        mul(sub(2, mul(d, inv)), inv)
+                    )
+                // We need to use non-overflowing average for the update step.
+                let zNext := add(and(z, q), shr(1, xor(z, q)))
+                if iszero(lt(zNext, z)) { break }
+                z := zNext
+            }
+        }
+        // No need for flooring correction, as we have started from overestimate.
+    }
+
     /// @dev Returns the factorial of `x`.
     function factorial(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
