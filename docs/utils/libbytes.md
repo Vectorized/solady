@@ -456,3 +456,19 @@ function emptyCalldata() internal pure returns (bytes calldata result)
 ```
 
 Returns empty calldata bytes. For silencing the compiler.
+
+### msbToAddress(bytes32)
+
+```solidity
+function msbToAddress(bytes32 x) internal pure returns (address)
+```
+
+Returns the most significant 20 bytes as an address.
+
+### lsbToAddress(bytes32)
+
+```solidity
+function lsbToAddress(bytes32 x) internal pure returns (address)
+```
+
+Returns the least significant 20 bytes as an address.
