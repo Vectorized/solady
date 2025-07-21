@@ -366,4 +366,11 @@ contract LibBytesTest is SoladyTest {
             return type(uint256).max;
         }
     }
+
+    function testBytes32ToAddress(bytes32 x) public {
+        uint256 msb = uint256(x) >> 96;
+        uint256 lsb = (uint256(x) << 96) >> 96;
+        assertEq(uint160(LibBytes.msbToAddress(x)), msb);
+        assertEq(uint160(LibBytes.lsbToAddress(x)), lsb);
+    }
 }
