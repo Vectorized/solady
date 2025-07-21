@@ -853,4 +853,14 @@ library LibBytes {
             result.length := 0
         }
     }
+
+    /// @dev Returns the most significant 20 bytes as an address.
+    function msbToAddress(bytes32 x) internal pure returns (address) {
+        return address(bytes20(x));
+    }
+
+    /// @dev Returns the least significant 20 bytes as an address.
+    function lsbToAddress(bytes32 x) internal pure returns (address) {
+        return address(uint160(uint256(x)));
+    }
 }
