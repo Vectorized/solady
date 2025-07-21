@@ -78,7 +78,7 @@ jobs:
             forge test --fuzz-runs 5000
           )
 
-  tests-nightly:
+  tests-ithaca:
     name: Forge Ithaca Testing
     runs-on: ubuntu-latest
     strategy:
@@ -89,7 +89,7 @@ jobs:
       - name: Install Foundry Nightly
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
       - name: Install Dependencies
         run: forge install
       - name: Run Tests with ${{ matrix.profile }}
