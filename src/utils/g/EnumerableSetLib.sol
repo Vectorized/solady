@@ -69,6 +69,9 @@ library EnumerableSetLib {
     /*                         CONSTANTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev The index to represent a value that does not exist.
+    uint256 internal constant NOT_FOUND = type(uint256).max;
+
     /// @dev A sentinel value to denote the zero value in storage.
     /// No elements can be equal to this value.
     /// `uint72(bytes9(keccak256(bytes("_ZERO_SENTINEL"))))`.
@@ -761,6 +764,107 @@ library EnumerableSetLib {
             // forgefmt: disable-next-item
             result := or(r, byte(and(div(0xd76453e0, shr(r, x)), 0x1f),
                 0x001f0d1e100c1d070f090b19131c1706010e11080a1a141802121b1503160405))
+        }
+    }
+
+    /// @dev Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+    function indexOf(AddressSet storage set, address value)
+        internal
+        view
+        returns (uint256 result)
+    {
+        result = NOT_FOUND;
+        if (uint160(value) == _ZERO_SENTINEL) return result;
+        bytes32 rootSlot = _rootSlot(set);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(value) { value := _ZERO_SENTINEL }
+            result := not(0)
+            let rootPacked := sload(rootSlot)
+            for {} 1 {} {
+                if iszero(shr(160, shl(160, rootPacked))) {
+                    if eq(shr(96, rootPacked), value) {
+                        result := 0
+                        break
+                    }
+                    if eq(shr(96, sload(add(rootSlot, 1))), value) {
+                        result := 1
+                        break
+                    }
+                    if eq(shr(96, sload(add(rootSlot, 2))), value) {
+                        result := 2
+                        break
+                    }
+                    break
+                }
+                mstore(0x20, rootSlot)
+                mstore(0x00, value)
+                result := sub(sload(keccak256(0x00, 0x40)), 1)
+                break
+            }
+        }
+    }
+
+    /// @dev Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+    function indexOf(Bytes32Set storage set, bytes32 value)
+        internal
+        view
+        returns (uint256 result)
+    {
+        result = NOT_FOUND;
+        if (uint256(value) == _ZERO_SENTINEL) return result;
+        bytes32 rootSlot = _rootSlot(set);
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(value) { value := _ZERO_SENTINEL }
+            for {} 1 {} {
+                if iszero(sload(not(rootSlot))) {
+                    if eq(sload(rootSlot), value) {
+                        result := 0
+                        break
+                    }
+                    if eq(sload(add(rootSlot, 1)), value) {
+                        result := 1
+                        break
+                    }
+                    if eq(sload(add(rootSlot, 2)), value) {
+                        result := 2
+                        break
+                    }
+                    break
+                }
+                mstore(0x20, rootSlot)
+                mstore(0x00, value)
+                result := sub(sload(keccak256(0x00, 0x40)), 1)
+                break
+            }
+        }
+    }
+
+    /// @dev Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+    function indexOf(Uint256Set storage set, uint256 i) internal view returns (uint256 result) {
+        result = indexOf(_toBytes32Set(set), bytes32(i));
+    }
+
+    /// @dev Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+    function indexOf(Int256Set storage set, int256 i) internal view returns (uint256 result) {
+        result = indexOf(_toBytes32Set(set), bytes32(uint256(i)));
+    }
+
+    /// @dev Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+    function indexOf(Uint8Set storage set, uint8 value) internal view returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := not(0)
+            let packed := sload(set.slot)
+            let m := shl(and(0xff, value), 1)
+            if and(packed, m) {
+                result := 0
+                for { let p := and(packed, sub(m, 1)) } p {} {
+                    p := xor(p, and(p, add(1, not(p))))
+                    result := add(result, 1)
+                }
+            }
         }
     }
 
