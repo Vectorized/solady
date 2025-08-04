@@ -339,4 +339,40 @@ contract LibBitTest is SoladyTest {
         }
         return s;
     }
+
+    function testToNibblesGas() public {
+        bytes memory s = hex"123456789abcdef123456789abcdef123456789abcdef123456789abcdef";
+        bytes memory expected =
+            hex"0102030405060708090a0b0c0d0e0f0102030405060708090a0b0c0d0e0f0102030405060708090a0b0c0d0e0f0102030405060708090a0b0c0d0e0f";
+        assertEq(LibBit.toNibbles(s), expected);
+    }
+
+    function testToNibblesDifferential(uint256 r, bytes memory s) public {
+        if (r & 0x01 == 0) {
+            _brutalizeMemory();
+            _misalignFreeMemoryPointer();
+        }
+        bytes memory computed = LibBit.toNibbles(s);
+        _checkMemory(computed);
+        assertEq(computed, _toNibblesOriginal(s));
+    }
+
+    function _toNibblesOriginal(bytes memory input) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let bytesLength := mload(input)
+            let nibblesLength := shl(0x01, bytesLength)
+            mstore(0x40, add(result, and(not(0x1f), add(nibblesLength, 0x3f))))
+            mstore(result, nibblesLength)
+            let bytesStart := add(input, 0x20)
+            let nibblesStart := add(result, 0x20)
+            for { let i := 0x00 } lt(i, bytesLength) { i := add(i, 0x01) } {
+                let offset := add(nibblesStart, shl(0x01, i))
+                let b := byte(0x00, mload(add(bytesStart, i)))
+                mstore8(offset, shr(0x04, b))
+                mstore8(add(offset, 0x01), and(b, 0x0F))
+            }
+        }
+    }
 }

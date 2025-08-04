@@ -190,6 +190,30 @@ library LibBit {
         }
     }
 
+    /// @dev hex"ABCD" -> hex"0A0B0C0D".
+    function toNibbles(bytes memory s) internal pure returns (bytes memory result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            let n := mload(s)
+            mstore(result, add(n, n)) // Store the new length.
+            s := add(s, 0x20)
+            let o := add(result, 0x20)
+            // forgefmt: disable-next-item
+            for { let i := 0 } lt(i, n) { i := add(i, 0x10) } {
+                let x := shr(128, mload(add(s, i)))
+                x := and(0x0000000000000000ffffffffffffffff0000000000000000ffffffffffffffff, or(shl(64, x), x))
+                x := and(0x00000000ffffffff00000000ffffffff00000000ffffffff00000000ffffffff, or(shl(32, x), x))
+                x := and(0x0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff, or(shl(16, x), x))
+                x := and(0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff, or(shl(8, x), x))
+                mstore(add(o, add(i, i)),
+                    and(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f, or(shl(4, x), x)))
+            }
+            mstore(add(o, add(s, s)), 0) // Zeroize slot after result.
+            mstore(0x40, add(0x40, add(o, add(s, s)))) // Allocate memory.
+        }
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     BOOLEAN OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
