@@ -844,4 +844,64 @@ contract EnumerableSetLibTest is SoladyTest {
     function updateUint8Set(uint8 value, bool isAdd, uint256 cap) public returns (bool) {
         return uint8Set.update(value, isAdd, cap);
     }
+
+    function testAddressSetIndexOf(bytes32 r) public {
+        LibPRNG.PRNG memory prng;
+        prng.state = uint256(r);
+        address[] memory a = new address[](_bound(_random(), 0, 16));
+
+        for (uint256 i; i != a.length; ++i) {
+            address value = address(uint160(prng.next()));
+            addressSet.add(value);
+            a[i] = value;
+        }
+
+        if (a.length != 0) {
+            uint256 i = _random() % a.length;
+            address value = a[i];
+            assertEq(addressSet.indexOf(value), i);
+            assertEq(addressSet.at(addressSet.indexOf(value)), value);
+            if (_randomChance(2)) {
+                value = address(bytes20(keccak256(abi.encode(value, value, "abcdef"))));
+                assertEq(addressSet.indexOf(value), EnumerableSetLib.NOT_FOUND);
+            }
+        }
+    }
+
+    function testBytes32SetIndexOf(bytes32 r) public {
+        LibPRNG.PRNG memory prng;
+        prng.state = uint256(r);
+        bytes32[] memory a = new bytes32[](_bound(_random(), 0, 16));
+
+        for (uint256 i; i != a.length; ++i) {
+            bytes32 value = bytes32(prng.next());
+            bytes32Set.add(value);
+            a[i] = value;
+        }
+
+        if (a.length != 0) {
+            uint256 i = _random() % a.length;
+            bytes32 value = a[i];
+            assertEq(bytes32Set.indexOf(value), i);
+            assertEq(bytes32Set.at(bytes32Set.indexOf(value)), value);
+            if (_randomChance(2)) {
+                value = keccak256(abi.encode(value, value, "abcdef"));
+                assertEq(bytes32Set.indexOf(value), EnumerableSetLib.NOT_FOUND);
+            }
+        }
+    }
+
+    function testEnumerableUint8SetIndexOf(uint256 flags, uint8 value) public {
+        uint8[] memory ordinals = _flagsToOrdinals(flags);
+        unchecked {
+            for (uint256 i; i != ordinals.length; ++i) {
+                uint8Set.add(ordinals[i]);
+            }
+            if (uint8Set.contains(value)) {
+                assertEq(uint8Set.at(uint8Set.indexOf(value)), value);
+            } else {
+                assertEq(uint8Set.indexOf(value), EnumerableSetLib.NOT_FOUND);
+            }
+        }
+    }
 }
