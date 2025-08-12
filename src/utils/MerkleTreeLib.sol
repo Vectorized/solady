@@ -254,7 +254,6 @@ library MerkleTreeLib {
         pure
         returns (bytes32[] memory result)
     {
-        uint256 p = roundUpPow2(leaves.length);
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(0x40)
@@ -263,6 +262,9 @@ library MerkleTreeLib {
                 mstore(0x00, 0xe7171dc4) // `MerkleTreeLeavesEmpty()`.
                 revert(0x1c, 0x04)
             }
+            let p := sub(mload(leaves), 1)
+            for { let i := 1 } lt(i, 0x80) { i := add(i, i) } { p := or(p, shr(i, p)) }
+            p := add(p, 1)
             mstore(result, p) // Store length.
             mstore(0x40, add(result, add(0x20, shl(5, p)))) // Allocate memory.
             let d := sub(result, leaves)
@@ -280,23 +282,5 @@ library MerkleTreeLib {
     /// @dev Equivalent to `pad(leaves, bytes32(0))`.
     function pad(bytes32[] memory leaves) internal pure returns (bytes32[] memory result) {
         result = pad(leaves, bytes32(0));
-    }
-
-    /// @dev Returns the smallest power of 2 greater than or equal to `x`.
-    /// Defaults to zero if `x == 0`.
-    function roundUpPow2(uint256 x) internal pure returns (uint256 y) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            y := sub(x, 1)
-            y := or(y, shr(1, y))
-            y := or(y, shr(2, y))
-            y := or(y, shr(4, y))
-            y := or(y, shr(8, y))
-            y := or(y, shr(16, y))
-            y := or(y, shr(32, y))
-            y := or(y, shr(64, y))
-            y := or(y, shr(128, y))
-            y := add(y, 1)
-        }
     }
 }
