@@ -206,8 +206,8 @@ library LibBit {
                 x := and(0x00000000ffffffff00000000ffffffff00000000ffffffff00000000ffffffff, or(shl(32, x), x))
                 x := and(0x0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff, or(shl(16, x), x))
                 x := and(0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff, or(shl(8, x), x))
-                let mask := 0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f
-                mstore(add(o, add(i, i)), or(shl(8, and(x, not(mask))), and(x, mask)))
+                mstore(add(o, add(i, i)),
+                    and(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f, or(shl(4, x), x)))
             }
             mstore(add(o, add(s, s)), 0) // Zeroize slot after result.
             mstore(0x40, add(0x40, add(o, add(s, s)))) // Allocate memory.
