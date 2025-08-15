@@ -1988,4 +1988,7 @@ interface Vm is VmSafe {
 
     /// Stops all safe memory expectation in the current subcontext.
     function stopExpectSafeMemory() external;
+
+    /// Sets the blockhash for a given block number.
+    function setBlockhash(uint256 blockNumber, bytes32 blockHash) external;
 }
