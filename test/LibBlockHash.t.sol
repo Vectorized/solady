@@ -18,8 +18,12 @@ contract LibBlockHashTest is SoladyTest {
         vm.etch(LibBlockHash.HISTORY_STORAGE_ADDRESS, _HISTORY_STORAGE_BYTECODE);
     }
 
-    function __blockHash(uint256 blockNumber, bytes32 expectedHash, bytes32 sysExpectedHash) internal view returns (bool) {
-         if (expectedHash != sysExpectedHash) return false;
+    function __blockHash(uint256 blockNumber, bytes32 expectedHash, bytes32 sysExpectedHash)
+        internal
+        view
+        returns (bool)
+    {
+        if (expectedHash != sysExpectedHash) return false;
         return sysExpectedHash == LibBlockHash.blockHash(blockNumber);
     }
 
@@ -64,6 +68,3 @@ contract LibBlockHashTest is SoladyTest {
         assertEq(LibBlockHash.blockHash(block.number - 1000), bytes32(0));
     }
 }
-
-
-
