@@ -140,6 +140,17 @@ function commonBytePrefix(uint256 x, uint256 y)
 
 Returns the common prefix of `x` and `y` at the byte level.
 
+### toNibbles(bytes)
+
+```solidity
+function toNibbles(bytes memory s)
+    internal
+    pure
+    returns (bytes memory result)
+```
+
+hex"ABCD" -> hex"0A0B0C0D".
+
 ## Boolean Operations
 
 A Solidity bool on the stack or memory is represented as a 256-bit word.   

@@ -1277,35 +1277,4 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(mover.code, hex"3d35ff");
         assertEq(mover, SafeTransferLib.ETH_MOVER);
     }
-
-    function _deployOneTimeVault(address to, uint256 amount) internal returns (address vault) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            to := shr(96, shl(96, to)) // Clean upper 96 bits.
-            for {} 1 {} {
-                let m := mload(0x40)
-                // If the mover is missing or bricked, deploy a minimal accrual contract
-                // that withdraws all ETH to `to` when being called only by `to`.
-                mstore(
-                    add(m, 0x1f), 0x33146025575b600160005260206000f35b3d3d3d3d47335af1601a573d3dfd
-                )
-                mstore(m, or(to, shl(160, 0x6034600b3d3960343df3fe73)))
-                // Compute and store the bytecode hash.
-                mstore8(0x00, 0xff) // Write the prefix.
-                mstore(0x35, keccak256(m, 0x3f))
-                mstore(0x01, shl(96, address())) // Deployer.
-                mstore(0x15, 0) // Salt.
-                vault := keccak256(0x00, 0x55)
-                if iszero(
-                    mul(
-                        returndatasize(),
-                        call(gas(), vault, amount, codesize(), 0x00, codesize(), 0x00)
-                    )
-                ) { if iszero(create2(0, m, 0x3f, 0)) { revert(codesize(), codesize()) } } // For gas estimation.
-
-                mstore(0x40, m)
-                break
-            }
-        }
-    }
 }

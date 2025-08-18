@@ -62,6 +62,7 @@ tokens
 utils
 ├─ Base58 — "Library for Base58 encoding and decoding"
 ├─ Base64 — "Library for Base64 encoding and decoding"
+├─ BlockHashLib — "Library for accessing block hashes way beyond the 256-block limit"
 ├─ CallContextChecker — "Call context checker mixin"
 ├─ CREATE3 — "Deterministic deployments agnostic to the initialization code"
 ├─ DateTimeLib — "Library for date time operations"

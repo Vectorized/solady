@@ -132,6 +132,17 @@ The canonical Permit2 address.
 [Github](https://github.com/Uniswap/permit2)   
 [Etherscan](https://etherscan.io/address/0x000000000022D473030F116dDEE9F6B43aC78BA3)
 
+### ETH_MOVER
+
+```solidity
+address internal constant ETH_MOVER =
+    0x00000000000073c48c8055bD43D1A53799176f0D
+```
+
+The canonical address of the `SELFDESTRUCT` ETH mover.   
+See: https://gist.github.com/Vectorized/1cb8ad4cf393b1378e08f23f79bd99fa   
+[Etherscan](https://etherscan.io/address/0x00000000000073c48c8055bD43D1A53799176f0D)
+
 ## ETH Operations
 
 If the ETH transfer MUST succeed with a reasonable gas budget, use the force variants.   
@@ -221,6 +232,18 @@ function trySafeTransferAllETH(address to, uint256 gasStipend)
 ```
 
 Sends all the ETH in the current contract to `to`, with a `gasStipend`.
+
+### safeMoveETH(address,uint256)
+
+```solidity
+function safeMoveETH(address to, uint256 amount)
+    internal
+    returns (address vault)
+```
+
+Force transfers ETH to `to`, without triggering the fallback (if any).   
+This method attempts to use a separate contract to send via `SELFDESTRUCT`,   
+and upon failure, deploys a minimal vault to accrue the ETH.
 
 ## ERC20 Operations
 

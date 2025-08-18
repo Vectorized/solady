@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Library for accessing block hashes way beyond the 256-block limit. ref: EIP-2935
+/// @notice Library for accessing block hashes way beyond the 256-block limit.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/BlockHashLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Blockhash.sol)
 library BlockHashLib {
