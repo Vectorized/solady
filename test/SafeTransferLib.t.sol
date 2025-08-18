@@ -1233,7 +1233,7 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(address(this).balance, selfBalanceBefore);
     }
 
-    function testSaveMoveETHToMoverReverts() public {
+    function testSaveMoveETHToMoverReverts(bytes32) public {
         if (_randomChance(2)) _deployETHMover();
         address to = SafeTransferLib.ETH_MOVER;
 
@@ -1242,6 +1242,19 @@ contract SafeTransferLibTest is SoladyTest {
 
         vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
         this.safeMoveETH(to, amount);
+    }
+
+    function testSaveMoveETHInsufficientBalanceReverts(bytes32) public {
+        if (_randomChance(2)) _deployETHMover();
+        address to = _randomHashedAddress();
+
+        uint256 amount = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 128 - 1);
+
+        if (address(this).balance > amount) {
+            vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+            this.safeMoveETH(to, amount);
+        }
     }
 
     function safeMoveETH(address to, uint256 amount) public returns (address) {
