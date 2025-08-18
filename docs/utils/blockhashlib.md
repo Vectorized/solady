@@ -1,6 +1,6 @@
 # BlockHashLib
 
-Library for accessing block hashes way beyond the 256-block limit. ref: EIP-2935
+Library for accessing block hashes way beyond the 256-block limit.
 
 
 
