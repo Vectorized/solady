@@ -260,17 +260,14 @@ library MerkleTreeLib {
             let l := mload(leaves)
             let p := sub(l, 1)
             if iszero(lt(p, 0xffffffff)) {
-                if iszero(l) {
-                    mstore(0x00, 0xe7171dc4) // `MerkleTreeLeavesEmpty()`.
-                    revert(0x1c, 0x04)
-                }
-                invalid()
+                mstore(0x00, 0xe7171dc4) // `MerkleTreeLeavesEmpty()`.
+                revert(0x1c, mul(iszero(l), 0x04)) // If `p > 2**32 - 1`, revert with empty.
             }
-            p := or(p, shr(1, p))
-            p := or(p, shr(2, p))
-            p := or(p, shr(4, p))
-            p := or(p, shr(8, p))
-            p := add(1, or(p, shr(16, p))) // Supports up to `2**32 - 1`.
+            p := or(shr(1, p), p)
+            p := or(shr(2, p), p)
+            p := or(shr(4, p), p)
+            p := or(shr(8, p), p)
+            p := add(1, or(shr(16, p), p)) // Supports up to `2**32 - 1`.
             mstore(result, p) // Store length.
             mstore(0x40, add(result, add(0x20, shl(5, p)))) // Allocate memory.
             let d := sub(result, leaves)
