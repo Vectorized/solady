@@ -1178,7 +1178,7 @@ contract SafeTransferLibTest is SoladyTest {
     }
 
     function testSaveMoveETHViaVault(bytes32) public {
-        address to = _randomHashedAddress();
+        address to = _randomUniqueHashedAddress();
         assertEq(to.balance, 0);
 
         uint256 amount0 = _bound(_random(), 0, 2 ** 128 - 1);
@@ -1189,8 +1189,15 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(this.safeMoveETH(to, amount1), vault);
         assertEq(vault.balance, amount0 + amount1);
 
-        vm.prank(to);
+        address pranker = _randomUniqueHashedAddress();
+        vm.prank(pranker);
         (bool success,) = vault.call("");
+        require(success);
+        assertEq(vault.balance, amount0 + amount1);
+        assertEq(to.balance, 0);
+
+        vm.prank(to);
+        (success,) = vault.call("");
         require(success);
         assertEq(vault.balance, 0);
         assertEq(to.balance, amount0 + amount1);
