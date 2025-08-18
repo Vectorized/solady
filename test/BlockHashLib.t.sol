@@ -34,6 +34,8 @@ contract BlockHashLibTest is SoladyTest {
         vm.roll(simulationBlockNumber);
 
         assertEq(BlockHashLib.blockHash(queryBlockNumber), _blockHash(queryBlockNumber));
+
+        // Some random comment to trigger the CI via a visible diff. 3287623879676
     }
 
     function _blockHash(uint256 blockNumber) internal view returns (bytes32) {
