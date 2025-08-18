@@ -253,8 +253,7 @@ async function main() {
         .replace(/((?:See\:)?\s)`([A-Za-z0-9\/]+?\.sol)`/ig, (m0, m1, m2) => {
           if (!m0.match(/^See\:/i) && !m2.match(/\.sol$/i)) return m0;
           let l = docSrcPaths.filter(q => has(q, getTitle(m2)));
-          let s = path.relative(path.dirname(p), l[0]).replace(/^(?!\.\/|\.\.\/)/, './');
-          return l.length ? m1 + '[`' + m2 + '`](' + s + ')' : m0;
+          return l.length ? m1 + '[`' + m2 + '`](' + getDocSubPath(l[0]) + ')' : m0;
         })
       );
     });
