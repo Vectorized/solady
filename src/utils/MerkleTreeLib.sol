@@ -258,13 +258,19 @@ library MerkleTreeLib {
         assembly {
             result := mload(0x40)
             let l := mload(leaves)
-            if iszero(l) {
-                mstore(0x00, 0xe7171dc4) // `MerkleTreeLeavesEmpty()`.
-                revert(0x1c, 0x04)
+            let p := sub(l, 1)
+            if iszero(lt(p, 0xffffffff)) {
+                if iszero(l) {
+                    mstore(0x00, 0xe7171dc4) // `MerkleTreeLeavesEmpty()`.
+                    revert(0x1c, 0x04)
+                }
+                invalid()
             }
-            let p := sub(mload(leaves), 1)
-            for { let i := 1 } lt(i, 0x80) { i := add(i, i) } { p := or(p, shr(i, p)) }
-            p := add(p, 1)
+            p := or(p, shr(1, p))
+            p := or(p, shr(2, p))
+            p := or(p, shr(4, p))
+            p := or(p, shr(8, p))
+            p := add(1, or(p, shr(16, p))) // Supports up to `2**32 - 1`.
             mstore(result, p) // Store length.
             mstore(0x40, add(result, add(0x20, shl(5, p)))) // Allocate memory.
             let d := sub(result, leaves)
