@@ -31,6 +31,7 @@ skip = []
 [profile.ithaca]
 evm_version = "cancun"
 odyssey = true
+gas_limit = 100_000_000
 skip = []
 
 [profile.solx]
