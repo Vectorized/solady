@@ -13,7 +13,7 @@ jobs:
         profile: [super-intense-0,super-intense-1]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
