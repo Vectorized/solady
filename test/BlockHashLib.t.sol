@@ -2,9 +2,9 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {LibBlockHash} from "../src/utils/LibBlockHash.sol";
+import {BlockHashLib} from "../src/utils/BlockHashLib.sol";
 
-contract LibBlockHashTest is SoladyTest {
+contract BlockHashLibTest is SoladyTest {
     uint256 internal startingBlock;
 
     address internal constant SYSTEM_ADDRESS = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
@@ -15,16 +15,14 @@ contract LibBlockHashTest is SoladyTest {
     function setUp() public {
         vm.roll(block.number + 100);
         startingBlock = block.number;
-        vm.etch(LibBlockHash.HISTORY_STORAGE_ADDRESS, _HISTORY_STORAGE_BYTECODE);
+        vm.etch(BlockHashLib.HISTORY_STORAGE_ADDRESS, _HISTORY_STORAGE_BYTECODE);
     }
 
-    function __blockHash(uint256 blockNumber, bytes32 expectedHash, bytes32 sysExpectedHash)
+    function _testBlockHash(uint256 blockNumber, bytes32 expectedHash, bytes32 sysExpectedHash)
         internal
-        view
-        returns (bool)
     {
-        if (expectedHash != sysExpectedHash) return false;
-        return sysExpectedHash == LibBlockHash.blockHash(blockNumber);
+        assertEq(expectedHash, sysExpectedHash);
+        assertEq(sysExpectedHash, BlockHashLib.blockHash(blockNumber));
     }
 
     function testFuzzRecentBlocks(uint8 offset, uint64 currentBlock, bytes32 expectedHash) public {
@@ -36,7 +34,7 @@ contract LibBlockHashTest is SoladyTest {
         uint256 targetBlock = currentBlock - boundedOffset;
         vm.setBlockhash(targetBlock, expectedHash);
 
-        assertTrue(__blockHash(targetBlock, expectedHash, blockhash(targetBlock)));
+        _testBlockHash(targetBlock, expectedHash, blockhash(targetBlock));
     }
 
     function testFuzzVeryOldBlocks(uint256 offset, uint256 currentBlock) public {
@@ -46,7 +44,7 @@ contract LibBlockHashTest is SoladyTest {
         vm.roll(currentBlock);
 
         uint256 targetBlock = currentBlock - offset;
-        assertTrue(__blockHash(targetBlock, bytes32(0), bytes32(0)));
+        _testBlockHash(targetBlock, bytes32(0), bytes32(0));
     }
 
     function testFuzzFutureBlocks(uint256 offset, uint256 currentBlock) public {
@@ -57,14 +55,14 @@ contract LibBlockHashTest is SoladyTest {
 
         unchecked {
             uint256 targetBlock = currentBlock + offset;
-            assertTrue(__blockHash(targetBlock, blockhash(targetBlock), blockhash(targetBlock)));
+            _testBlockHash(targetBlock, blockhash(targetBlock), blockhash(targetBlock));
         }
     }
 
     function testUnsupportedChainsReturnZeroWhenOutOfRange() public {
-        vm.etch(LibBlockHash.HISTORY_STORAGE_ADDRESS, hex"");
+        vm.etch(BlockHashLib.HISTORY_STORAGE_ADDRESS, hex"");
 
         vm.roll(block.number + 1000);
-        assertEq(LibBlockHash.blockHash(block.number - 1000), bytes32(0));
+        assertEq(BlockHashLib.blockHash(block.number - 1000), bytes32(0));
     }
 }
