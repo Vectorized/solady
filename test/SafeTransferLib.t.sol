@@ -1184,9 +1184,9 @@ contract SafeTransferLibTest is SoladyTest {
         uint256 amount0 = _bound(_random(), 0, 2 ** 128 - 1);
         uint256 amount1 = _bound(_random(), 0, 2 ** 128 - 1);
         vm.deal(address(this), 2 ** 160 - 1);
-        address vault = SafeTransferLib.saveMoveETH(_brutalized(to), amount0);
+        address vault = this.safeMoveETH(to, amount0);
         assertEq(vault.balance, amount0);
-        assertEq(SafeTransferLib.saveMoveETH(_brutalized(to), amount1), vault);
+        assertEq(this.safeMoveETH(to, amount1), vault);
         assertEq(vault.balance, amount0 + amount1);
 
         vm.prank(to);
@@ -1196,7 +1196,7 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(to.balance, amount0 + amount1);
     }
 
-    function saveMoveETHViaMover(bytes32) public {
+    function safeMoveETHViaMover(bytes32) public {
         _deployETHMover();
 
         address to = _randomHashedAddress();
@@ -1206,21 +1206,46 @@ contract SafeTransferLibTest is SoladyTest {
         uint256 amount1 = _bound(_random(), 0, 2 ** 128 - 1);
         vm.deal(address(this), 2 ** 160 - 1);
         uint256 selfBalanceBefore = address(this).balance;
-        assertEq(SafeTransferLib.saveMoveETH(_brutalized(to), amount0), address(0));
+        assertEq(SafeTransferLib.safeMoveETH(to, amount0), address(0));
 
         assertEq(to.balance, amount0);
         assertEq(address(this).balance, selfBalanceBefore - amount0);
 
         if (SafeTransferLib.ETH_MOVER.code.length == 0) {
-            address vault = SafeTransferLib.saveMoveETH(_brutalized(to), amount0);
+            address vault = this.safeMoveETH(to, amount0);
             assertEq(vault.balance, amount1);
             assertEq(to.balance, amount0);
             assertEq(address(this).balance, selfBalanceBefore - amount0);
         } else {
-            assertEq(SafeTransferLib.saveMoveETH(_brutalized(to), amount0), address(0));
+            assertEq(this.safeMoveETH(to, amount0), address(0));
             assertEq(to.balance, amount0 + amount1);
             assertEq(address(this).balance, selfBalanceBefore - amount0 - amount1);
         }
+    }
+
+    function testSaveMoveETHToSelfIsNoOp(bytes32) public {
+        if (_randomChance(2)) _deployETHMover();
+        address to = address(this);
+        uint256 amount = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 160 - 1);
+        uint256 selfBalanceBefore = address(this).balance;
+        assertEq(this.safeMoveETH(to, amount), address(0));
+        assertEq(address(this).balance, selfBalanceBefore);
+    }
+
+    function testSaveMoveETHToMoverReverts() public {
+        if (_randomChance(2)) _deployETHMover();
+        address to = SafeTransferLib.ETH_MOVER;
+
+        uint256 amount = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 160 - 1);
+
+        vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+        this.safeMoveETH(to, amount);
+    }
+
+    function safeMoveETH(address to, uint256 amount) public returns (address) {
+        return SafeTransferLib.safeMoveETH(_brutalized(to), amount);
     }
 
     function _deployETHMover() internal {

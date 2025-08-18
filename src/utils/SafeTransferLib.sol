@@ -200,7 +200,7 @@ library SafeTransferLib {
     /// @dev Force transfers ETH to `to`, without triggering the fallback (if any).
     /// This method attempts to use a separate contract to send via `SELFDESTRUCT`,
     /// and upon failure, deploys a minimal vault to accrue the ETH.
-    function saveMoveETH(address to, uint256 amount) internal returns (address vault) {
+    function safeMoveETH(address to, uint256 amount) internal returns (address vault) {
         /// @solidity memory-safe-assembly
         assembly {
             to := shr(96, shl(96, to)) // Clean upper 96 bits.
