@@ -1251,8 +1251,10 @@ contract SafeTransferLibTest is SoladyTest {
         uint256 amount = _bound(_random(), 0, 2 ** 128 - 1);
         vm.deal(address(this), 2 ** 128 - 1);
 
-        if (address(this).balance > amount) {
+        if (address(this).balance < amount) {
             vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+            this.safeMoveETH(to, amount);
+        } else {
             this.safeMoveETH(to, amount);
         }
     }
