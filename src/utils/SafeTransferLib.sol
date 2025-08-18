@@ -205,7 +205,8 @@ library SafeTransferLib {
         assembly {
             to := shr(96, shl(96, to)) // Clean upper 96 bits.
             for { let mover := ETH_MOVER } iszero(eq(to, address())) {} {
-                if or(lt(selfbalance(), amount), eq(to, mover)) {
+                let selfBalanceBefore := selfbalance()
+                if or(lt(selfBalanceBefore, amount), eq(to, mover)) {
                     mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                     revert(0x1c, 0x04)
                 }
@@ -213,6 +214,7 @@ library SafeTransferLib {
                     let balanceBefore := balance(to) // Check via delta, in case `SELFDESTRUCT` is bricked.
                     pop(call(gas(), mover, amount, codesize(), 0x00, codesize(), 0x00))
                     if iszero(lt(add(amount, balance(to)), balanceBefore)) { break }
+                    if lt(selfBalanceBefore, selfbalance()) { invalid() } // Just in case.
                 }
                 let m := mload(0x40)
                 // If the mover is missing or bricked, deploy a minimal vault
