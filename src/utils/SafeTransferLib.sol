@@ -63,6 +63,11 @@ library SafeTransferLib {
     /// [Etherscan](https://etherscan.io/address/0x000000000022D473030F116dDEE9F6B43aC78BA3)
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
+    /// @dev The canonical address of the `SELFDESTRUCT` ETH mover.
+    /// See: https://gist.github.com/Vectorized/1cb8ad4cf393b1378e08f23f79bd99fa
+    /// [Etherscan](https://etherscan.io/address/0x00000000000073c48c8055bD43D1A53799176f0D)
+    address internal constant ETH_MOVER = 0x00000000000073c48c8055bD43D1A53799176f0D;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ETH OPERATIONS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -189,6 +194,46 @@ library SafeTransferLib {
         /// @solidity memory-safe-assembly
         assembly {
             success := call(gasStipend, to, selfbalance(), codesize(), 0x00, codesize(), 0x00)
+        }
+    }
+
+    /// @dev Force transfers ETH to `to`, without triggering the fallback (if any).
+    /// This method attempts to use a separate contract to send via `SELFDESTRUCT`,
+    /// and upon failure, deploys a minimal vault to accrue the ETH.
+    function safeMoveETH(address to, uint256 amount) internal returns (address vault) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            to := shr(96, shl(96, to)) // Clean upper 96 bits.
+            for { let mover := ETH_MOVER } iszero(eq(to, address())) {} {
+                if or(lt(selfbalance(), amount), eq(to, mover)) {
+                    mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
+                    revert(0x1c, 0x04)
+                }
+                if extcodesize(mover) {
+                    let balanceBefore := balance(to) // Check via delta, in case `SELFDESTRUCT` is bricked.
+                    pop(call(gas(), mover, amount, codesize(), 0x00, codesize(), 0x00))
+                    if iszero(lt(add(amount, balance(to)), balanceBefore)) { break }
+                }
+                let m := mload(0x40)
+                // If the mover is missing or bricked, deploy a minimal vault
+                // that withdraws all ETH to `to` when being called only by `to`.
+                // forgefmt: disable-next-item
+                mstore(add(m, 0x20), 0x33146025575b600160005260206000f35b3d3d3d3d47335af1601a5760003dfd)
+                mstore(m, or(to, shl(160, 0x6035600b3d3960353df3fe73)))
+                // Compute and store the bytecode hash.
+                mstore8(0x00, 0xff) // Write the prefix.
+                mstore(0x35, keccak256(m, 0x40))
+                mstore(0x01, shl(96, address())) // Deployer.
+                mstore(0x15, 0) // Salt.
+                vault := keccak256(0x00, 0x55)
+                pop(call(gas(), vault, amount, codesize(), 0x00, codesize(), 0x00))
+                // The vault returns a single word on success. Failure reverts with empty data.
+                if iszero(returndatasize()) {
+                    if iszero(create2(0, m, 0x40, 0)) { revert(codesize(), codesize()) } // For gas estimation.
+                }
+                mstore(0x40, m) // Restore the free memory pointer.
+                break
+            }
         }
     }
 

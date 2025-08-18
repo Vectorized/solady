@@ -1176,4 +1176,136 @@ contract SafeTransferLibTest is SoladyTest {
     function totalSupplyQuery(address token) public view returns (uint256) {
         return SafeTransferLib.totalSupply(token);
     }
+
+    function testSaveMoveETHViaVault(bytes32) public {
+        address to = _randomUniqueHashedAddress();
+        assertEq(to.balance, 0);
+
+        uint256 amount0 = _bound(_random(), 0, 2 ** 128 - 1);
+        uint256 amount1 = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 160 - 1);
+        address vault = this.safeMoveETH(to, amount0);
+        assertEq(vault.balance, amount0);
+        assertEq(this.safeMoveETH(to, amount1), vault);
+        assertEq(vault.balance, amount0 + amount1);
+
+        address pranker = _randomUniqueHashedAddress();
+        vm.prank(pranker);
+        (bool success,) = vault.call("");
+        require(success);
+        assertEq(vault.balance, amount0 + amount1);
+        assertEq(to.balance, 0);
+
+        vm.prank(to);
+        (success,) = vault.call("");
+        require(success);
+        assertEq(vault.balance, 0);
+        assertEq(to.balance, amount0 + amount1);
+    }
+
+    function safeMoveETHViaMover(bytes32) public {
+        _deployETHMover();
+
+        address to = _randomHashedAddress();
+        assertEq(to.balance, 0);
+
+        uint256 amount0 = _bound(_random(), 0, 2 ** 128 - 1);
+        uint256 amount1 = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 160 - 1);
+        uint256 selfBalanceBefore = address(this).balance;
+        assertEq(SafeTransferLib.safeMoveETH(to, amount0), address(0));
+
+        assertEq(to.balance, amount0);
+        assertEq(address(this).balance, selfBalanceBefore - amount0);
+
+        if (SafeTransferLib.ETH_MOVER.code.length == 0) {
+            address vault = this.safeMoveETH(to, amount0);
+            assertEq(vault.balance, amount1);
+            assertEq(to.balance, amount0);
+            assertEq(address(this).balance, selfBalanceBefore - amount0);
+        } else {
+            assertEq(this.safeMoveETH(to, amount0), address(0));
+            assertEq(to.balance, amount0 + amount1);
+            assertEq(address(this).balance, selfBalanceBefore - amount0 - amount1);
+        }
+    }
+
+    function testSaveMoveETHToSelfIsNoOp(bytes32) public {
+        if (_randomChance(2)) _deployETHMover();
+        address to = address(this);
+        uint256 amount = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 160 - 1);
+        uint256 selfBalanceBefore = address(this).balance;
+        assertEq(this.safeMoveETH(to, amount), address(0));
+        assertEq(address(this).balance, selfBalanceBefore);
+    }
+
+    function testSaveMoveETHToMoverReverts(bytes32) public {
+        if (_randomChance(2)) _deployETHMover();
+        address to = SafeTransferLib.ETH_MOVER;
+
+        uint256 amount = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 160 - 1);
+
+        vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+        this.safeMoveETH(to, amount);
+    }
+
+    function testSaveMoveETHInsufficientBalanceReverts(bytes32) public {
+        if (_randomChance(2)) _deployETHMover();
+        address to = _randomHashedAddress();
+
+        uint256 amount = _bound(_random(), 0, 2 ** 128 - 1);
+        vm.deal(address(this), 2 ** 128 - 1);
+
+        if (address(this).balance < amount) {
+            vm.expectRevert(SafeTransferLib.ETHTransferFailed.selector);
+            this.safeMoveETH(to, amount);
+        } else {
+            this.safeMoveETH(to, amount);
+        }
+    }
+
+    function safeMoveETH(address to, uint256 amount) public returns (address) {
+        return SafeTransferLib.safeMoveETH(_brutalized(to), amount);
+    }
+
+    function _deployETHMover() internal {
+        bytes memory initCode = hex"623d35ff3d526003601df3";
+        bytes32 salt = 0x000000000000000000000000000000000000000063d76c4f57ebf10084429e18;
+        address mover = _nicksCreate2(0, salt, initCode);
+        assertEq(mover.code, hex"3d35ff");
+        assertEq(mover, SafeTransferLib.ETH_MOVER);
+    }
+
+    function _deployOneTimeVault(address to, uint256 amount) internal returns (address vault) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            to := shr(96, shl(96, to)) // Clean upper 96 bits.
+            for {} 1 {} {
+                let m := mload(0x40)
+                // If the mover is missing or bricked, deploy a minimal accrual contract
+                // that withdraws all ETH to `to` when being called only by `to`.
+                mstore(
+                    add(m, 0x1f), 0x33146025575b600160005260206000f35b3d3d3d3d47335af1601a573d3dfd
+                )
+                mstore(m, or(to, shl(160, 0x6034600b3d3960343df3fe73)))
+                // Compute and store the bytecode hash.
+                mstore8(0x00, 0xff) // Write the prefix.
+                mstore(0x35, keccak256(m, 0x3f))
+                mstore(0x01, shl(96, address())) // Deployer.
+                mstore(0x15, 0) // Salt.
+                vault := keccak256(0x00, 0x55)
+                if iszero(
+                    mul(
+                        returndatasize(),
+                        call(gas(), vault, amount, codesize(), 0x00, codesize(), 0x00)
+                    )
+                ) { if iszero(create2(0, m, 0x3f, 0)) { revert(codesize(), codesize()) } } // For gas estimation.
+
+                mstore(0x40, m)
+                break
+            }
+        }
+    }
 }
