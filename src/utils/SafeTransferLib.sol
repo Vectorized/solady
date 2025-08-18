@@ -64,7 +64,7 @@ library SafeTransferLib {
     address internal constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
     /// @dev The canonical address of the `SELFDESTRUCT` ETH mover.
-    ///
+    /// See: https://gist.github.com/Vectorized/1cb8ad4cf393b1378e08f23f79bd99fa
     /// [Etherscan](https://etherscan.io/address/0x00000000000073c48c8055bD43D1A53799176f0D)
     address internal constant ETH_MOVER = 0x00000000000073c48c8055bD43D1A53799176f0D;
 
