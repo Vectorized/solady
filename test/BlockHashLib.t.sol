@@ -16,7 +16,7 @@ contract BlockHashLibTest is SoladyTest {
         uint256 simulationBlockNumber,
         uint256 queryBlockNumber,
         uint256 savedBlockedNumber,
-        bytes32 h
+        bytes32 hashToSave
     ) public {
         if (_randomChance(2)) {
             vm.etch(BlockHashLib.HISTORY_STORAGE_ADDRESS, _HISTORY_STORAGE_BYTECODE);
@@ -26,10 +26,10 @@ contract BlockHashLibTest is SoladyTest {
 
         vm.roll(savedBlockedNumber + 1);
         vm.prank(SYSTEM_ADDRESS);
-        (bool success,) = BlockHashLib.HISTORY_STORAGE_ADDRESS.call(abi.encode(h));
+        (bool success,) = BlockHashLib.HISTORY_STORAGE_ADDRESS.call(abi.encode(hashToSave));
         require(success);
 
-        vm.setBlockhash(savedBlockedNumber, h);
+        vm.setBlockhash(savedBlockedNumber, hashToSave);
 
         vm.roll(simulationBlockNumber);
 
