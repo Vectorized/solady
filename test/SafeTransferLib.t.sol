@@ -1267,6 +1267,8 @@ contract SafeTransferLibTest is SoladyTest {
     }
 
     function safeMoveETH(address to, uint256 amount) public returns (address) {
+        if (_randomChance(2)) _misalignFreeMemoryPointer();
+        if (_randomChance(2)) _brutalizeMemory();
         return SafeTransferLib.safeMoveETH(_brutalized(to), amount);
     }
 
