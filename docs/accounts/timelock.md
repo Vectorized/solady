@@ -30,8 +30,8 @@ and `...` is the remaining 22 bytes which can be anything. For ease of mind, jus
 
 <b>Inherits:</b>  
 
-- [`accounts/ERC7821.sol`](accounts/erc7821.md)  
-- [`auth/EnumerableRoles.sol`](auth/enumerableroles.md)  
+- [`accounts/ERC7821.sol`](./ERC7821.sol)  
+- [`auth/EnumerableRoles.sol`](../auth/EnumerableRoles.sol)  
 
 
 <!-- customintro:start --><!-- customintro:end -->

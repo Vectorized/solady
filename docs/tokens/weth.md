@@ -7,7 +7,7 @@ Simple Wrapped Ether implementation.
 
 <b>Inherits:</b>  
 
-- [`ERC20.sol`](erc20.md)  
+- [`tokens/ERC20.sol`](./ERC20.sol)  
 
 
 <!-- customintro:start --><!-- customintro:end -->

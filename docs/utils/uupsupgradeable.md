@@ -11,7 +11,7 @@ which do not store the implementation at `_ERC1967_IMPLEMENTATION_SLOT`.
 
 <b>Inherits:</b>  
 
-- [`utils/CallContextChecker.sol`](utils/callcontextchecker.md)  
+- [`utils/CallContextChecker.sol`](./CallContextChecker.sol)  
 
 
 <!-- customintro:start --><!-- customintro:end -->

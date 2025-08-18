@@ -76,7 +76,7 @@ bytes internal constant EIP7702_PROXY_CREATION_CODE =
 ```
 
 The creation code for the EIP7702Proxy.   
-This is generated from [`EIP7702Proxy.sol`](accounts/eip7702proxy.md) with exact compilation settings.
+This is generated from [`EIP7702Proxy.sol`](./EIP7702Proxy.sol) with exact compilation settings.
 
 ### EIP7702_PROXY_MINIMAL_CODE_HASH
 
@@ -85,7 +85,7 @@ bytes32 internal constant EIP7702_PROXY_MINIMAL_CODE_HASH =
     0xf8710866f390ac7c12640457f9cb9663657ac8168b7d4ce6418a982932b3043e
 ```
 
-The keccak256 of runtime code for [`EIP7702Proxy.sol`](accounts/eip7702proxy.md) with exact compilation settings,   
+The keccak256 of runtime code for [`EIP7702Proxy.sol`](./EIP7702Proxy.sol) with exact compilation settings,   
 with immutables zeroized and without the CBOR metadata.
 
 ### EIP7702_PROXY_MINIMAL_CODE_LENGTH
@@ -94,7 +94,7 @@ with immutables zeroized and without the CBOR metadata.
 uint256 internal constant EIP7702_PROXY_MINIMAL_CODE_LENGTH = 0x1ba
 ```
 
-The length of the runtime code for [`EIP7702Proxy.sol`](accounts/eip7702proxy.md) with exact compilation settings,   
+The length of the runtime code for [`EIP7702Proxy.sol`](./EIP7702Proxy.sol) with exact compilation settings,   
 with immutables zeroized and without the CBOR metadata.
 
 ## Authority And Proxy Operations

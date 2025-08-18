@@ -14,7 +14,7 @@ the nomenclature for the 2-step ownership handover may be unique to this codebas
 
 <b>Inherits:</b>  
 
-- [`auth/Ownable.sol`](auth/ownable.md)  
+- [`auth/Ownable.sol`](./Ownable.sol)  
 
 
 <!-- customintro:start --><!-- customintro:end -->
