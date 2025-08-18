@@ -45,6 +45,16 @@ error ExceedsCapacity()
 
 Cannot accommodate a new unique value with the capacity.
 
+## Constants
+
+### NOT_FOUND
+
+```solidity
+uint256 internal constant NOT_FOUND = type(uint256).max
+```
+
+The index to represent a value that does not exist.
+
 ## Structs
 
 ### AddressSet
@@ -539,3 +549,58 @@ function at(Uint8Set storage set, uint256 i)
 ```
 
 Returns the element at index `i` in the set. Reverts if `i` is out-of-bounds.
+
+### indexOf(AddressSet,address)
+
+```solidity
+function indexOf(AddressSet storage set, address value)
+    internal
+    view
+    returns (uint256 result)
+```
+
+Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+
+### indexOf(Bytes32Set,bytes32)
+
+```solidity
+function indexOf(Bytes32Set storage set, bytes32 value)
+    internal
+    view
+    returns (uint256 result)
+```
+
+Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+
+### indexOf(Uint256Set,uint256)
+
+```solidity
+function indexOf(Uint256Set storage set, uint256 i)
+    internal
+    view
+    returns (uint256 result)
+```
+
+Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+
+### indexOf(Int256Set,int256)
+
+```solidity
+function indexOf(Int256Set storage set, int256 i)
+    internal
+    view
+    returns (uint256 result)
+```
+
+Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
+
+### indexOf(Uint8Set,uint8)
+
+```solidity
+function indexOf(Uint8Set storage set, uint8 value)
+    internal
+    view
+    returns (uint256 result)
+```
+
+Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.

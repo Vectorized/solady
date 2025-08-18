@@ -13,7 +13,7 @@ jobs:
         profile: [invariant-intense-0,invariant-intense-1,invariant-intense-2,invariant-intense-3]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
