@@ -357,6 +357,7 @@ contract LibBitTest is SoladyTest {
         assertEq(computed, _toNibblesOriginal(s));
     }
 
+    // Original code from Optimism (MIT-licensed): https://github.com/ethereum-optimism/optimism/blob/1bfc93f7c1fe1846217795a1f6051e1b0260f597/packages/contracts-bedrock/src/libraries/Bytes.sol#L94
     function _toNibblesOriginal(bytes memory input) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
