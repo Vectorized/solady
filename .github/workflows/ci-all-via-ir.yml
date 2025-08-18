@@ -13,7 +13,7 @@ jobs:
         profile: [via-ir-0,via-ir-1,via-ir-2,via-ir-3]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
