@@ -78,27 +78,30 @@ jobs:
             forge test --fuzz-runs 5000
           )
 
-  tests-ithaca:
-    name: Forge Ithaca Testing
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        profile: [post-cancun,post-cancun-via-ir]
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install Foundry Nightly
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: stable
-      - name: Install Dependencies
-        run: forge install
-      - name: Run Tests with ${{ matrix.profile }}
-        run: |
-          if [[ "${{ matrix.profile }}" == "post-cancun" ]]; then
-            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28
-          elif [[ "${{ matrix.profile }}" == "post-cancun-via-ir" ]]; then
-            FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir
-          fi
+  # Disable for now until we can use `foundry.toml` setting to override the
+  # transaction gas limit. See: EIP-7825.
+  # 
+  # tests-ithaca:
+  #   name: Forge Ithaca Testing
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       profile: [post-cancun,post-cancun-via-ir]
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Install Foundry Nightly
+  #       uses: foundry-rs/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
+  #     - name: Install Dependencies
+  #       run: forge install
+  #     - name: Run Tests with ${{ matrix.profile }}
+  #       run: |
+  #         if [[ "${{ matrix.profile }}" == "post-cancun" ]]; then
+  #           FOUNDRY_PROFILE=ithaca forge test --use 0.8.28
+  #         elif [[ "${{ matrix.profile }}" == "post-cancun-via-ir" ]]; then
+  #           FOUNDRY_PROFILE=ithaca forge test --use 0.8.28 --via-ir
+  #         fi
 
   codespell:
     runs-on: ${{ matrix.os }}
