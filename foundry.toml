@@ -10,6 +10,7 @@ auto_detect_solc = false
 optimizer = true
 optimizer_runs = 1_000
 gas_limit = 100_000_000 # ETH is 30M, but we use a higher value.
+block_gas_limit = 100_000_000
 skip = ["*/*7702*", "*/*Transient*", "*/ext/ithaca/*", "*/ext/zksync/*"]
 fs_permissions = [{ access = "read", path = "./test/data"}]
 remappings = [
@@ -31,7 +32,6 @@ skip = []
 [profile.ithaca]
 evm_version = "cancun"
 odyssey = true
-gas_limit = 100_000_000
 skip = []
 
 [profile.solx]
