@@ -842,6 +842,32 @@ library LibBytes {
         }
     }
 
+    /// @dev Checks if `x` is in `a`. Assumes `a` has been checked.
+    function checkInCalldata(bytes calldata x, bytes calldata a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if or(
+                or(lt(x.offset, a.offset), gt(add(x.offset, x.length), add(a.length, a.offset))),
+                shr(64, or(x.length, x.offset))
+            ) { revert(0x00, 0x00) }
+        }
+    }
+
+    /// @dev Checks if `x` is in `a`. Assumes `a` has been checked.
+    function checkInCalldata(bytes[] calldata x, bytes calldata a) internal pure {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let e := sub(add(a.length, a.offset), 0x20)
+            if or(lt(x.offset, a.offset), shr(64, x.offset)) { revert(0x00, 0x00) }
+            for { let i := 0 } iszero(eq(x.length, i)) { i := add(i, 1) } {
+                let o := calldataload(add(x.offset, shl(5, i)))
+                let t := add(o, x.offset)
+                let l := calldataload(t)
+                if or(shr(64, or(l, o)), gt(add(t, l), e)) { revert(0x00, 0x00) }
+            }
+        }
+    }
+
     /// @dev Returns empty calldata bytes. For silencing the compiler.
     function emptyCalldata() internal pure returns (bytes calldata result) {
         /// @solidity memory-safe-assembly

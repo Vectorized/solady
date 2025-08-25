@@ -373,4 +373,48 @@ contract LibBytesTest is SoladyTest {
         assertEq(uint160(LibBytes.msbToAddress(x)), msb);
         assertEq(uint160(LibBytes.lsbToAddress(x)), lsb);
     }
+
+    function testCheckInCalldata(bytes memory child) public view {
+        this.checkInCalldata(child, abi.encode(child));
+    }
+
+    function testCheckInCalldata() public pure {
+        LibBytes.checkInCalldata(msg.data, msg.data);
+    }
+
+    function checkInCalldata(bytes calldata expectedChild, bytes calldata encoded) public pure {
+        bytes calldata child;
+        /// @solidity memory-safe-assembly
+        assembly {
+            child.offset := add(0x20, add(encoded.offset, calldataload(encoded.offset)))
+            child.length := calldataload(add(encoded.offset, calldataload(encoded.offset)))
+        }
+        LibBytes.checkInCalldata(child, encoded);
+        LibBytes.checkInCalldata(child, msg.data);
+        LibBytes.checkInCalldata(encoded, msg.data);
+        require(keccak256(expectedChild) == keccak256(child));
+    }
+
+    function testCheckInCalldata(bytes[] memory children) public view {
+        this.checkInCalldata(children, abi.encode(children));
+    }
+
+    function checkInCalldata(bytes[] calldata expectedChildren, bytes calldata encoded)
+        public
+        pure
+    {
+        bytes[] calldata children;
+        /// @solidity memory-safe-assembly
+        assembly {
+            children.offset := add(0x20, add(encoded.offset, calldataload(encoded.offset)))
+            children.length := calldataload(add(encoded.offset, calldataload(encoded.offset)))
+        }
+        LibBytes.checkInCalldata(children, encoded);
+        LibBytes.checkInCalldata(expectedChildren, msg.data);
+        LibBytes.checkInCalldata(children, msg.data);
+        require(expectedChildren.length == children.length);
+        for (uint256 i; i < children.length; ++i) {
+            require(keccak256(expectedChildren[i]) == keccak256(children[i]));
+        }
+    }
 }
