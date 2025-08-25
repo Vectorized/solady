@@ -449,6 +449,26 @@ function bytesInCalldata(bytes calldata a, uint256 offset)
 
 Returns bytes in calldata. Performs bounds checks.
 
+### checkInCalldata(bytes,bytes)
+
+```solidity
+function checkInCalldata(bytes calldata x, bytes calldata a)
+    internal
+    pure
+```
+
+Checks if `x` is in `a`. Assumes `a` has been checked.
+
+### checkInCalldata(bytes[],bytes)
+
+```solidity
+function checkInCalldata(bytes[] calldata x, bytes calldata a)
+    internal
+    pure
+```
+
+Checks if `x` is in `a`. Assumes `a` has been checked.
+
 ### emptyCalldata()
 
 ```solidity
