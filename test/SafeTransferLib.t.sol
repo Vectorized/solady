@@ -1218,6 +1218,10 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(to.balance, amount0);
         assertEq(address(this).balance, selfBalanceBefore - amount0);
 
+        if (_randomChance(2)) {
+            vm.etch(SafeTransferLib.ETH_MOVER, "");
+        }
+
         if (SafeTransferLib.ETH_MOVER.code.length == 0) {
             address vault = this.safeMoveETH(to, amount1);
             assertEq(vault.balance, amount1);

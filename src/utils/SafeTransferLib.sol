@@ -214,8 +214,10 @@ library SafeTransferLib {
                     let balanceBefore := balance(to) // Check via delta, in case `SELFDESTRUCT` is bricked.
                     mstore(0x00, to)
                     pop(call(gas(), mover, amount, 0x00, 0x20, codesize(), 0x00))
-                    if iszero(lt(add(amount, balance(to)), balanceBefore)) { break }
-                    if lt(selfBalanceBefore, selfbalance()) { invalid() } // Just in case.
+                    // If `address(to).balance >= amount + balanceBefore`, skip vault workflow.
+                    if iszero(lt(balance(to), add(amount, balanceBefore))) { break }
+                    // Just in case `SELFDESTRUCT` is changed to not revert and do nothing.
+                    if lt(selfBalanceBefore, selfbalance()) { invalid() }
                 }
                 let m := mload(0x40)
                 // If the mover is missing or bricked, deploy a minimal vault
