@@ -214,7 +214,7 @@ library SafeTransferLib {
                     let balanceBefore := balance(to) // Check via delta, in case `SELFDESTRUCT` is bricked.
                     mstore(0x00, to)
                     pop(call(gas(), mover, amount, 0x00, 0x20, codesize(), 0x00))
-                    if iszero(lt(add(amount, balance(to)), balanceBefore)) { break }
+                    if iszero(lt(balance(to), add(amount, balanceBefore))) { break }
                     if lt(selfBalanceBefore, selfbalance()) { invalid() } // Just in case.
                 }
                 let m := mload(0x40)
