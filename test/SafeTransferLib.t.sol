@@ -1203,7 +1203,7 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(to.balance, amount0 + amount1);
     }
 
-    function safeMoveETHViaMover(bytes32) public {
+    function testSafeMoveETHViaMover(bytes32) public {
         _deployETHMover();
 
         address to = _randomHashedAddress();
@@ -1219,12 +1219,12 @@ contract SafeTransferLibTest is SoladyTest {
         assertEq(address(this).balance, selfBalanceBefore - amount0);
 
         if (SafeTransferLib.ETH_MOVER.code.length == 0) {
-            address vault = this.safeMoveETH(to, amount0);
+            address vault = this.safeMoveETH(to, amount1);
             assertEq(vault.balance, amount1);
             assertEq(to.balance, amount0);
-            assertEq(address(this).balance, selfBalanceBefore - amount0);
+            assertEq(address(this).balance, selfBalanceBefore - amount0 - amount1);
         } else {
-            assertEq(this.safeMoveETH(to, amount0), address(0));
+            assertEq(this.safeMoveETH(to, amount1), address(0));
             assertEq(to.balance, amount0 + amount1);
             assertEq(address(this).balance, selfBalanceBefore - amount0 - amount1);
         }
