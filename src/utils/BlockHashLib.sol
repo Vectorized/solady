@@ -22,10 +22,10 @@ library BlockHashLib {
     /// consistent with the EVM's native `BLOCKHASH` behavior.
     function blockHash(uint256 blockNumber) internal view returns (bytes32 result) {
         unchecked {
-            // If `blockNumber + 256` overflows:
-            // - Typical chain height (`block.number > 255`) -> `staticcall` -> 0.
-            // - Very early chain (`block.number <= 255`) -> `blockhash` -> 0.
-            if (block.number <= blockNumber + 256) return blockhash(blockNumber);
+            // If `blockNumber + 257` overflows:
+            // - Typical chain height (`block.number > 256`) -> `staticcall` -> 0.
+            // - Very early chain (`block.number <= 256`) -> `blockhash` -> 0.
+            if (block.number < blockNumber + 257) return blockhash(blockNumber);
         }
         /// @solidity memory-safe-assembly
         assembly {
