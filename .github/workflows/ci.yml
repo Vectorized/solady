@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        profile: [post-cancun,post-cancun-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
+        profile: [post-prague,post-prague-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
     steps:
       - uses: actions/checkout@v5
       - name: Install Foundry Stable
@@ -27,12 +27,12 @@ jobs:
         run: forge install
       - name: Run Tests with ${{ matrix.profile }}
         run: >
-          ( [ "${{ matrix.profile }}" = "post-cancun" ] &&
-            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.30 &&
+          ( [ "${{ matrix.profile }}" = "post-prague" ] &&
+            FOUNDRY_PROFILE=post_prague forge test --use 0.8.30 &&
             FOUNDRY_PROFILE=zksync forge test --use 0.8.30
           ) ||
-          ( [ "${{ matrix.profile }}" = "post-cancun-via-ir" ] &&
-            FOUNDRY_PROFILE=post_cancun forge test --use 0.8.30 --via-ir &&
+          ( [ "${{ matrix.profile }}" = "post-prague-via-ir" ] &&
+            FOUNDRY_PROFILE=post_prague forge test --use 0.8.30 --via-ir &&
             FOUNDRY_PROFILE=zksync forge test --use 0.8.30 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
