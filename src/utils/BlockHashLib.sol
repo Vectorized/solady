@@ -82,7 +82,7 @@ library BlockHashLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let prefix := sub(byte(0, calldataload(header.offset)), 0xF6)
+            let prefix := sub(byte(0, calldataload(header.offset)), 0xF6) // List prefix
             let pos :=
                 mul(and(0xFFFFF, shr(mul(0x14, field), LEADING_FIELDS_POS_TABLE)), lt(field, 0x7))
             start := add(and(0xFF, pos), prefix)
