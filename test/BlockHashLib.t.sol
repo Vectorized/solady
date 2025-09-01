@@ -72,10 +72,9 @@ contract BlockHashLibTest is SoladyTest {
             cd = new bytes[](1);
             cd[0] = abi.encodeWithSelector(this.checkLeadingPos.selector, _ETH_BLOCK_23270177);
         }
-        if (selector == this.testVerifyBlockHeader.selector) {
+        if (selector == this.testVerifyBlockHash.selector) {
             cd = new bytes[](1);
-            cd[0] =
-                abi.encodeWithSelector(this.checkVerifyBlockHeader.selector, _ETH_BLOCK_23270177);
+            cd[0] = abi.encodeWithSelector(this.checkVerifyBlockHash.selector, _ETH_BLOCK_23270177);
         }
     }
 
@@ -142,13 +141,13 @@ contract BlockHashLibTest is SoladyTest {
         }
     }
 
-    function checkVerifyBlockHeader(bytes calldata h) public {
+    function checkVerifyBlockHash(bytes calldata h) public {
         vm.roll(23270177 + 1);
         vm.setBlockhash(23270177, _ETH_BLOCK_HASH_23270177);
-        assertEq(BlockHashLib.verifyBlockHeader(h, 23270177), _ETH_BLOCK_HASH_23270177);
+        assertEq(BlockHashLib.verifyBlockHash(h, 23270177), _ETH_BLOCK_HASH_23270177);
     }
 
     function testLeadingPos() public view {}
 
-    function testVerifyBlockHeader() public view {}
+    function testVerifyBlockHash() public view {}
 }

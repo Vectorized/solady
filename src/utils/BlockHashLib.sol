@@ -54,7 +54,7 @@ library BlockHashLib {
     }
 
     /// @dev Returns whether the hash of a provided RLP-encoded block `header` equals the block hash at `blockNumber`.
-    function verifyBlockHeader(bytes calldata header, uint256 blockNumber)
+    function verifyBlockHash(bytes calldata header, uint256 blockNumber)
         internal
         view
         returns (bytes32 result)
@@ -63,7 +63,7 @@ library BlockHashLib {
         /// @solidity memory-safe-assembly
         assembly {
             calldatacopy(mload(0x40), header.offset, header.length)
-            if xor(result, keccak256(mload(0x40), header.length)) {
+            if iszero(eq(result, keccak256(mload(0x40), header.length))) {
                 mstore(0x00, 0x464db2f8) // InvalidBlockHeader()
                 revert(0x1c, 0x04)
             }
