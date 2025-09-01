@@ -19,8 +19,9 @@ remappings = [
 [profile.pre_global_structs]
 skip = ["*/g/*", "*/*7702*", "*/*BlockHashLib*", "*/*Transient*", "*/ext/ithaca/*", "*/ext/zksync/*"]
 
-[profile.post_cancun]
-evm_version = "cancun"
+
+[profile.post_prague]
+evm_version = "prague"
 skip = ["*/ext/ithaca/*"]
 
 [profile.zksync]
