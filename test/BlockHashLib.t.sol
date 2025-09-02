@@ -102,8 +102,8 @@ contract BlockHashLibTest is SoladyTest {
         assertEq(actual.transactionsRoot, expected.transactionsRoot, "transactionsRoot");
         assertEq(actual.receiptsRoot, expected.receiptsRoot, "receiptsRoot");
         assertEq(
-            keccak256(bytes.concat(actual.logsBloom)),
-            keccak256(bytes.concat(expected.logsBloom)),
+            keccak256(abi.encodePacked(actual.logsBloom)),
+            keccak256(abi.encodePacked(expected.logsBloom)),
             "logsBloom"
         );
     }
