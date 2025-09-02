@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @dev Ethereum block header fields relevent to historical MPT proofs.
+/// @dev Ethereum block header fields relevant to historical MPT proofs.
 struct ShortHeader {
     bytes32 parentHash;
     bytes32 stateRoot;
