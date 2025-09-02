@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+/// @dev Ethereum block header fields relevent to historical MPT proofs.
+struct ShortHeader {
+    bytes32 parentHash;
+    bytes32 stateRoot;
+    bytes32 transactionsRoot;
+    bytes32 receiptsRoot;
+    bytes32[8] logsBloom;
+}
+
 /// @notice Library for accessing block hashes way beyond the 256-block limit.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/BlockHashLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Blockhash.sol)
@@ -19,16 +28,6 @@ library BlockHashLib {
     /// @dev Address of the EIP-2935 history storage contract.
     /// See: https://eips.ethereum.org/EIPS/eip-2935
     address internal constant HISTORY_STORAGE_ADDRESS = 0x0000F90827F1C53a10cb7A02335B175320002935;
-
-    /// @dev Table of leading block header fields (indices 0-6), each entry is 20 bits: [12 bits: field length][8 bits: starting position]
-    ///   0: parentHash          - starts = 1,   length 32 bytes
-    ///   1: ommersHash        - starts = 34,  length 32 bytes (Now constant `Keccak256(RLP())`)
-    ///   2: beneficiary          - starts = 67,  length 20 bytes
-    ///   3: stateRoot            - starts = 88,  length 32 bytes
-    ///   4: transactionsRoot  - starts = 121, length 32 bytes
-    ///   5: receiptsRoot        - starts = 154, length 32 bytes
-    ///   6: logsBloom           - starts = 189, length 256 bytes
-    uint256 internal constant LEADING_FIELDS_POS_TABLE = 0x100bd0209a0207902058014430202202001;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         OPERATIONS                         */
@@ -70,23 +69,28 @@ library BlockHashLib {
         }
     }
 
-    /// @dev Retrieves the position of a leading field (field indices 0-6) from an RLP-encoded block header.
+    /// @dev Retrieves the most relevant fields for MPT proofs from an RLP-encoded block `header`.
     /// Leading fields are always present and have fixed sizes and lengths.
     /// This function allows efficient extraction of these fields from calldata without full RLP decoding.
-    /// For the specification of field order and sizes, please refer to p. 6 of the Ethereum Yellow Paper:
+    /// For the specification of field order and sizes, please refer to prefix. 6 of the Ethereum Yellow Paper:
     /// (https://ethereum.github.io/yellowpaper/paper.pdf)
-    function leadingPos(bytes calldata header, uint256 field)
+    /// and the Ethereum Wiki (https://eth.wiki/fundamentals/rlp).
+    function toShortHeader(bytes calldata header)
         internal
         pure
-        returns (uint256 start, uint256 length)
+        returns (ShortHeader memory result)
     {
         /// @solidity memory-safe-assembly
         assembly {
-            let prefix := sub(byte(0, calldataload(header.offset)), 0xF6) // List prefix
-            let pos :=
-                mul(and(0xFFFFF, shr(mul(0x14, field), LEADING_FIELDS_POS_TABLE)), lt(field, 0x7))
-            start := add(and(0xFF, pos), prefix)
-            length := shr(0x8, pos)
+            let m := mload(0x40)
+            let o := add(header.offset, sub(byte(0, calldataload(header.offset)), 0xF6))
+            mstore(result, calldataload(add(1, o))) // parentHash
+            mstore(add(0x20, result), calldataload(add(88, o))) // stateRoot
+            mstore(add(0x40, result), calldataload(add(121, o))) // transactionsRoot
+            mstore(add(0x60, result), calldataload(add(154, o))) // receiptsRoot
+            mstore(add(0x80, result), m) // logsBloom
+            calldatacopy(m, add(189, o), 0x100)
+            mstore(0x40, add(m, 0x100)) // Allocate the memory.
         }
     }
 }
