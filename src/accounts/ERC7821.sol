@@ -60,6 +60,7 @@ contract ERC7821 is Receiver {
     /// - `0x01000000000000000000...`: Single batch. Does not support optional `opData`.
     /// - `0x01000000000078210001...`: Single batch. Supports optional `opData`.
     /// - `0x01000000000078210002...`: Batch of batches.
+    /// - `0x01000000000078210003...`: Single batch with common `to` address and optional `opData`.
     ///
     /// For the "batch of batches" mode, each batch will be recursively passed into
     /// `execute` internally with mode `0x01000000000078210001...`.
@@ -230,6 +231,9 @@ contract ERC7821 is Receiver {
         revert(); // In your override, replace this with logic to operate on `opData`.
     }
 
+    /// @dev Executes the calls.
+    /// Reverts and bubbles up error if any call fails.
+    /// The `mode` and `executionData` are passed along in case there's a need to use them.
     function _execute(
         bytes32 mode,
         bytes calldata executionData,
@@ -264,6 +268,9 @@ contract ERC7821 is Receiver {
         }
     }
 
+    /// @dev Executes the calls.
+    /// Reverts and bubbles up error if any call fails.
+    /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
     function _execute(CallSansTo[] calldata calls, address to, bytes32 keyHash) internal virtual {
         unchecked {
             uint256 i;
@@ -298,6 +305,7 @@ contract ERC7821 is Receiver {
         }
     }
 
+    /// @dev Convenience function for getting `calls[i]`, without bounds checks.
     function _get(CallSansTo[] calldata calls, uint256 i)
         internal
         view
