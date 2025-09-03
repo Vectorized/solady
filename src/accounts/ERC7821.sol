@@ -137,13 +137,16 @@ contract ERC7821 is Receiver {
         }
     }
 
+    /// @dev For execution of a batch of batches with a common `to` address.
+    /// @dev if to == address(0), it will be replaced with address(this)
+    /// Execution Data: abi.encode(address to, CallSansTo[] calls, bytes opData)
     function _executeBatchCommonTo(bytes32 mode, bytes calldata executionData) internal virtual {
-        // Execution Data: abi.encode(address to, CallSansTo[] calls, bytes opData)
         address to;
         CallSansTo[] calldata calls;
         bytes calldata opData;
 
-        assembly ("memory-safe") {
+        /// @solidity memory-safe-assembly
+        assembly {
             to := calldataload(executionData.offset)
 
             let callOffset :=
