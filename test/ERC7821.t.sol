@@ -275,4 +275,18 @@ contract ERC7821Test is SoladyTest {
     function pushBytes(bytes memory x) public {
         _bytes.push(x);
     }
+
+    function testERC7821CommonToWithZeroAddress() public {
+        // Test that when to=address(0), it gets replaced with address(this) (the MockERC7821 contract)
+        // We'll call executeDirect which directly calls the internal _execute function
+        ERC7821.CallSansTo[] memory calls = new ERC7821.CallSansTo[](1);
+        calls[0].value = 0;
+        calls[0].data = abi.encodeWithSignature("setAuthorizedCaller(address,bool)", address(0x123), true);
+
+        // This should replace address(0) with address(mbe) and call setAuthorizedCaller on itself
+        mbe.executeDirect(calls, address(0));
+
+        // Verify the call succeeded by checking that address(0x123) is now authorized
+        assertTrue(mbe.isAuthorizedCaller(address(0x123)));
+    }
 }

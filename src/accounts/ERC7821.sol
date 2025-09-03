@@ -264,6 +264,9 @@ contract ERC7821 is Receiver {
     function _execute(CallSansTo[] calldata calls, address to, bytes32 keyHash) internal virtual {
         unchecked {
             uint256 i;
+            if (to == address(0)) {
+                to = address(this);
+            }
             if (calls.length == uint256(0)) return;
             do {
                 (uint256 value, bytes calldata data) = _get(calls, i);
