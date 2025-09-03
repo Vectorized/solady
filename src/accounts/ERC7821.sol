@@ -25,6 +25,11 @@ contract ERC7821 is Receiver {
         bytes data; // Calldata to send with the call.
     }
 
+    struct CallSansTo {
+        uint256 value; // Amount of native currency (i.e. Ether) to send.
+        bytes data; // Calldata to send with the call.
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -73,8 +78,10 @@ contract ERC7821 is Receiver {
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual {
         uint256 id = _executionModeId(mode);
         if (id == 3) return _executeBatchOfBatches(mode, executionData);
+        if (id == 4) return _executeBatchCommonTo(mode, executionData);
         Call[] calldata calls;
         bytes calldata opData;
+
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(id) {
@@ -126,7 +133,37 @@ contract ERC7821 is Receiver {
             id := eq(m, 0x01000000000000000000) // 1.
             id := or(shl(1, eq(m, 0x01000000000078210001)), id) // 2.
             id := or(mul(3, eq(m, 0x01000000000078210002)), id) // 3.
+            id := or(mul(4, eq(m, 0x01000000000078210003)), id) // 4.
         }
+    }
+
+    function _executeBatchCommonTo(bytes32 mode, bytes calldata executionData) internal virtual {
+        // Execution Data: abi.encode(address to, CallSansTo[] calls, bytes opData)
+        address to;
+        CallSansTo[] calldata calls;
+        bytes calldata opData;
+
+        assembly ("memory-safe") {
+            to := calldataload(executionData.offset)
+
+            let callOffset :=
+                add(executionData.offset, calldataload(add(0x20, executionData.offset)))
+            calls.offset := add(callOffset, 0x20)
+            calls.length := calldataload(callOffset)
+
+            // This line is needed to ensure that opdata is valid in all code paths.
+            // Otherwise the compiler complains.
+            opData.length := 0
+            // If the offset of `executionData` allows for `opData`, and the mode supports it.
+            if gt(calldataload(add(0x20, executionData.offset)), 0x40) {
+                let opDataOffset :=
+                    add(executionData.offset, calldataload(add(0x40, executionData.offset)))
+                opData.offset := add(opDataOffset, 0x20)
+                opData.length := calldataload(opDataOffset)
+            }
+        }
+
+        _execute(mode, executionData, to, calls, opData);
     }
 
     /// @dev For execution of a batch of batches.
@@ -190,6 +227,26 @@ contract ERC7821 is Receiver {
         revert(); // In your override, replace this with logic to operate on `opData`.
     }
 
+    function _execute(
+        bytes32 mode,
+        bytes calldata executionData,
+        address to,
+        CallSansTo[] calldata calls,
+        bytes calldata opData
+    ) internal virtual {
+        // Silence compiler warning on unused variables.
+        mode = mode;
+        executionData = executionData;
+        // Very basic auth to only allow this contract to be called by itself.
+        // Override this function to perform more complex auth with `opData`.
+        if (opData.length == uint256(0)) {
+            require(msg.sender == address(this));
+            // Remember to return `_execute(calls, extraData)` when you override this function.
+            return _execute(calls, to, bytes32(0));
+        }
+        revert(); // In your override, replace this with logic to operate on `opData`.
+    }
+
     /// @dev Executes the calls.
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
@@ -200,6 +257,17 @@ contract ERC7821 is Receiver {
             do {
                 (address to, uint256 value, bytes calldata data) = _get(calls, i);
                 _execute(to, value, data, extraData);
+            } while (++i != calls.length);
+        }
+    }
+
+    function _execute(CallSansTo[] calldata calls, address to, bytes32 keyHash) internal virtual {
+        unchecked {
+            uint256 i;
+            if (calls.length == uint256(0)) return;
+            do {
+                (uint256 value, bytes calldata data) = _get(calls, i);
+                _execute(to, value, data, keyHash);
             } while (++i != calls.length);
         }
     }
@@ -221,6 +289,22 @@ contract ERC7821 is Receiver {
                 returndatacopy(m, 0x00, returndatasize())
                 revert(m, returndatasize())
             }
+        }
+    }
+
+    function _get(CallSansTo[] calldata calls, uint256 i)
+        internal
+        view
+        virtual
+        returns (uint256 value, bytes calldata data)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let c := add(calls.offset, calldataload(add(calls.offset, shl(5, i))))
+            value := calldataload(c)
+            let o := add(c, calldataload(add(c, 0x20)))
+            data.offset := add(o, 0x20)
+            data.length := calldataload(o)
         }
     }
 
