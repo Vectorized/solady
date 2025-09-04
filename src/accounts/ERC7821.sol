@@ -274,8 +274,11 @@ contract ERC7821 is Receiver {
     function _execute(CallSansTo[] calldata calls, address to, bytes32 keyHash) internal virtual {
         unchecked {
             uint256 i;
-            if (to == address(0)) {
-                to = address(this);
+            // If `to` is address(0), it will be replaced with address(this)
+            /// @solidity memory-safe-assembly
+            assembly {
+                let t := shr(96, shl(96, to))
+                to := or(mul(address(), iszero(t)), t)
             }
             if (calls.length == uint256(0)) return;
             do {
