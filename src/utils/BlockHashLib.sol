@@ -70,11 +70,11 @@ library BlockHashLib {
     }
 
     /// @dev Retrieves the most relevant fields for MPT proofs from an RLP-encoded block `header`.
-    /// Leading fields are always present and have fixed sizes and lengths.
+    /// Leading fields are always present and have fixed offsets and lengths.
     /// This function allows efficient extraction of these fields from calldata without full RLP decoding.
-    /// For the specification of field order and sizes, please refer to prefix. 6 of the Ethereum Yellow Paper:
+    /// For the specification of field order and lengths, please refer to prefix. 6 of the Ethereum Yellow Paper:
     /// (https://ethereum.github.io/yellowpaper/paper.pdf)
-    /// and the Ethereum Wiki (https://eth.wiki/fundamentals/rlp).
+    /// and the Ethereum Wiki (https://epf.wiki/#/wiki/EL/RLP).
     function toShortHeader(bytes calldata header)
         internal
         pure
@@ -90,7 +90,7 @@ library BlockHashLib {
             mstore(add(0x60, result), calldataload(add(154, o))) // receiptsRoot
             mstore(add(0x80, result), m) // logsBloom
             calldatacopy(m, add(189, o), 0x100)
-            mstore(0x40, add(m, 0x100)) // Allocate the memory.
+            mstore(0x40, add(0x100, m)) // Allocate the memory.
         }
     }
 }
