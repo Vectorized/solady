@@ -603,7 +603,7 @@ contract TestPlus is Brutalizer {
         }
     }
 
-    /// @dev Increments the free memory pointer by a world.
+    /// @dev Increments the free memory pointer by a word.
     function _incrementFreeMemoryPointer() internal pure {
         uint256 word = 0x20;
         /// @solidity memory-safe-assembly
