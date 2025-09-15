@@ -544,7 +544,7 @@ function eq(bytes memory a, bytes32 b)
     returns (bool result)
 ```
 
-Returns `abi.decode(a, (bytes32)) == a`.
+Returns `abi.decode(a, (bytes32)) == b`.
 
 ## Byte Slice Hashing Operations
 
