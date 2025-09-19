@@ -231,7 +231,7 @@ contract LibCloneTest is SoladyTest {
         _checkArgsOnERC1967IBeaconProxy(instance, args);
     }
 
-    function testImplemenationOf(address implementation) public {
+    function testIImplementationOf(address implementation) public {
         _maybeBrutalizeMemory();
         bytes memory args = _truncateBytes(_randomBytes(), _ERC1967I_BEACON_PROXY_ARGS_MAX_LENGTH);
         address instance;
@@ -273,7 +273,7 @@ contract LibCloneTest is SoladyTest {
         _checkMemory();
     }
 
-    function testImplemenationOfGas() public {
+    function testImplementationOfGas() public {
         address implementation = address(123);
         bytes memory args = "1234564789";
         address instance;
