@@ -135,10 +135,10 @@ contract ERC7821 is Receiver {
 
     /// @dev For execution of a batch of batches with a common `to` address.
     /// @dev if to == address(0), it will be replaced with address(this)
-    /// Execution Data: abi.encode(address to, bytes[] datas, bytes opData)
+    /// Execution Data: abi.encode(address to, bytes[] dataArr, bytes opData)
     function _executeCalldataOptimal(bytes32 mode, bytes calldata executionData) internal virtual {
         address to;
-        bytes[] calldata datas;
+        bytes[] calldata dataArr;
         bytes calldata opData;
 
         /// @solidity memory-safe-assembly
@@ -147,8 +147,8 @@ contract ERC7821 is Receiver {
 
             let dataOffset :=
                 add(executionData.offset, calldataload(add(0x20, executionData.offset)))
-            datas.offset := add(dataOffset, 0x20)
-            datas.length := calldataload(dataOffset)
+            dataArr.offset := add(dataOffset, 0x20)
+            dataArr.length := calldataload(dataOffset)
 
             // This line is needed to ensure that opdata is valid in all code paths.
             // Otherwise the compiler complains.
@@ -162,7 +162,7 @@ contract ERC7821 is Receiver {
             }
         }
 
-        _execute(mode, executionData, to, datas, opData);
+        _execute(mode, executionData, to, dataArr, opData);
     }
 
     /// @dev For execution of a batch of batches.
@@ -233,7 +233,7 @@ contract ERC7821 is Receiver {
         bytes32 mode,
         bytes calldata executionData,
         address to,
-        bytes[] calldata datas,
+        bytes[] calldata dataArr,
         bytes calldata opData
     ) internal virtual {
         // Silence compiler warning on unused variables.
@@ -244,7 +244,7 @@ contract ERC7821 is Receiver {
         if (opData.length == uint256(0)) {
             require(msg.sender == address(this));
             // Remember to return `_execute(calls, extraData)` when you override this function.
-            return _execute(datas, to, bytes32(0));
+            return _execute(dataArr, to, bytes32(0));
         }
         revert(); // In your override, replace this with logic to operate on `opData`.
     }
@@ -263,12 +263,12 @@ contract ERC7821 is Receiver {
         }
     }
 
-    /// @dev Executes the datas, with a common `to` address.
+    /// @dev Executes the dataArr, with a common `to` address.
     /// @dev if to == address(0), it will be replaced with address(this)
     /// @dev value for all calls is set to 0
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
-    function _execute(bytes[] calldata datas, address to, bytes32 extraData) internal virtual {
+    function _execute(bytes[] calldata dataArr, address to, bytes32 extraData) internal virtual {
         unchecked {
             uint256 i;
             // If `to` is address(0), it will be replaced with address(this)
@@ -277,11 +277,11 @@ contract ERC7821 is Receiver {
                 let t := shr(96, shl(96, to))
                 to := or(mul(address(), iszero(t)), t)
             }
-            if (datas.length == uint256(0)) return;
+            if (dataArr.length == uint256(0)) return;
             do {
 
-                _execute(to, 0, datas[i], extraData);
-            } while (++i != datas.length);
+                _execute(to, 0, dataArr[i], extraData);
+            } while (++i != dataArr.length);
         }
     }
 

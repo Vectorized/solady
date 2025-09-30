@@ -58,12 +58,12 @@ contract ERC7821Test is SoladyTest {
         vm.pauseGasMetering();
         vm.deal(address(this), 1 ether);
 
-        bytes[] memory datas = new bytes[](2);
+        bytes[] memory dataArr = new bytes[](2);
 
-        datas[0] = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
-        datas[1] = abi.encodeWithSignature("returnsHash(bytes)", "lol");
+        dataArr[0] = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
+        dataArr[1] = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
-        bytes memory data = abi.encode(target, datas);
+        bytes memory data = abi.encode(target, dataArr);
         vm.resumeGasMetering();
 
         mbe.execute(_CALLDATA_OPTIMAL_MODE, data);
@@ -90,11 +90,11 @@ contract ERC7821Test is SoladyTest {
     function testERC7821CalldataOptimal(bytes memory opData) public {
         vm.deal(address(this), 1 ether);
 
-        bytes[] memory datas = new bytes[](2);
-        datas[0] = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
-        datas[1] = abi.encodeWithSignature("returnsHash(bytes)", "lol");
+        bytes[] memory dataArr = new bytes[](2);
+        dataArr[0] = abi.encodeWithSignature("returnsBytes(bytes)", "hehe");
+        dataArr[1] = abi.encodeWithSignature("returnsHash(bytes)", "lol");
 
-        mbe.execute(_CALLDATA_OPTIMAL_MODE, _encodeCalldataOptimal(target, datas, opData));
+        mbe.execute(_CALLDATA_OPTIMAL_MODE, _encodeCalldataOptimal(target, dataArr, opData));
 
         assertEq(mbe.lastOpData(), opData);
     }
@@ -110,11 +110,11 @@ contract ERC7821Test is SoladyTest {
     }
 
     function testERC7821CalldataOptimalForRevert() public {
-        bytes[] memory datas = new bytes[](1);
-        datas[0] = abi.encodeWithSignature("revertsWithCustomError()");
+        bytes[] memory dataArr = new bytes[](1);
+        dataArr[0] = abi.encodeWithSignature("revertsWithCustomError()");
 
         vm.expectRevert(CustomError.selector);
-        mbe.execute(_CALLDATA_OPTIMAL_MODE, _encodeCalldataOptimal(target, datas, ""));
+        mbe.execute(_CALLDATA_OPTIMAL_MODE, _encodeCalldataOptimal(target, dataArr, ""));
     }
 
     function _encode(ERC7821.Call[] memory calls, bytes memory opData)
@@ -125,12 +125,12 @@ contract ERC7821Test is SoladyTest {
         return abi.encode(calls, opData);
     }
 
-    function _encodeCalldataOptimal(address to, bytes[] memory datas, bytes memory opData)
+    function _encodeCalldataOptimal(address to, bytes[] memory dataArr, bytes memory opData)
         internal
         returns (bytes memory)
     {
-        if (_randomChance(2) && opData.length == 0) return abi.encode(to, datas);
-        return abi.encode(to, datas, opData);
+        if (_randomChance(2) && opData.length == 0) return abi.encode(to, dataArr);
+        return abi.encode(to, dataArr, opData);
     }
 
     struct Payload {
@@ -171,28 +171,28 @@ contract ERC7821Test is SoladyTest {
     function testERC7821CalldataOptimal(bytes32) public {
         vm.deal(address(this), 1 ether);
 
-        bytes[] memory datas = new bytes[](_randomUniform() & 3);
-        Payload[] memory payloads = new Payload[](datas.length);
+        bytes[] memory dataArr = new bytes[](_randomUniform() & 3);
+        Payload[] memory payloads = new Payload[](dataArr.length);
 
-        for (uint256 i; i < datas.length; ++i) {
+        for (uint256 i; i < dataArr.length; ++i) {
             bytes memory data = _truncateBytes(_randomBytes(), 0x1ff);
             payloads[i].data = data;
             if (_randomChance(2)) {
                 payloads[i].mode = 0;
-                datas[i] = abi.encodeWithSignature("returnsBytes(bytes)", data);
+                dataArr[i] = abi.encodeWithSignature("returnsBytes(bytes)", data);
             } else {
                 payloads[i].mode = 1;
-                datas[i] = abi.encodeWithSignature("returnsHash(bytes)", data);
+                dataArr[i] = abi.encodeWithSignature("returnsHash(bytes)", data);
             }
         }
 
-        mbe.executeDirect(datas, target);
+        mbe.executeDirect(dataArr, target);
 
-        if (datas.length != 0 && _randomChance(32)) {
-            datas[_randomUniform() % datas.length] =
+        if (dataArr.length != 0 && _randomChance(32)) {
+            dataArr[_randomUniform() % dataArr.length] =
                 abi.encodeWithSignature("revertsWithCustomError()");
             vm.expectRevert(CustomError.selector);
-            mbe.executeDirect(datas, target);
+            mbe.executeDirect(dataArr, target);
         }
     }
 
@@ -258,11 +258,11 @@ contract ERC7821Test is SoladyTest {
     function testERC7821CalldataOptimalWithZeroAddress() public {
         // Test that when to=address(0), it gets replaced with address(this) (the MockERC7821 contract)
         // We'll call executeDirect which directly calls the internal _execute function
-        bytes[] memory datas = new bytes[](1);
-        datas[0] = abi.encodeWithSignature("setAuthorizedCaller(address,bool)", address(0x123), true);
+        bytes[] memory dataArr = new bytes[](1);
+        dataArr[0] = abi.encodeWithSignature("setAuthorizedCaller(address,bool)", address(0x123), true);
 
         // This should replace address(0) with address(mbe) and call setAuthorizedCaller on itself
-        mbe.executeDirect(datas, address(0));
+        mbe.executeDirect(dataArr, address(0));
 
         // Verify the call succeeded by checking that address(0x123) is now authorized
         assertTrue(mbe.isAuthorizedCaller(address(0x123)));
