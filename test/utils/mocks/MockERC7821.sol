@@ -26,11 +26,11 @@ contract MockERC7821 is ERC7821, Brutalizer {
         bytes32,
         bytes calldata,
         address to,
-        CallSansTo[] calldata calls,
+        bytes[] calldata datas,
         bytes calldata opData
     ) internal virtual override {
         lastOpData = opData;
-        _execute(calls, to, bytes32(0));
+        _execute(datas, to, bytes32(0));
     }
 
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual override {
@@ -45,10 +45,10 @@ contract MockERC7821 is ERC7821, Brutalizer {
         _checkMemory();
     }
 
-    function executeDirect(CallSansTo[] calldata calls, address to) public payable virtual {
+    function executeDirect(bytes[] calldata datas, address to) public payable virtual {
         _misalignFreeMemoryPointer();
         _brutalizeMemory();
-        _execute(calls, to, bytes32(0));
+        _execute(datas, to, bytes32(0));
         _checkMemory();
     }
 
