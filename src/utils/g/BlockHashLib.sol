@@ -96,8 +96,12 @@ library BlockHashLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            // Just perform some minimal light bounds checking.
-            if iszero(
+            mstore(result, calldataload(add(4, encodedHeader.offset))) // `parentHash`.
+            mstore(add(0x20, result), calldataload(add(91, encodedHeader.offset))) // `stateRoot`.
+            mstore(add(0x40, result), calldataload(add(124, encodedHeader.offset))) // `transactionsRoot`.
+            mstore(add(0x60, result), calldataload(add(157, encodedHeader.offset))) // `receiptsRoot`.
+            calldatacopy(mload(add(0x80, result)), add(192, encodedHeader.offset), 0x100) // `logsBloom`.
+            if iszero( // Just perform some minimal light bounds checking.
                 and(
                     gt(encodedHeader.length, 447), // `0x100 + 192 - 1`.
                     eq(byte(0, calldataload(encodedHeader.offset)), 0xf9) // `0xff < len < 0x10000`.
@@ -106,11 +110,6 @@ library BlockHashLib {
                 mstore(0x00, 0x1a27c4e4) // `InvalidBlockHeaderEncoding()`.
                 revert(0x1c, 0x04)
             }
-            mstore(result, calldataload(add(4, encodedHeader.offset))) // `parentHash`.
-            mstore(add(0x20, result), calldataload(add(91, encodedHeader.offset))) // `stateRoot`.
-            mstore(add(0x40, result), calldataload(add(124, encodedHeader.offset))) // `transactionsRoot`.
-            mstore(add(0x60, result), calldataload(add(157, encodedHeader.offset))) // `receiptsRoot`.
-            calldatacopy(mload(add(0x80, result)), add(192, encodedHeader.offset), 0x100) // `logsBloom`.
         }
     }
 }
