@@ -2,9 +2,30 @@
 pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
-import {BlockHashLib, ShortHeader} from "../src/utils/BlockHashLib.sol";
+import {BlockHashLib} from "../src/utils/BlockHashLib.sol";
+import {LibRLP} from "../src/utils/LibRLP.sol";
 
 contract BlockHashLibTest is SoladyTest {
+    using LibRLP for *;
+
+    struct BlockHeader {
+        bytes32 parentHash;
+        bytes32 ommersHash;
+        bytes20 beneficiary;
+        bytes32 stateRoot;
+        bytes32 transactionsRoot;
+        bytes32 receiptsRoot;
+        bytes32[8] logsBloom;
+        bytes32 difficultyOrPrevrandao;
+        uint256 number;
+        uint256 gasLimit;
+        uint256 gasUsed;
+        uint256 timestamp;
+        bytes extraData;
+        bytes32 mixHash;
+        bytes8 nonce;
+    }
+
     uint256 internal startingBlock;
 
     address internal constant SYSTEM_ADDRESS = 0xffffFFFfFFffffffffffffffFfFFFfffFFFfFFfE;
@@ -67,54 +88,90 @@ contract BlockHashLibTest is SoladyTest {
         }
     }
 
-    function beforeTestSetup(bytes4 selector) public pure returns (bytes[] memory cd) {
-        if (selector == this.testToShortHeader.selector) {
-            cd = new bytes[](1);
-            cd[0] = abi.encodeWithSelector(this.checkToShortHeader.selector, _ETH_BLOCK_23270177);
-        }
-        if (selector == this.testVerifyBlockHash.selector) {
-            cd = new bytes[](1);
-            cd[0] = abi.encodeWithSelector(this.checkVerifyBlockHash.selector, _ETH_BLOCK_23270177);
-        }
-    }
-
-    function checkToShortHeader(bytes calldata h) public {
-        ShortHeader memory expected = ShortHeader({
-            parentHash: 0x1581f4448b16694d5a728161cd65f8c80b88f5352a6f5bd2d2315b970582958d,
-            stateRoot: 0x10d2afa5dabcf2dbfe3aa82b758427938e07880bd6fef3c82c404d0dd7c3f0f3,
-            transactionsRoot: 0xf81230c715a462c827898bf2e337982907a7af90e5be20f911785bda05dab93c,
-            receiptsRoot: 0x740f11bc75cf25e40d78d892d2e03083eaa573e5b4c26913fcc1b833db854c94,
-            logsBloom: [
-                bytes32(0x85f734fb06ea8fe377abbcb2e27f9ac99751ba817dc327327db101fd76f964ed), // lol
-                0x0b7ca161f148fc165b9e5b575dc7473f17f4b8ebbf4a7b02b3e1e642197f27b2,
-                0xaf54680834449abaf833619ac7d18afb50b19d5f6944dca0dc952edfdd983757,
-                0x3783c339ee6a36353ce6e536eaaf29fcd569c426091d4e24568dc353347f98c7,
-                0x4fb6f8c91d68d358467c437563f66566377fe6c3f9e8301dbeb5fc7e7adee7a8,
-                0x5ef5f8fa905cedbaf26601e21ba91646cac4034601e51d889d49739ee6990943,
-                0xa6a41927660f68e1f50b9f9209ee29551a7dae478d88e0547eefc83334ea770b,
-                0xb6fbac620fc47479c2c59389622bf32f55e36a75e56a5fc47c38bf8ef211fc0e
-            ]
-        });
-
-        ShortHeader memory actual = BlockHashLib.toShortHeader(h);
-        assertEq(actual.parentHash, expected.parentHash, "parentHash");
-        assertEq(actual.stateRoot, expected.stateRoot, "stateRoot");
-        assertEq(actual.transactionsRoot, expected.transactionsRoot, "transactionsRoot");
-        assertEq(actual.receiptsRoot, expected.receiptsRoot, "receiptsRoot");
-        assertEq(
-            keccak256(abi.encodePacked(actual.logsBloom)),
-            keccak256(abi.encodePacked(expected.logsBloom)),
-            "logsBloom"
-        );
-    }
-
-    function checkVerifyBlockHash(bytes calldata h) public {
+    function testVerifyBlock() public {
         vm.roll(23270177 + 1);
         vm.setBlockhash(23270177, _ETH_BLOCK_HASH_23270177);
-        assertEq(BlockHashLib.verifyBlockHash(h, 23270177), _ETH_BLOCK_HASH_23270177);
+        assertEq(this.verifyBlock(_ETH_BLOCK_23270177, 23270177), _ETH_BLOCK_HASH_23270177);
     }
 
-    function testToShortHeader() public view {}
+    function verifyBlock(bytes calldata blockHeader, uint256 blockNumber)
+        public
+        view
+        returns (bytes32)
+    {
+        return BlockHashLib.verifyBlock(blockHeader, blockNumber);
+    }
 
-    function testVerifyBlockHash() public view {}
+    function _randomBlockHeader() internal returns (BlockHeader memory b, bytes memory encoded) {
+        if (_randomChance(2)) {
+            b.parentHash = bytes32(_random());
+            b.ommersHash = bytes32(_random());
+            b.beneficiary = bytes20(bytes32(_random()));
+            b.stateRoot = bytes32(_random());
+            b.transactionsRoot = bytes32(_random());
+            b.receiptsRoot = bytes32(_random());
+        }
+        if (_randomChance(2)) {
+            for (uint256 i; i < 8; ++i) {
+                b.logsBloom[i] = bytes32(_random());
+            }
+        }
+        if (_randomChance(2)) {
+            b.difficultyOrPrevrandao = bytes32(_random());
+            b.number = _random();
+            b.gasLimit = _random();
+            b.gasUsed = _random();
+            b.timestamp = _random();
+            b.extraData = _truncateBytes(_randomBytes(), 32);
+            b.mixHash = bytes32(_random());
+            b.nonce = bytes8(bytes32(_random()));
+        }
+
+        LibRLP.List memory l;
+        l.p(abi.encodePacked(b.parentHash));
+        l.p(abi.encodePacked(b.ommersHash));
+        l.p(abi.encodePacked(b.beneficiary));
+        l.p(abi.encodePacked(b.stateRoot));
+        l.p(abi.encodePacked(b.transactionsRoot));
+        l.p(abi.encodePacked(b.receiptsRoot));
+        l.p(abi.encodePacked(b.logsBloom));
+        l.p(abi.encodePacked(b.difficultyOrPrevrandao));
+        l.p(b.number);
+        l.p(b.gasLimit);
+        l.p(b.gasUsed);
+        l.p(b.timestamp);
+        l.p(b.extraData);
+        l.p(abi.encodePacked(b.mixHash));
+        l.p(abi.encodePacked(b.nonce));
+        encoded = l.encode();
+    }
+
+    function testToShortHeader(bytes32) public {
+        (BlockHeader memory b, bytes memory encoded) = _randomBlockHeader();
+        BlockHashLib.ShortHeader memory s =
+            this.toShortHeader(_truncateBytes(_randomBytes(), 128), encoded);
+        assertEq(s.parentHash, b.parentHash);
+        assertEq(s.stateRoot, b.stateRoot);
+        assertEq(s.transactionsRoot, b.transactionsRoot);
+        assertEq(s.receiptsRoot, b.receiptsRoot);
+        for (uint256 i; i < 8; ++i) {
+            assertEq(s.logsBloom[i], b.logsBloom[i]);
+        }
+    }
+
+    function toShortHeader(bytes calldata, bytes calldata encodedHeader)
+        public
+        view
+        returns (BlockHashLib.ShortHeader memory result)
+    {
+        _misalignFreeMemoryPointer();
+        _brutalizeMemory();
+        result = BlockHashLib.toShortHeader(encodedHeader);
+        _checkMemory();
+    }
+
+    function testRandomBlockHeader(bytes32) public {
+        (, bytes memory encoded) = _randomBlockHeader();
+        assertEq(uint8(bytes1(encoded[0])), 0xf9);
+    }
 }
