@@ -1,23 +1,27 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.13;
+
+// This file is auto-generated.
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                          STRUCTS                           */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+/// @dev Ethereum block header fields relevant to historical MPT proofs.
+struct ShortHeader {
+    bytes32 parentHash;
+    bytes32 stateRoot;
+    bytes32 transactionsRoot;
+    bytes32 receiptsRoot;
+    bytes32[8] logsBloom;
+}
+
+using BlockHashLib for ShortHeader global;
 
 /// @notice Library for accessing block hashes way beyond the 256-block limit.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/BlockHashLib.sol)
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/utils/g/BlockHashLib.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Blockhash.sol)
 library BlockHashLib {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STRUCTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Ethereum block header fields relevant to historical MPT proofs.
-    struct ShortHeader {
-        bytes32 parentHash;
-        bytes32 stateRoot;
-        bytes32 transactionsRoot;
-        bytes32 receiptsRoot;
-        bytes32[8] logsBloom;
-    }
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
