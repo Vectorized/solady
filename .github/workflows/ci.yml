@@ -86,10 +86,10 @@ jobs:
         profile: [post-cancun,post-cancun-via-ir]
     steps:
       - uses: actions/checkout@v5
-      - name: Install Foundry Nightly
+      - name: Install Foundry Stable
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
       - name: Install Dependencies
         run: forge install
       - name: Run Tests with ${{ matrix.profile }}
