@@ -303,9 +303,6 @@ contract ERC7821 is Receiver {
         }
     }
 
-    event LogBytes(bytes);
-    event LogUint(uint256);
-
     /// @dev Executes the `dataArr`, with a common `to` address.
     /// If any `to == address(0)`, it will be replaced with `address(this)`.
     /// Value for all calls is zero.
@@ -322,14 +319,8 @@ contract ERC7821 is Receiver {
                 let t := shr(96, shl(96, to))
                 to := or(mul(address(), iszero(t)), t)
             }
-
-            emit LogUint(dataArr.length);
-            emit LogUint(_get(dataArr, 0).length);
-            emit LogUint(_get(dataArr, 1).length);
-
             if (dataArr.length == uint256(0)) return;
             do {
-                emit LogBytes(_get(dataArr, i));
                 _execute(to, 0, _get(dataArr, i), extraData);
             } while (++i != dataArr.length);
         }
