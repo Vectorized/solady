@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./utils/SoladyTest.sol";
-import {ERC7821, MockERC7821} from "./utils/mocks/MockERC7821.sol";
-import {LibClone} from "../src/utils/LibClone.sol";
+import "../../utils/SoladyTest.sol";
+import {ERC7821, MockERC7821} from "../../utils/mocks/MockERC7821.sol";
+import {LibClone} from "../../../src/utils/LibClone.sol";
 
 contract ERC7821Test is SoladyTest {
     error CustomError();

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {Receiver} from "./Receiver.sol";
+import {Receiver} from "../../Receiver.sol";
 
-/// @notice Minimal batch executor mixin.
-/// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC7821.sol)
+/// @notice Minimal batch executor mixin (Ithaca variant).
+/// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ext/ithaca/ERC7821.sol)
 ///
 /// @dev This contract can be inherited to create fully-fledged smart accounts.
 /// If you merely want to combine approve-swap transactions into a single transaction
@@ -35,6 +35,10 @@ contract ERC7821 is Receiver {
     /// @dev Cannot decode `executionData` as a batch of batches `abi.encode(bytes[])`.
     error BatchOfBatchesDecodingError();
 
+    /// @dev Cannot decode the optimized batch as either `abi.encode(address, bytes[], bytes)`.
+    /// or `abi.encode(address, bytes[])`.
+    error OptimizedBatchDecodingError();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -55,6 +59,7 @@ contract ERC7821 is Receiver {
     /// - `0x01000000000000000000...`: Single batch. Does not support optional `opData`.
     /// - `0x01000000000078210001...`: Single batch. Supports optional `opData`.
     /// - `0x01000000000078210002...`: Batch of batches.
+    /// - `0x01000000000078210003...`: Single batch with common `to` address and optional `opData`.
     ///
     /// For the "batch of batches" mode, each batch will be recursively passed into
     /// `execute` internally with mode `0x01000000000078210001...`.
@@ -73,8 +78,10 @@ contract ERC7821 is Receiver {
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual {
         uint256 id = _executionModeId(mode);
         if (id == 3) return _executeBatchOfBatches(mode, executionData);
+        if (id == 4) return _executeOptimizedBatch(mode, executionData);
         Call[] calldata calls;
         bytes calldata opData;
+
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(id) {
@@ -126,7 +133,75 @@ contract ERC7821 is Receiver {
             id := eq(m, 0x01000000000000000000) // 1.
             id := or(shl(1, eq(m, 0x01000000000078210001)), id) // 2.
             id := or(mul(3, eq(m, 0x01000000000078210002)), id) // 3.
+            id := or(mul(4, eq(m, 0x01000000000078210003)), id) // 4.
         }
+    }
+
+    /// @dev For execution of a batch of batches with a common `to` address.
+    /// Execution Data: `abi.encode(address to, bytes[] dataArr, bytes opData)`
+    function _executeOptimizedBatch(bytes32 mode, bytes calldata executionData) internal virtual {
+        address to;
+        bytes[] calldata dataArr;
+        bytes calldata opData;
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            // This line is needed to ensure that `opData` is valid in all code paths.
+            // Otherwise the compiler complains.
+            opData.length := 0
+
+            to := calldataload(executionData.offset)
+
+            let b := calldataload(add(0x20, executionData.offset)) // Relative offset of `dataArr`.
+            let c := add(executionData.offset, b) // Absolute offset of `dataArr.length`.
+            dataArr.offset := add(c, 0x20)
+            dataArr.length := calldataload(c)
+
+            let e := add(executionData.offset, executionData.length) // End of `executionData`.
+
+            // Perform bounds checking, to ensure:
+            // - `to` is within `executionData`.
+            // - `dataArr` and all of its elements are within `executionData`.
+            // - `opData` is within `executionData`, if provided.
+            // As this is a non-standard ERC7821 mode, `LibERC7579` will not include the decoding
+            // functions with bound checks. So we simply do the checks here.
+            if or(
+                shr(64, or(b, or(executionData.length, executionData.offset))),
+                or(gt(dataArr.offset, e), lt(executionData.length, 0x40))
+            ) {
+                mstore(0x00, 0x6f23de0b) // `OptimizedBatchDecodingError()`.
+                revert(0x1c, 0x04)
+            }
+            // If the relative offset of `dataArr` is 3 words or more,
+            // it indicates the possible presence of a relative `opData` offset.
+            if iszero(lt(b, 0x60)) {
+                let p := calldataload(add(0x40, executionData.offset)) // Relative offset of `opData`.
+                let q := add(executionData.offset, p) // Absolute offset of `opData.length`.
+                opData.offset := add(q, 0x20)
+                opData.length := calldataload(q)
+                if or(shr(64, or(opData.length, p)), gt(add(opData.length, opData.offset), e)) {
+                    mstore(0x00, 0x6f23de0b) // `OptimizedBatchDecodingError()`.
+                    revert(0x1c, 0x04)
+                }
+            }
+            if dataArr.length {
+                // Perform bounds checks on the decoded `dataArr`.
+                // Loop runs out-of-gas if `dataArr.length` is big enough to cause overflows.
+                for { let i := dataArr.length } 1 {} {
+                    i := sub(i, 1)
+                    let p := calldataload(add(dataArr.offset, shl(5, i))) // Relative offset of `dataArr[i]`.
+                    let u := add(dataArr.offset, p) // Absolute offset of `dataArr[i].length`.
+                    let l := calldataload(u) // `dataArr[i].length`.
+                    if or(shr(64, or(p, l)), gt(add(l, add(0x20, u)), e)) {
+                        mstore(0x00, 0x6f23de0b) // `OptimizedBatchDecodingError()`.
+                        revert(0x1c, 0x04)
+                    }
+                    if iszero(i) { break }
+                }
+            }
+        }
+
+        _executeOptimizedBatch(mode, executionData, to, dataArr, opData);
     }
 
     /// @dev For execution of a batch of batches.
@@ -192,6 +267,30 @@ contract ERC7821 is Receiver {
 
     /// @dev Executes the calls.
     /// Reverts and bubbles up error if any call fails.
+    /// The `mode` and `executionData` are passed along in case there's a need to use them.
+    function _executeOptimizedBatch(
+        bytes32 mode,
+        bytes calldata executionData,
+        address to,
+        bytes[] calldata dataArr,
+        bytes calldata opData
+    ) internal virtual {
+        // Silence compiler warning on unused variables.
+        mode = mode;
+        executionData = executionData;
+        // Very basic auth to only allow this contract to be called by itself.
+        // Override this function to perform more complex auth with `opData`.
+        if (opData.length == uint256(0)) {
+            require(msg.sender == address(this));
+            // Remember to return `_executeOptimizedBatch(dataArr, to, extraData)`
+            // when you override this function.
+            return _executeOptimizedBatch(dataArr, to, bytes32(0));
+        }
+        revert(); // In your override, replace this with logic to operate on `opData`.
+    }
+
+    /// @dev Executes the calls.
+    /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
     function _execute(Call[] calldata calls, bytes32 extraData) internal virtual {
         unchecked {
@@ -201,6 +300,29 @@ contract ERC7821 is Receiver {
                 (address to, uint256 value, bytes calldata data) = _get(calls, i);
                 _execute(to, value, data, extraData);
             } while (++i != calls.length);
+        }
+    }
+
+    /// @dev Executes the `dataArr`, with a common `to` address.
+    /// If any `to == address(0)`, it will be replaced with `address(this)`.
+    /// Value for all calls is zero.
+    /// Reverts and bubbles up error if any call fails.
+    /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
+    function _executeOptimizedBatch(bytes[] calldata dataArr, address to, bytes32 extraData)
+        internal
+        virtual
+    {
+        unchecked {
+            uint256 i;
+            /// @solidity memory-safe-assembly
+            assembly {
+                let t := shr(96, shl(96, to))
+                to := or(mul(address(), iszero(t)), t)
+            }
+            if (dataArr.length == uint256(0)) return;
+            do {
+                _execute(to, 0, dataArr[i], extraData);
+            } while (++i != dataArr.length);
         }
     }
 
