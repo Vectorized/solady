@@ -282,9 +282,9 @@ contract ERC7821 is Receiver {
         // Override this function to perform more complex auth with `opData`.
         if (opData.length == uint256(0)) {
             require(msg.sender == address(this));
-            // Remember to return `_executeOptimizedBatch(dataArr, to, extraData)`
+            // Remember to return `_executeOptimizedBatch(to, dataArr, extraData)`
             // when you override this function.
-            return _executeOptimizedBatch(dataArr, to, bytes32(0));
+            return _executeOptimizedBatch(to, dataArr, bytes32(0));
         }
         revert(); // In your override, replace this with logic to operate on `opData`.
     }
@@ -303,12 +303,15 @@ contract ERC7821 is Receiver {
         }
     }
 
+    event LogBytes(bytes);
+    event LogUint(uint256);
+
     /// @dev Executes the `dataArr`, with a common `to` address.
     /// If any `to == address(0)`, it will be replaced with `address(this)`.
     /// Value for all calls is zero.
     /// Reverts and bubbles up error if any call fails.
     /// `extraData` can be any supplementary data (e.g. a memory pointer, some hash).
-    function _executeOptimizedBatch(bytes[] calldata dataArr, address to, bytes32 extraData)
+    function _executeOptimizedBatch(address to, bytes[] calldata dataArr, bytes32 extraData)
         internal
         virtual
     {
@@ -319,9 +322,15 @@ contract ERC7821 is Receiver {
                 let t := shr(96, shl(96, to))
                 to := or(mul(address(), iszero(t)), t)
             }
+
+            emit LogUint(dataArr.length);
+            emit LogUint(_get(dataArr, 0).length);
+            emit LogUint(_get(dataArr, 1).length);
+
             if (dataArr.length == uint256(0)) return;
             do {
-                _execute(to, 0, dataArr[i], extraData);
+                emit LogBytes(_get(dataArr, i));
+                _execute(to, 0, _get(dataArr, i), extraData);
             } while (++i != dataArr.length);
         }
     }
@@ -363,6 +372,21 @@ contract ERC7821 is Receiver {
             let o := add(c, calldataload(add(c, 0x40)))
             data.offset := add(o, 0x20)
             data.length := calldataload(o)
+        }
+    }
+
+    /// @dev Convenience function for getting `dataArr[i]`, without bounds checks.
+    function _get(bytes[] calldata dataArr, uint256 i)
+        internal
+        view
+        virtual
+        returns (bytes calldata data)
+    {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let c := add(dataArr.offset, calldataload(add(dataArr.offset, shl(5, i))))
+            data.offset := add(c, 0x20)
+            data.length := calldataload(c)
         }
     }
 }

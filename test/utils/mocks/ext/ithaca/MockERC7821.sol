@@ -22,6 +22,17 @@ contract MockERC7821 is ERC7821, Brutalizer {
         _execute(calls, bytes32(0));
     }
 
+    function _executeOptimizedBatch(
+        bytes32,
+        bytes calldata,
+        address to,
+        bytes[] calldata dataArr,
+        bytes calldata opData
+    ) internal virtual override {
+        lastOpData = opData;
+        _executeOptimizedBatch(to, dataArr, bytes32(0));
+    }
+
     function execute(bytes32 mode, bytes calldata executionData) public payable virtual override {
         if (!isAuthorizedCaller[msg.sender]) revert Unauthorized();
         super.execute(mode, executionData);
@@ -31,6 +42,13 @@ contract MockERC7821 is ERC7821, Brutalizer {
         _misalignFreeMemoryPointer();
         _brutalizeMemory();
         _execute(calls, bytes32(0));
+        _checkMemory();
+    }
+
+    function executeDirect(address to, bytes[] calldata dataArr) public payable virtual {
+        _misalignFreeMemoryPointer();
+        _brutalizeMemory();
+        _executeOptimizedBatch(to, dataArr, bytes32(0));
         _checkMemory();
     }
 
