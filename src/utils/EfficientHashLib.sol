@@ -754,7 +754,7 @@ library EfficientHashLib {
         }
     }
 
-    /// @dev Returns `abi.decode(a, (bytes32)) == a`.
+    /// @dev Returns `abi.decode(a, (bytes32)) == b`.
     function eq(bytes memory a, bytes32 b) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
