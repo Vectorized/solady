@@ -30,8 +30,9 @@ evm_version = "cancun"
 skip = []
 
 [profile.ithaca]
-evm_version = "cancun"
-odyssey = true
+gas_limit = 16_777_216 # To prevent EVM error.
+evm_version = "prague"
+test = "test/ext/ithaca"
 skip = []
 
 [profile.solx]
