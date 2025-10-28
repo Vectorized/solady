@@ -54,11 +54,15 @@ contract LifebuoyTest is SoladyTest {
         assertEq(_deployViaCreate(deployer, initcode), expected);
     }
 
-    function testLifebuoyCreateDeployment(address deployer, address owner, uint256 r) public {
-        while (deployer.code.length != 0 || uint160(deployer) < 0xffffffffff) {
-            deployer = _randomNonZeroAddress();
-        }
+    function testLifebuoyCreateDeployment(address owner, uint256 r) public {
+        // We have to avoid using an address passed in via fuzz args,
+        // cuz etching to `console.log` address will break this test.
+        address deployer = _randomHashedAddress();
+
+        // This is a minimal contract that uses the 'CREATE' opcode to deploy
+        // the calldata and returns the addesss.
         vm.etch(deployer, hex"3d3d363d3d37363d34f09052602081f3");
+
         for (uint256 i; i != 3; ++i) {
             r = r >> 32;
             if (r & 31 == 0) {
