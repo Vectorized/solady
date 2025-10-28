@@ -140,8 +140,9 @@ contract LibCWIATest is SoladyTest, CWIA {
         uint64 argUint64,
         uint8 argUint8
     ) public {
-        bytes memory data =
-            abi.encodePacked(argAddress, argUint256, argUint256Array, argUint64, argUint8);
+        bytes memory data = abi.encodePacked(
+            argAddress, argUint256, argUint256Array, argUint64, argUint8
+        );
         LibCWIATest clone = LibCWIATest(LibCWIA.clone(address(this), data));
         _shouldBehaveLikeClone(address(clone), value_);
 

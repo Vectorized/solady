@@ -235,30 +235,31 @@ contract BLSTest is SoladyTest {
     // passing two bytes32 instead of bytes memory saves approx 700 gas per call
     // Computes the mod against the bls12-381 field modulus
     function _modfield(bytes32 _b1, bytes32 _b2) private view returns (BLS.Fp memory r) {
-        (bool success, bytes memory output) = address(0x5).staticcall(
-            abi.encode(
-                // arg[0] = base.length
-                0x40,
-                // arg[1] = exp.length
-                0x20,
-                // arg[2] = mod.length
-                0x40,
-                // arg[3] = base.bits
-                // places the first 32 bytes of _b1 and the last 32 bytes of _b2
-                _b1,
-                _b2,
-                // arg[4] = exp
-                // exponent always 1
-                1,
-                // arg[5] = mod
-                // this field_modulus as hex 4002409555221667393417789825735904156556882819939007885332058136124031650490837864442687629129015664037894272559787
-                // we add the 0 prefix so that the result will be exactly 64 bytes
-                // saves 300 gas per call instead of sending it along every time
-                // places the first 32 bytes and the last 32 bytes of the field modulus
-                0x000000000000000000000000000000001a0111ea397fe69a4b1ba7b6434bacd7,
-                0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-            )
-        );
+        (bool success, bytes memory output) = address(0x5)
+            .staticcall(
+                abi.encode(
+                    // arg[0] = base.length
+                    0x40,
+                    // arg[1] = exp.length
+                    0x20,
+                    // arg[2] = mod.length
+                    0x40,
+                    // arg[3] = base.bits
+                    // places the first 32 bytes of _b1 and the last 32 bytes of _b2
+                    _b1,
+                    _b2,
+                    // arg[4] = exp
+                    // exponent always 1
+                    1,
+                    // arg[5] = mod
+                    // this field_modulus as hex 4002409555221667393417789825735904156556882819939007885332058136124031650490837864442687629129015664037894272559787
+                    // we add the 0 prefix so that the result will be exactly 64 bytes
+                    // saves 300 gas per call instead of sending it along every time
+                    // places the first 32 bytes and the last 32 bytes of the field modulus
+                    0x000000000000000000000000000000001a0111ea397fe69a4b1ba7b6434bacd7,
+                    0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
+                )
+            );
         require(success, "MODEXP failed");
         return abi.decode(output, (BLS.Fp));
     }

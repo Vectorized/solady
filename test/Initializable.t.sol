@@ -147,7 +147,8 @@ contract InitializableTest is SoladyTest {
         uint64 initializedVersion,
         uint64 version
     ) public {
-        bool expected = initializing == true || initializedVersion >= version;
+        bool expected =
+            initializing == true || initializedVersion >= version;
         bool computed;
         /// @solidity memory-safe-assembly
         assembly {

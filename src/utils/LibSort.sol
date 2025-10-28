@@ -540,11 +540,7 @@ library LibSort {
 
     /// @dev Returns the sorted set union of `a` and `b`.
     /// Note: Behaviour is undefined if inputs are not sorted and uniquified.
-    function union(int256[] memory a, int256[] memory b)
-        internal
-        pure
-        returns (int256[] memory c)
-    {
+    function union(int256[] memory a, int256[] memory b) internal pure returns (int256[] memory c) {
         c = _toInts(_union(_toUints(a), _toUints(b), 1 << 255));
     }
 

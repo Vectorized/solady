@@ -15,7 +15,9 @@ contract CREATE3Test is SoladyTest {
 
         MockERC20 deployed = MockERC20(
             this.deployDeterministic(
-                abi.encodePacked(type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18)),
+                abi.encodePacked(
+                    type(MockERC20).creationCode, abi.encode("Mock Token", "MOCK", 18)
+                ),
                 salt
             )
         );

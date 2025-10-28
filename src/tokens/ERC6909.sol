@@ -486,10 +486,7 @@ abstract contract ERC6909 {
     /// @dev Sets `amount` as the allowance of `spender` for `owner` for token `id`.
     ///
     /// Emits a {Approval} event.
-    function _approve(address owner, address spender, uint256 id, uint256 amount)
-        internal
-        virtual
-    {
+    function _approve(address owner, address spender, uint256 id, uint256 amount) internal virtual {
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the allowance slot and store the amount.
@@ -535,13 +532,11 @@ abstract contract ERC6909 {
     /// This includes minting and burning.
     function _beforeTokenTransfer(address from, address to, uint256 id, uint256 amount)
         internal
-        virtual
-    {}
+        virtual {}
 
     /// @dev Hook that is called after any transfer of tokens.
     /// This includes minting and burning.
     function _afterTokenTransfer(address from, address to, uint256 id, uint256 amount)
         internal
-        virtual
-    {}
+        virtual {}
 }

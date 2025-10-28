@@ -521,7 +521,8 @@ contract LibZipTest is SoladyTest {
         /// @solidity memory-safe-assembly
         assembly {
             let n := 0
-            for {} byte(n, s) { n := add(n, 1) } {} // Scan for '\0'.
+            for {} // Scan for '\0'.
+             byte(n, s) { n := add(n, 1) } {}
             expected := n
             let m := 0x7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F7F
             let x := not(or(or(add(and(s, m), m), s), m))

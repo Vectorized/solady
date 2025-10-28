@@ -439,9 +439,7 @@ contract SafeTransferLibTest is SoladyTest {
         SafeTransferLib.safeTransferAllFrom(address(erc20), address(this), address(1));
     }
 
-    function testTransferAllFromWithStandardERC20(address from, address to, uint256 amount)
-        public
-    {
+    function testTransferAllFromWithStandardERC20(address from, address to, uint256 amount) public {
         while (!(to != from && to != address(this) && from != address(this))) {
             to = _randomNonZeroAddress();
             from = _randomNonZeroAddress();
@@ -636,9 +634,7 @@ contract SafeTransferLibTest is SoladyTest {
         verifySafeTransferFrom(address(returnsFalse), from, to, amount, _REVERTS_WITH_SELECTOR);
     }
 
-    function testTransferFromWithRevertingReverts(address from, address to, uint256 amount)
-        public
-    {
+    function testTransferFromWithRevertingReverts(address from, address to, uint256 amount) public {
         verifySafeTransferFrom(address(reverting), from, to, amount, _REVERTS_WITH_ANY);
     }
 
@@ -696,11 +692,12 @@ contract SafeTransferLibTest is SoladyTest {
         if (mode == _REVERTS_WITH_SELECTOR) {
             vm.expectRevert(SafeTransferLib.TransferFailed.selector);
         } else if (mode == _REVERTS_WITH_ANY) {
-            (bool success,) = address(this).call(
-                abi.encodeWithSignature(
-                    "verifySafeTransfer(address,address,uint256)", token, to, amount
-                )
-            );
+            (bool success,) = address(this)
+                .call(
+                    abi.encodeWithSignature(
+                        "verifySafeTransfer(address,address,uint256)", token, to, amount
+                    )
+                );
             assertFalse(success);
             return;
         }
@@ -734,15 +731,16 @@ contract SafeTransferLibTest is SoladyTest {
         if (mode == _REVERTS_WITH_SELECTOR) {
             vm.expectRevert(SafeTransferLib.TransferFromFailed.selector);
         } else if (mode == _REVERTS_WITH_ANY) {
-            (bool success,) = address(this).call(
-                abi.encodeWithSignature(
-                    "verifySafeTransferFrom(address,address,address,uint256)",
-                    token,
-                    from,
-                    to,
-                    amount
-                )
-            );
+            (bool success,) = address(this)
+                .call(
+                    abi.encodeWithSignature(
+                        "verifySafeTransferFrom(address,address,address,uint256)",
+                        token,
+                        from,
+                        to,
+                        amount
+                    )
+                );
             assertFalse(success);
             return;
         }
@@ -778,11 +776,12 @@ contract SafeTransferLibTest is SoladyTest {
         if (mode == _REVERTS_WITH_SELECTOR) {
             vm.expectRevert(SafeTransferLib.ApproveFailed.selector);
         } else if (mode == _REVERTS_WITH_ANY) {
-            (bool success,) = address(this).call(
-                abi.encodeWithSignature(
-                    "verifySafeApprove(address,address,uint256)", token, to, amount
-                )
-            );
+            (bool success,) = address(this)
+                .call(
+                    abi.encodeWithSignature(
+                        "verifySafeApprove(address,address,uint256)", token, to, amount
+                    )
+                );
             assertFalse(success);
             return;
         }

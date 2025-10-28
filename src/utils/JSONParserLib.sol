@@ -588,6 +588,7 @@ library JSONParserLib {
                     }
                     _item, _pOut := parseValue(s_, _item, _pOut, end_)
                     if _item {
+
                         // forgefmt: disable-next-item
                         mstore(_item, setP(or(_PARENT_IS_ARRAY, mload(_item)),
                             _BITPOS_KEY, j_))
@@ -618,6 +619,7 @@ library JSONParserLib {
                     if eq(chr(_pOut), 58) {
                         _item, _pOut := parseValue(s_, _item, add(_pOut, 1), end_)
                         if _item {
+
                             // forgefmt: disable-next-item
                             mstore(_item, setP(setP(or(_PARENT_IS_OBJECT, mload(_item)),
                                 _BITPOS_KEY_LENGTH, sub(pKeyEnd_, pKeyStart_)),
@@ -686,7 +688,11 @@ library JSONParserLib {
                 if eq(chr(_pOut), 46) { _pOut := skip0To9s(add(_pOut, 1), end_, 1) } // '.'.
                 let t_ := mload(_pOut)
                 // 'E', 'e'.
-                if eq(or(0x20, byte(0, t_)), 101) {
+                if eq(
+                    or(0x20, byte(0, t_)),
+                    101
+                ) {
+
                     // forgefmt: disable-next-item
                     _pOut := skip0To9s(add(byte(sub(byte(1, t_), 14), 0x010001), // '+', '-'.
                         add(_pOut, 1)), end_, 1)

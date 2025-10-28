@@ -518,11 +518,7 @@ library LibBytes {
 
     /// @dev Reduces the size of `subject` to `n`.
     /// If `n` is greater than the size of `subject`, this will be a no-op.
-    function truncate(bytes memory subject, uint256 n)
-        internal
-        pure
-        returns (bytes memory result)
-    {
+    function truncate(bytes memory subject, uint256 n) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := subject
@@ -786,11 +782,7 @@ library LibBytes {
     }
 
     /// @dev Returns the word at `offset`, without any bounds checks.
-    function loadCalldata(bytes calldata a, uint256 offset)
-        internal
-        pure
-        returns (bytes32 result)
-    {
+    function loadCalldata(bytes calldata a, uint256 offset) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := calldataload(add(a.offset, offset))

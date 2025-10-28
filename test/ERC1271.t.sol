@@ -377,9 +377,10 @@ contract ERC1271Test is SoladyTest {
     function testSupportsERC7739() public {
         _TestTemps memory t = _testTemps();
         assertEq(
-            t.account.isValidSignature(
-                0x7739773977397739773977397739773977397739773977397739773977397739, ""
-            ),
+            t.account
+                .isValidSignature(
+                    0x7739773977397739773977397739773977397739773977397739773977397739, ""
+                ),
             bytes4(0x77390001)
         );
     }

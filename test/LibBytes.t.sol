@@ -62,9 +62,8 @@ contract LibBytesTest is SoladyTest {
 
     function testDirectReturn(uint256 seed) public {
         bytes[] memory expected = _generateBytesArray(seed);
-        (bool success, bytes memory encoded) = address(this).call(
-            abi.encodeWithSignature("generateBytesArray(uint256,bool)", seed, true)
-        );
+        (bool success, bytes memory encoded) = address(this)
+            .call(abi.encodeWithSignature("generateBytesArray(uint256,bool)", seed, true));
         assertTrue(success);
         bytes[] memory computed;
         /// @solidity memory-safe-assembly
@@ -321,9 +320,7 @@ contract LibBytesTest is SoladyTest {
         return 0;
     }
 
-    function testIndexOfByteDifferential(bytes memory subject, bytes1 needle, uint256 from)
-        public
-    {
+    function testIndexOfByteDifferential(bytes memory subject, bytes1 needle, uint256 from) public {
         if (_randomChance(2)) _brutalizeMemory();
         if (_randomChance(2)) _misalignFreeMemoryPointer();
         if (_randomChance(2)) {

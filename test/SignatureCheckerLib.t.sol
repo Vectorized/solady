@@ -219,26 +219,25 @@ contract SignatureCheckerLibTest is SoladyTest {
 
             // We have to do the call in assembly to ensure that Solidity does not
             // clean up the brutalized bits.
-            callResult :=
+            callResult := and(
                 and(
-                    and(
-                        // Whether the returndata is equal to 1.
-                        eq(mload(0x00), 1),
-                        // Whether the returndata is exactly 0x20 bytes (1 word) long .
-                        eq(returndatasize(), 0x20)
-                    ),
-                    // Whether the staticcall does not revert.
-                    // This must be placed at the end of the `and` clause,
-                    // as the arguments are evaluated from right to left.
-                    staticcall(
-                        gas(), // Remaining gas.
-                        address(), // The current contract's address.
-                        m, // Offset of calldata in memory.
-                        0xe4, // Length of calldata in memory.
-                        0x00, // Offset of returndata.
-                        0x20 // Length of returndata to write.
-                    )
+                    // Whether the returndata is equal to 1.
+                    eq(mload(0x00), 1),
+                    // Whether the returndata is exactly 0x20 bytes (1 word) long .
+                    eq(returndatasize(), 0x20)
+                ),
+                // Whether the staticcall does not revert.
+                // This must be placed at the end of the `and` clause,
+                // as the arguments are evaluated from right to left.
+                staticcall(
+                    gas(), // Remaining gas.
+                    address(), // The current contract's address.
+                    m, // Offset of calldata in memory.
+                    0xe4, // Length of calldata in memory.
+                    0x00, // Offset of returndata.
+                    0x20 // Length of returndata to write.
                 )
+            )
         }
         assertEq(callResult, expectedResult);
 

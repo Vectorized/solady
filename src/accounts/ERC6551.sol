@@ -111,14 +111,13 @@ abstract contract ERC6551 is UUPSUpgradeable, Receiver, ERC1271 {
                 let tokenContract := mload(0x20)
                 // `tokenId` is already at 0x40.
                 mstore(0x20, 0x6352211e) // `ownerOf(uint256)`.
-                result :=
-                    mul( // Returns `address(0)` on failure or if contract does not exist.
-                        mload(0x20),
-                        and(
-                            gt(returndatasize(), 0x1f),
-                            staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
-                        )
+                result := mul( // Returns `address(0)` on failure or if contract does not exist.
+                    mload(0x20),
+                    and(
+                        gt(returndatasize(), 0x1f),
+                        staticcall(gas(), tokenContract, 0x3c, 0x24, 0x20, 0x20)
                     )
+                )
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }

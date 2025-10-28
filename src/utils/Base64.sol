@@ -84,11 +84,7 @@ library Base64 {
 
     /// @dev Encodes `data` using the base64 encoding described in RFC 4648.
     /// Equivalent to `encode(data, fileSafe, false)`.
-    function encode(bytes memory data, bool fileSafe)
-        internal
-        pure
-        returns (string memory result)
-    {
+    function encode(bytes memory data, bool fileSafe) internal pure returns (string memory result) {
         result = encode(data, fileSafe, false);
     }
 

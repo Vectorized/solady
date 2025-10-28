@@ -167,10 +167,12 @@ abstract contract TimedRoles {
     }
 
     /// @dev Checks that the caller is authorized to set the timed role.
-    function _authorizeSetTimedRole(address holder, uint256 timedRole, uint40 start, uint40 expires)
-        internal
-        virtual
-    {
+    function _authorizeSetTimedRole(
+        address holder,
+        uint256 timedRole,
+        uint40 start,
+        uint40 expires
+    ) internal virtual {
         if (!_timedRolesSenderIsContractOwner()) _revertTimedRolesUnauthorized();
         // Silence compiler warning on unused variables.
         (holder, timedRole, start, expires) = (holder, timedRole, start, expires);
@@ -193,8 +195,9 @@ abstract contract TimedRoles {
                 encodedTimeRoles := add(0x20, encodedTimeRoles)
                 mstore(0x00, mload(encodedTimeRoles))
                 let p := sload(keccak256(0x00, 0x38))
-                result :=
-                    iszero(or(lt(timestamp(), shr(216, p)), gt(timestamp(), and(0xffffffffff, p))))
+                result := iszero(
+                    or(lt(timestamp(), shr(216, p)), gt(timestamp(), and(0xffffffffff, p)))
+                )
             }
         }
     }
@@ -263,11 +266,10 @@ abstract contract TimedRoles {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0x8da5cb5b) // `owner()`.
-            result :=
-                and(
-                    and(eq(caller(), mload(0x00)), gt(returndatasize(), 0x1f)),
-                    staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
-                )
+            result := and(
+                and(eq(caller(), mload(0x00)), gt(returndatasize(), 0x1f)),
+                staticcall(gas(), address(), 0x1c, 0x04, 0x00, 0x20)
+            )
         }
     }
 

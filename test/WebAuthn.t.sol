@@ -36,7 +36,7 @@ contract WebAuthnTest is P256VerifierEtcher {
         _TestTemps memory t = _testTemps();
         WebAuthn.WebAuthnAuth memory auth;
         auth.authenticatorData =
-            hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000101";
+        hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000101";
         auth.clientDataJSON = string(
             abi.encodePacked(
                 '{"type":"webauthn.get","challenge":"',
@@ -57,7 +57,7 @@ contract WebAuthnTest is P256VerifierEtcher {
         _TestTemps memory t = _testTemps();
         WebAuthn.WebAuthnAuth memory auth;
         auth.authenticatorData =
-            hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763050000010a";
+        hex"49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763050000010a";
         auth.clientDataJSON = string(
             abi.encodePacked(
                 '{"type":"webauthn.get","challenge":"',
@@ -147,10 +147,7 @@ contract WebAuthnTest is P256VerifierEtcher {
         if (!_randomChance(4)) result = s;
     }
 
-    function _sampleChallengeIndex(string memory clientDataJSON)
-        internal
-        returns (uint256 result)
-    {
+    function _sampleChallengeIndex(string memory clientDataJSON) internal returns (uint256 result) {
         if (!_randomChance(4)) {
             result = LibString.indexOf(clientDataJSON, '"challenge":"');
             if (result <= 0xffffffff) return result;

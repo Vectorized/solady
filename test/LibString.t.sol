@@ -530,7 +530,10 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.replace("abc", "d", "x"), "abc");
     }
 
-    function testStringReplaceMedium() public {
+    function testStringReplaceMedium()
+        public
+    {
+
         // forgefmt: disable-next-item
         string memory subject = "70708741044725766535585242414884609539555049888764130733849700923779599488691391677696419266840";
         string memory search = "46095395550498887641307338497009";
@@ -540,7 +543,10 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.replace(subject, search, replacement), expectedResult);
     }
 
-    function testStringReplaceLong() public {
+    function testStringReplaceLong()
+        public
+    {
+
         // forgefmt: disable-next-item
         string memory subject = "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search";
         string memory search = "search_search_search_search_search_search";
@@ -1266,17 +1272,13 @@ contract LibStringTest is SoladyTest {
 
                     // ensure they are characters 0-9 or A-F or a-f and therefore hexadecimal
                     require(
-                        (
-                            (byteU8_1 >= 48 && byteU8_1 <= 57) || (byteU8_1 >= 65 && byteU8_1 <= 70)
-                                || (byteU8_1 >= 97 && byteU8_1 <= 102)
-                        ),
+                        ((byteU8_1 >= 48 && byteU8_1 <= 57) || (byteU8_1 >= 65 && byteU8_1 <= 70)
+                                || (byteU8_1 >= 97 && byteU8_1 <= 102)),
                         "invalid encoded string"
                     );
                     require(
-                        (
-                            (byteU8_2 >= 48 && byteU8_2 <= 57) || (byteU8_2 >= 65 && byteU8_2 <= 70)
-                                || (byteU8_2 >= 97 && byteU8_2 <= 102)
-                        ),
+                        ((byteU8_2 >= 48 && byteU8_2 <= 57) || (byteU8_2 >= 65 && byteU8_2 <= 70)
+                                || (byteU8_2 >= 97 && byteU8_2 <= 102)),
                         "invalid encoded string"
                     );
 
@@ -1704,7 +1706,8 @@ contract LibStringTest is SoladyTest {
                 assembly {
                     let b := byte(0, mload(add(add(subject, 0x20), i)))
                     mstore8(
-                        add(add(result, 0x20), i), add(b, mul(0x20, and(lt(0x40, b), lt(b, 0x5b))))
+                        add(add(result, 0x20), i),
+                        add(b, mul(0x20, and(lt(0x40, b), lt(b, 0x5b))))
                     )
                 }
             }
@@ -1720,7 +1723,8 @@ contract LibStringTest is SoladyTest {
                 assembly {
                     let b := byte(0, mload(add(add(subject, 0x20), i)))
                     mstore8(
-                        add(add(result, 0x20), i), sub(b, mul(0x20, and(lt(0x60, b), lt(b, 0x7b))))
+                        add(add(result, 0x20), i),
+                        sub(b, mul(0x20, and(lt(0x60, b), lt(b, 0x7b))))
                     )
                 }
             }

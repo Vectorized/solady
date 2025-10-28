@@ -95,11 +95,7 @@ library MerkleTreeLib {
     }
 
     /// @dev Returns the leaf at `leafIndex`.
-    function leaf(bytes32[] memory tree, uint256 leafIndex)
-        internal
-        pure
-        returns (bytes32 result)
-    {
+    function leaf(bytes32[] memory tree, uint256 leafIndex) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
             let n := mload(tree)

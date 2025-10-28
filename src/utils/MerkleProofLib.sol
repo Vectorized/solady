@@ -167,13 +167,12 @@ library MerkleProofLib {
                     hashesBack := add(hashesBack, 0x20)
                     if iszero(lt(hashesBack, flagsLength)) { break }
                 }
-                isValid :=
-                    and(
-                        // Checks if the last value in the queue is same as the root.
-                        eq(mload(sub(hashesBack, 0x20)), root),
-                        // And whether all the proofs are used, if required.
-                        eq(proofEnd, proof)
-                    )
+                isValid := and(
+                    // Checks if the last value in the queue is same as the root.
+                    eq(mload(sub(hashesBack, 0x20)), root),
+                    // And whether all the proofs are used, if required.
+                    eq(proofEnd, proof)
+                )
                 break
             }
         }
@@ -207,7 +206,10 @@ library MerkleProofLib {
             // If the number of flags is correct.
             for {} eq(add(leaves.length, proof.length), add(flags.length, 1)) {} {
                 // For the case where `proof.length + leaves.length == 1`.
-                if iszero(flags.length) {
+                if iszero(
+                    flags.length
+                ) {
+
                     // `isValid = (proof.length == 1 ? proof[0] : leaves[0]) == root`.
                     // forgefmt: disable-next-item
                     isValid := eq(
@@ -267,13 +269,12 @@ library MerkleProofLib {
                     hashesBack := add(hashesBack, 0x20)
                     if iszero(lt(hashesBack, flags.length)) { break }
                 }
-                isValid :=
-                    and(
-                        // Checks if the last value in the queue is same as the root.
-                        eq(mload(sub(hashesBack, 0x20)), root),
-                        // And whether all the proofs are used, if required.
-                        eq(proofEnd, proof.offset)
-                    )
+                isValid := and(
+                    // Checks if the last value in the queue is same as the root.
+                    eq(mload(sub(hashesBack, 0x20)), root),
+                    // And whether all the proofs are used, if required.
+                    eq(proofEnd, proof.offset)
+                )
                 break
             }
         }

@@ -181,8 +181,10 @@ library DateTimeLib {
         assembly {
             // `daysInMonths = [31,28,31,30,31,30,31,31,30,31,30,31]`.
             // `result = daysInMonths[month - 1] + isLeapYear(year)`.
-            result :=
-                add(byte(month, shl(152, 0x1f1c1f1e1f1e1f1f1e1f1e1f)), and(eq(month, 2), flag))
+            result := add(
+                byte(month, shl(152, 0x1f1c1f1e1f1e1f1f1e1f1e1f)),
+                and(eq(month, 2), flag)
+            )
         }
     }
 
@@ -206,11 +208,10 @@ library DateTimeLib {
         uint256 md = daysInMonth(year, month);
         /// @solidity memory-safe-assembly
         assembly {
-            result :=
-                and(
-                    lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)),
-                    and(lt(sub(month, 1), 12), lt(sub(day, 1), md))
-                )
+            result := and(
+                lt(sub(year, 1970), sub(MAX_SUPPORTED_YEAR, 1969)),
+                and(lt(sub(month, 1), 12), lt(sub(day, 1), md))
+            )
         }
     }
 

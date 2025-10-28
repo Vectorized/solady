@@ -24,8 +24,8 @@ contract MockEntryPoint {
         bytes32 userOpHash,
         uint256 missingAccountFunds
     ) public payable returns (uint256 validationData) {
-        validationData =
-            ERC4337(payable(account)).validateUserOp(userOp, userOpHash, missingAccountFunds);
+        validationData = ERC4337(payable(account))
+            .validateUserOp(userOp, userOpHash, missingAccountFunds);
     }
 
     receive() external payable {

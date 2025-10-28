@@ -146,10 +146,7 @@ library SafeTransferLib {
     }
 
     /// @dev Sends all the ETH in the current contract to `to`, with a `gasStipend`.
-    function trySafeTransferAllETH(address to, uint256 gasStipend)
-        internal
-        returns (bool success)
-    {
+    function trySafeTransferAllETH(address to, uint256 gasStipend) internal returns (bool success) {
         /// @solidity memory-safe-assembly
         assembly {
             success := call(gasStipend, to, selfbalance(), 0x00, 0x00, 0x00, 0x00)
@@ -358,14 +355,13 @@ library SafeTransferLib {
         assembly {
             mstore(0x14, account) // Store the `account` argument.
             mstore(0x00, 0x70a08231000000000000000000000000) // `balanceOf(address)`.
-            amount :=
-                mul( // The arguments of `mul` are evaluated from right to left.
-                    mload(0x20),
-                    and( // The arguments of `and` are evaluated from right to left.
-                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
-                    )
+            amount := mul( // The arguments of `mul` are evaluated from right to left.
+                mload(0x20),
+                and( // The arguments of `and` are evaluated from right to left.
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gas(), token, 0x10, 0x24, 0x20, 0x20)
                 )
+            )
         }
     }
 

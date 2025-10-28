@@ -2566,10 +2566,11 @@ library LibClone {
     }
 
     /// @dev Deploys a deterministic ERC1967I beacon proxy with `args` and `salt`.
-    function deployDeterministicERC1967IBeaconProxy(address beacon, bytes memory args, bytes32 salt)
-        internal
-        returns (address instance)
-    {
+    function deployDeterministicERC1967IBeaconProxy(
+        address beacon,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (address instance) {
         instance = deployDeterministicERC1967IBeaconProxy(0, beacon, args, salt);
     }
 
@@ -2603,10 +2604,11 @@ library LibClone {
     /// @dev Creates a deterministic ERC1967I beacon proxy with `args` and `salt`.
     /// Note: This method is intended for use in ERC4337 factories,
     /// which are expected to NOT revert if the proxy is already deployed.
-    function createDeterministicERC1967IBeaconProxy(address beacon, bytes memory args, bytes32 salt)
-        internal
-        returns (bool alreadyDeployed, address instance)
-    {
+    function createDeterministicERC1967IBeaconProxy(
+        address beacon,
+        bytes memory args,
+        bytes32 salt
+    ) internal returns (bool alreadyDeployed, address instance) {
         return createDeterministicERC1967IBeaconProxy(0, beacon, args, salt);
     }
 
@@ -2721,11 +2723,7 @@ library LibClone {
     }
 
     /// @dev Equivalent to `argsOnERC1967IBeaconProxy(instance, start, 2 ** 256 - 1)`.
-    function argsOnERC1967IBeaconProxy(address instance)
-        internal
-        view
-        returns (bytes memory args)
-    {
+    function argsOnERC1967IBeaconProxy(address instance) internal view returns (bytes memory args) {
         /// @solidity memory-safe-assembly
         assembly {
             args := mload(0x40)

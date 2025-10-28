@@ -144,7 +144,8 @@ library LibCWIA {
             )
             // `keccak256("ReceiveETH(uint256)")`
             mstore(
-                sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
+                sub(data, 0x3a),
+                0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
             )
             mstore(
                 // Do a out-of-gas revert if `extraLength` is too big. 0xffff - 0x62 + 0x01 = 0xff9e.
@@ -207,7 +208,8 @@ library LibCWIA {
             )
             // `keccak256("ReceiveETH(uint256)")`
             mstore(
-                sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
+                sub(data, 0x3a),
+                0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
             )
             mstore(
                 // Do a out-of-gas revert if `extraLength` is too big. 0xffff - 0x62 + 0x01 = 0xff9e.
@@ -317,7 +319,8 @@ library LibCWIA {
             )
             // `keccak256("ReceiveETH(uint256)")`
             mstore(
-                sub(data, 0x3a), 0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
+                sub(data, 0x3a),
+                0x9e4ac34f21c619cefc926c8bd93b54bf5a39c7ab2127a895af1cc0691d7e3dff
             )
             mstore(
                 sub(data, 0x5a),

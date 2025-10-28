@@ -98,9 +98,10 @@ library Base58 {
                     o := add(o, w)
                     mstore8(o, mload(mod(v, 58)))
                 }
-                for {} iszero(byte(z, data)) { z := add(z, 1) } {} // Just loop, `z` is often tiny.
+                for {} // Just loop, `z` is often tiny.
+                 iszero(byte(z, data)) { z := add(z, 1) } {}
             }
-            if z { mstore(sub(o, 0x20), mul(div(w, 0xff), 49)) } // '1111...1111' in ASCII.
+            if z { mstore(sub(o, 0x20), mul(div(w, 0xff), 49))} // '1111...1111' in ASCII.
             o := sub(o, z)
 
             let n := sub(e, o) // Compute the final length.
