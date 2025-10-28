@@ -103,19 +103,18 @@ library WebAuthn {
                 let l := mload(encoded) // Cache `encoded`'s length.
                 let q := add(l, 0x0d) // Length of `encoded` prefixed with '"challenge":"'.
                 mstore(encoded, shr(152, '"challenge":"')) // Temp prefix with '"challenge":"'.
-                result :=
+                result := and(
+                    // 11. Verify JSON's type. Also checks for possible addition overflows.
                     and(
-                        // 11. Verify JSON's type. Also checks for possible addition overflows.
-                        and(
-                            eq(shr(88, mload(add(o, t))), shr(88, '"type":"webauthn.get"')),
-                            lt(shr(128, or(t, c)), lt(add(0x14, t), n))
-                        ),
-                        // 12. Verify JSON's challenge. Includes a check for the closing '"'.
-                        and(
-                            eq(keccak256(add(o, c), q), keccak256(add(encoded, 0x13), q)),
-                            and(eq(byte(0, mload(add(add(o, c), q))), 34), lt(add(q, c), n))
-                        )
+                        eq(shr(88, mload(add(o, t))), shr(88, '"type":"webauthn.get"')),
+                        lt(shr(128, or(t, c)), lt(add(0x14, t), n))
+                    ),
+                    // 12. Verify JSON's challenge. Includes a check for the closing '"'.
+                    and(
+                        eq(keccak256(add(o, c), q), keccak256(add(encoded, 0x13), q)),
+                        and(eq(byte(0, mload(add(add(o, c), q))), 34), lt(add(q, c), n))
                     )
+                )
                 mstore(encoded, l) // Restore `encoded`'s length, in case of string interning.
             }
             // Skip 13., 14., 15.

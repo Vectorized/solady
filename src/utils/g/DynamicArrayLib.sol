@@ -446,7 +446,9 @@ library DynamicArrayLib {
             let arrLen := mload(arrData)
             if iszero(lt(n, arrLen)) {
                 calldatacopy(
-                    add(arrData, shl(5, add(1, arrLen))), calldatasize(), shl(5, sub(n, arrLen))
+                    add(arrData, shl(5, add(1, arrLen))),
+                    calldatasize(),
+                    shl(5, sub(n, arrLen))
                 )
             }
             mstore(arrData, n)
@@ -806,11 +808,7 @@ library DynamicArrayLib {
     }
 
     /// @dev Returns the underlying array as a `uint256[]`.
-    function asUint256Array(DynamicArray memory a)
-        internal
-        pure
-        returns (uint256[] memory result)
-    {
+    function asUint256Array(DynamicArray memory a) internal pure returns (uint256[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(a)
@@ -818,11 +816,7 @@ library DynamicArrayLib {
     }
 
     /// @dev Returns the underlying array as a `address[]`.
-    function asAddressArray(DynamicArray memory a)
-        internal
-        pure
-        returns (address[] memory result)
-    {
+    function asAddressArray(DynamicArray memory a) internal pure returns (address[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(a)
@@ -838,11 +832,7 @@ library DynamicArrayLib {
     }
 
     /// @dev Returns the underlying array as a `bytes32[]`.
-    function asBytes32Array(DynamicArray memory a)
-        internal
-        pure
-        returns (bytes32[] memory result)
-    {
+    function asBytes32Array(DynamicArray memory a) internal pure returns (bytes32[] memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             result := mload(a)

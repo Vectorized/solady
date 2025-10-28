@@ -138,7 +138,8 @@ library LibBitmap {
             }
             let storageSlot := keccak256(0x00, 0x40)
             sstore(
-                storageSlot, and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0)))))
+                storageSlot,
+                and(sload(storageSlot), not(shl(shift, shr(sub(256, amount), not(0)))))
             )
         }
     }

@@ -174,7 +174,8 @@ library MetadataReaderLib {
                 returndatacopy(s, 0, n) // Copy the string's bytes.
                 mstore8(add(s, n), 0) // Place a '\0' at the end.
                 let i := s // Pointer to the next byte to scan.
-                for {} byte(0, mload(i)) { i := add(i, 1) } {} // Scan for '\0'.
+                for {} // Scan for '\0'.
+                 byte(0, mload(i)) { i := add(i, 1) } {}
                 mstore(m, sub(i, s)) // Store the string's length.
                 mstore(i, 0) // Zeroize the slot after the string.
                 mstore(0x40, add(0x20, i)) // Allocate memory for the string.
@@ -192,14 +193,13 @@ library MetadataReaderLib {
     {
         /// @solidity memory-safe-assembly
         assembly {
-            result :=
-                mul(
-                    mload(0x20),
-                    and( // The arguments of `and` are evaluated from right to left.
-                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gasStipend, target, add(ptr, 0x20), mload(ptr), 0x20, 0x20)
-                    )
+            result := mul(
+                mload(0x20),
+                and( // The arguments of `and` are evaluated from right to left.
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gasStipend, target, add(ptr, 0x20), mload(ptr), 0x20, 0x20)
                 )
+            )
         }
     }
 

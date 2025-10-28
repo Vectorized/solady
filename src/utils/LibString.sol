@@ -676,7 +676,8 @@ library LibString {
         assembly {
             result := mload(0x40)
             let n := 0
-            for {} byte(n, s) { n := add(n, 1) } {} // Scan for '\0'.
+            for {} // Scan for '\0'.
+             byte(n, s) { n := add(n, 1) } {}
             mstore(result, n) // Store the length.
             let o := add(result, 0x20)
             mstore(o, s) // Store the bytes of the string.
@@ -689,7 +690,8 @@ library LibString {
     function normalizeSmallString(bytes32 s) internal pure returns (bytes32 result) {
         /// @solidity memory-safe-assembly
         assembly {
-            for {} byte(result, s) { result := add(result, 1) } {} // Scan for '\0'.
+            for {} // Scan for '\0'.
+             byte(result, s) { result := add(result, 1) } {}
             mstore(0x00, s)
             mstore(result, 0x00)
             result := mload(0x00)
@@ -889,14 +891,13 @@ library LibString {
         assembly {
             // We don't need to zero right pad the string,
             // since this is our own custom non-standard packing scheme.
-            result :=
-                mul(
-                    // Load the length and the bytes.
-                    mload(add(a, 0x1f)),
-                    // `length != 0 && length < 32`. Abuses underflow.
-                    // Assumes that the length is valid and within the block gas limit.
-                    lt(sub(mload(a), 1), 0x1f)
-                )
+            result := mul(
+                // Load the length and the bytes.
+                mload(add(a, 0x1f)),
+                // `length != 0 && length < 32`. Abuses underflow.
+                // Assumes that the length is valid and within the block gas limit.
+                lt(sub(mload(a), 1), 0x1f)
+            )
         }
     }
 
@@ -922,14 +923,15 @@ library LibString {
             let aLen := mload(a)
             // We don't need to zero right pad the strings,
             // since this is our own custom non-standard packing scheme.
-            result :=
-                mul(
-                    or( // Load the length and the bytes of `a` and `b`.
-                    shl(shl(3, sub(0x1f, aLen)), mload(add(a, aLen))), mload(sub(add(b, 0x1e), aLen))),
-                    // `totalLen != 0 && totalLen < 31`. Abuses underflow.
-                    // Assumes that the lengths are valid and within the block gas limit.
-                    lt(sub(add(aLen, mload(b)), 1), 0x1e)
-                )
+            result := mul(
+                or( // Load the length and the bytes of `a` and `b`.
+                    shl(shl(3, sub(0x1f, aLen)), mload(add(a, aLen))),
+                    mload(sub(add(b, 0x1e), aLen))
+                ),
+                // `totalLen != 0 && totalLen < 31`. Abuses underflow.
+                // Assumes that the lengths are valid and within the block gas limit.
+                lt(sub(add(aLen, mload(b)), 1), 0x1e)
+            )
         }
     }
 

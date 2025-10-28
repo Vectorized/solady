@@ -93,8 +93,9 @@ abstract contract UUPSUpgradeable is CallContextChecker {
                 // Forwards the `data` to `newImplementation` via delegatecall.
                 let m := mload(0x40)
                 calldatacopy(m, data.offset, data.length)
-                if iszero(delegatecall(gas(), newImplementation, m, data.length, codesize(), 0x00))
-                {
+                if iszero(
+                    delegatecall(gas(), newImplementation, m, data.length, codesize(), 0x00)
+                ) {
                     // Bubble up the revert if the call reverts.
                     returndatacopy(m, 0x00, returndatasize())
                     revert(m, returndatasize())

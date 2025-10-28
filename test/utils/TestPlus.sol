@@ -568,11 +568,7 @@ contract TestPlus is Brutalizer {
 
     /// @dev Truncate the bytes to `n` bytes.
     /// Returns the result for function chaining.
-    function _truncateBytes(bytes memory b, uint256 n)
-        internal
-        pure
-        returns (bytes memory result)
-    {
+    function _truncateBytes(bytes memory b, uint256 n) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
             if gt(mload(b), n) { mstore(b, n) }

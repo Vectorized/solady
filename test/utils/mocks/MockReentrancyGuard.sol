@@ -102,14 +102,15 @@ contract MockReentrancyGuard is ReentrancyGuard {
         if (recursion > 0) {
             enterTimes++;
 
-            (bool success, bytes memory data) = address(this).call(
-                abi.encodeWithSignature(
-                    guarded
-                        ? "countGuardedIndirectRecursive(uint256)"
-                        : "countUnguardedIndirectRecursive(uint256)",
-                    recursion - 1
-                )
-            );
+            (bool success, bytes memory data) = address(this)
+                .call(
+                    abi.encodeWithSignature(
+                        guarded
+                            ? "countGuardedIndirectRecursive(uint256)"
+                            : "countUnguardedIndirectRecursive(uint256)",
+                        recursion - 1
+                    )
+                );
 
             if (!success) {
                 /// @solidity memory-safe-assembly

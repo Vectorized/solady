@@ -1184,12 +1184,12 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function testFullMulDivN(uint256 a, uint256 b, uint8 n) public {
-        (bool success0, bytes memory result0) = address(this).staticcall(
-            abi.encodeWithSignature("fullMulDiv(uint256,uint256,uint256)", a, b, 1 << n)
-        );
-        (bool success1, bytes memory result1) = address(this).staticcall(
-            abi.encodeWithSignature("fullMulDivN(uint256,uint256,uint8)", a, b, n)
-        );
+        (bool success0, bytes memory result0) = address(this)
+            .staticcall(
+                abi.encodeWithSignature("fullMulDiv(uint256,uint256,uint256)", a, b, 1 << n)
+            );
+        (bool success1, bytes memory result1) = address(this)
+            .staticcall(abi.encodeWithSignature("fullMulDivN(uint256,uint256,uint8)", a, b, n));
         assertEq(success0, success1);
         if (success0) {
             assertEq(abi.decode(result0, (uint256)), abi.decode(result1, (uint256)));
@@ -1381,8 +1381,9 @@ contract FixedPointMathLibTest is SoladyTest {
         view
         returns (bool)
     {
-        bytes memory data =
-            abi.encodeWithSignature("mulDivOriginal(uint256,uint256,uint256)", x, y, denominator);
+        bytes memory data = abi.encodeWithSignature(
+            "mulDivOriginal(uint256,uint256,uint256)", x, y, denominator
+        );
         (bool success,) = address(this).staticcall(data);
         return !success;
     }

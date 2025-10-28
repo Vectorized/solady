@@ -42,8 +42,8 @@ library SemVerLib {
                 let u := eq(byte(i, a), 46) // `.`
                 let v := eq(byte(j, b), 46) // `.`
                 if iszero(lt(result, or(u, v))) { break }
-                if u { u, i := mmp(add(i, 1), a) } // `.`
-                if v { v, j := mmp(add(j, 1), b) } // `.`
+                if u { u, i := mmp(add(i, 1), a)} // `.`
+                if v { v, j := mmp(add(j, 1), b)} // `.`
                 result := sub(gt(u, v), lt(u, v))
             }
             if iszero(result) {

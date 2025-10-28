@@ -45,8 +45,9 @@ contract LibERC6551Test is SoladyTest {
         address tokenContract,
         uint256 tokenId
     ) public {
-        bytes memory initCode =
-            LibERC6551.initCode(implementation, salt, chainId, tokenContract, tokenId);
+        bytes memory initCode = LibERC6551.initCode(
+            implementation, salt, chainId, tokenContract, tokenId
+        );
         if (_randomChance(8)) _brutalizeMemory();
         bytes32 initCodeHash =
             LibERC6551.initCodeHash(implementation, salt, chainId, tokenContract, tokenId);

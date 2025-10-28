@@ -25,12 +25,7 @@ contract MockERC4337 is ERC4337, Brutalizer {
         return super.executeBatch(calls);
     }
 
-    function _domainNameAndVersion()
-        internal
-        pure
-        override
-        returns (string memory, string memory)
-    {
+    function _domainNameAndVersion() internal pure override returns (string memory, string memory) {
         return ("Milady", "1");
     }
 

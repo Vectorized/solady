@@ -30,7 +30,8 @@ library P256 {
     address internal constant RIP_PRECOMPILE = 0x0000000000000000000000000000000000000100;
 
     /// @dev The order of the secp256r1 elliptic curve.
-    uint256 internal constant N = 0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
+    uint256 internal constant N =
+        0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
 
     /// @dev `N/2`. Used for checking the malleability of the signature.
     uint256 private constant _HALF_N =

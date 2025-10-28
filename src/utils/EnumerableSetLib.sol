@@ -382,7 +382,9 @@ library EnumerableSetLib {
         internal
         returns (bool result)
     {
-        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
+        if (result = add(set, value)) {
+            if (length(set) > cap) revert ExceedsCapacity();
+        }
     }
 
     /// @dev Adds `value` to the set. Returns whether `value` was not in the set.
@@ -391,7 +393,9 @@ library EnumerableSetLib {
         internal
         returns (bool result)
     {
-        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
+        if (result = add(set, value)) {
+            if (length(set) > cap) revert ExceedsCapacity();
+        }
     }
 
     /// @dev Adds `value` to the set. Returns whether `value` was not in the set.
@@ -400,7 +404,9 @@ library EnumerableSetLib {
         internal
         returns (bool result)
     {
-        if (result = add(set, value)) if (length(set) > cap) revert ExceedsCapacity();
+        if (result = add(set, value)) {
+            if (length(set) > cap) revert ExceedsCapacity();
+        }
     }
 
     /// @dev Adds `value` to the set. Returns whether `value` was not in the set.
@@ -760,11 +766,7 @@ library EnumerableSetLib {
     }
 
     /// @dev Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
-    function indexOf(AddressSet storage set, address value)
-        internal
-        view
-        returns (uint256 result)
-    {
+    function indexOf(AddressSet storage set, address value) internal view returns (uint256 result) {
         result = NOT_FOUND;
         if (uint160(value) == _ZERO_SENTINEL) return result;
         bytes32 rootSlot = _rootSlot(set);
@@ -798,11 +800,7 @@ library EnumerableSetLib {
     }
 
     /// @dev Returns the index of `value`. Returns `NOT_FOUND` if the value does not exist.
-    function indexOf(Bytes32Set storage set, bytes32 value)
-        internal
-        view
-        returns (uint256 result)
-    {
+    function indexOf(Bytes32Set storage set, bytes32 value) internal view returns (uint256 result) {
         result = NOT_FOUND;
         if (uint256(value) == _ZERO_SENTINEL) return result;
         bytes32 rootSlot = _rootSlot(set);

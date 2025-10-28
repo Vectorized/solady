@@ -161,7 +161,9 @@ library EnumerableMapLib {
         view
         returns (bytes32 value)
     {
-        if ((value = map._values[key]) == bytes32(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == bytes32(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -242,7 +244,9 @@ library EnumerableMapLib {
         view
         returns (uint256 value)
     {
-        if ((value = map._values[key]) == uint256(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == uint256(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -323,7 +327,9 @@ library EnumerableMapLib {
         view
         returns (address value)
     {
-        if ((value = map._values[key]) == address(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == address(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -404,7 +410,9 @@ library EnumerableMapLib {
         view
         returns (bytes32 value)
     {
-        if ((value = map._values[key]) == bytes32(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == bytes32(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -485,7 +493,9 @@ library EnumerableMapLib {
         view
         returns (uint256 value)
     {
-        if ((value = map._values[key]) == uint256(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == uint256(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -566,7 +576,9 @@ library EnumerableMapLib {
         view
         returns (address value)
     {
-        if ((value = map._values[key]) == address(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == address(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -647,7 +659,9 @@ library EnumerableMapLib {
         view
         returns (bytes32 value)
     {
-        if ((value = map._values[key]) == bytes32(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == bytes32(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -728,7 +742,9 @@ library EnumerableMapLib {
         view
         returns (uint256 value)
     {
-        if ((value = map._values[key]) == uint256(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == uint256(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.
@@ -809,7 +825,9 @@ library EnumerableMapLib {
         view
         returns (address value)
     {
-        if ((value = map._values[key]) == address(0)) if (!contains(map, key)) _revertNotFound();
+        if ((value = map._values[key]) == address(0)) {
+            if (!contains(map, key)) _revertNotFound();
+        }
     }
 
     /// @dev Returns the keys. May run out-of-gas if the map is too big.

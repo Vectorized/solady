@@ -350,7 +350,12 @@ library FixedPointMathLib {
     /// See: https://en.wikipedia.org/wiki/Lambert_W_function
     /// a.k.a. Product log function. This is an approximation of the principal branch.
     /// Note: This function is an approximation. Monotonically increasing.
-    function lambertW0Wad(int256 x) internal pure returns (int256 w) {
+    function lambertW0Wad(int256 x)
+        internal
+        pure
+        returns (int256 w)
+    {
+
         // forgefmt: disable-next-item
         unchecked {
             if ((w = x) <= -367879441171442322) revert OutOfDomain(); // `x` less than `-1/e`.
@@ -495,14 +500,13 @@ library FixedPointMathLib {
                     inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**32
                     inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**64
                     inv := mul(inv, sub(2, mul(d, inv))) // inverse mod 2**128
-                    z :=
-                        mul(
-                            // Divide [p1 p0] by the factors of two.
-                            // Shift in bits from `p1` into `p0`. For this we need
-                            // to flip `t` such that it is `2**256 / t`.
-                            or(mul(sub(p1, gt(r, z)), add(div(sub(0, t), t), 1)), div(sub(z, r), t)),
-                            mul(sub(2, mul(d, inv)), inv) // inverse mod 2**256
-                        )
+                    z := mul(
+                        // Divide [p1 p0] by the factors of two.
+                        // Shift in bits from `p1` into `p0`. For this we need
+                        // to flip `t` such that it is `2**256 / t`.
+                        or(mul(sub(p1, gt(r, z)), add(div(sub(0, t), t), 1)), div(sub(z, r), t)),
+                        mul(sub(2, mul(d, inv)), inv) // inverse mod 2**256
+                    )
                     break
                 }
                 z := div(z, d)
@@ -533,11 +537,10 @@ library FixedPointMathLib {
             inv := mul(inv, sub(2, mul(d, inv)))
             inv := mul(inv, sub(2, mul(d, inv)))
             inv := mul(inv, sub(2, mul(d, inv)))
-            z :=
-                mul(
-                    or(mul(sub(p1, gt(r, z)), add(div(sub(0, t), t), 1)), div(sub(z, r), t)),
-                    mul(sub(2, mul(d, inv)), inv)
-                )
+            z := mul(
+                or(mul(sub(p1, gt(r, z)), add(div(sub(0, t), t), 1)), div(sub(z, r), t)),
+                mul(sub(2, mul(d, inv)), inv)
+            )
         }
     }
 

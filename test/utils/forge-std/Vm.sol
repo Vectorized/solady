@@ -272,10 +272,7 @@ interface VmSafe {
     /// Gets the environment variable `name` and parses it as `uint256`.
     /// Reverts if the variable could not be parsed.
     /// Returns `defaultValue` if the variable was not found.
-    function envOr(string calldata name, uint256 defaultValue)
-        external
-        view
-        returns (uint256 value);
+    function envOr(string calldata name, uint256 defaultValue) external view returns (uint256 value);
 
     /// Gets the environment variable `name` and parses it as an array of `address`, delimited by `delim`.
     /// Reverts if the variable could not be parsed.
@@ -312,26 +309,17 @@ interface VmSafe {
     /// Gets the environment variable `name` and parses it as `int256`.
     /// Reverts if the variable could not be parsed.
     /// Returns `defaultValue` if the variable was not found.
-    function envOr(string calldata name, int256 defaultValue)
-        external
-        view
-        returns (int256 value);
+    function envOr(string calldata name, int256 defaultValue) external view returns (int256 value);
 
     /// Gets the environment variable `name` and parses it as `address`.
     /// Reverts if the variable could not be parsed.
     /// Returns `defaultValue` if the variable was not found.
-    function envOr(string calldata name, address defaultValue)
-        external
-        view
-        returns (address value);
+    function envOr(string calldata name, address defaultValue) external view returns (address value);
 
     /// Gets the environment variable `name` and parses it as `bytes32`.
     /// Reverts if the variable could not be parsed.
     /// Returns `defaultValue` if the variable was not found.
-    function envOr(string calldata name, bytes32 defaultValue)
-        external
-        view
-        returns (bytes32 value);
+    function envOr(string calldata name, bytes32 defaultValue) external view returns (bytes32 value);
 
     /// Gets the environment variable `name` and parses it as `string`.
     /// Reverts if the variable could not be parsed.
@@ -434,9 +422,7 @@ interface VmSafe {
         returns (bool found, bytes32 key, bytes32 parent);
 
     /// Gets the number of elements in the mapping at the given slot, for a given address.
-    function getMappingLength(address target, bytes32 mappingSlot)
-        external
-        returns (uint256 length);
+    function getMappingLength(address target, bytes32 mappingSlot) external returns (uint256 length);
 
     /// Gets the elements at index idx of the mapping at the given slot, for a given address. The
     /// index must be less than the length of the mapping (i.e. the number of keys in the mapping).
@@ -624,10 +610,7 @@ interface VmSafe {
     function keyExists(string calldata json, string calldata key) external view returns (bool);
 
     /// Checks if `key` exists in a JSON object.
-    function keyExistsJson(string calldata json, string calldata key)
-        external
-        view
-        returns (bool);
+    function keyExistsJson(string calldata json, string calldata key) external view returns (bool);
 
     /// Parses a string of JSON data at `key` and coerces it to `address`.
     function parseJsonAddress(string calldata json, string calldata key)
@@ -642,10 +625,7 @@ interface VmSafe {
         returns (address[] memory);
 
     /// Parses a string of JSON data at `key` and coerces it to `bool`.
-    function parseJsonBool(string calldata json, string calldata key)
-        external
-        pure
-        returns (bool);
+    function parseJsonBool(string calldata json, string calldata key) external pure returns (bool);
 
     /// Parses a string of JSON data at `key` and coerces it to `bool[]`.
     function parseJsonBoolArray(string calldata json, string calldata key)
@@ -678,10 +658,7 @@ interface VmSafe {
         returns (bytes[] memory);
 
     /// Parses a string of JSON data at `key` and coerces it to `int256`.
-    function parseJsonInt(string calldata json, string calldata key)
-        external
-        pure
-        returns (int256);
+    function parseJsonInt(string calldata json, string calldata key) external pure returns (int256);
 
     /// Parses a string of JSON data at `key` and coerces it to `int256[]`.
     function parseJsonIntArray(string calldata json, string calldata key)
@@ -883,16 +860,10 @@ interface VmSafe {
         returns (bytes32 parsedValue);
 
     /// Parses the given `string` into a `int256`.
-    function parseInt(string calldata stringifiedValue)
-        external
-        pure
-        returns (int256 parsedValue);
+    function parseInt(string calldata stringifiedValue) external pure returns (int256 parsedValue);
 
     /// Parses the given `string` into a `uint256`.
-    function parseUint(string calldata stringifiedValue)
-        external
-        pure
-        returns (uint256 parsedValue);
+    function parseUint(string calldata stringifiedValue) external pure returns (uint256 parsedValue);
 
     /// Replaces occurrences of `from` in the given `string` with `to`.
     function replace(string calldata input, string calldata from, string calldata to)
@@ -913,10 +884,7 @@ interface VmSafe {
     function toString(address value) external pure returns (string memory stringifiedValue);
 
     /// Converts the given value to a `string`.
-    function toString(bytes calldata value)
-        external
-        pure
-        returns (string memory stringifiedValue);
+    function toString(bytes calldata value) external pure returns (string memory stringifiedValue);
 
     /// Converts the given value to a `string`.
     function toString(bytes32 value) external pure returns (string memory stringifiedValue);
@@ -959,9 +927,12 @@ interface VmSafe {
 
     /// Compares two `int256` values. Expects difference to be less than or equal to `maxDelta`.
     /// Formats values with decimals in failure message.
-    function assertApproxEqAbsDecimal(int256 left, int256 right, uint256 maxDelta, uint256 decimals)
-        external
-        pure;
+    function assertApproxEqAbsDecimal(
+        int256 left,
+        int256 right,
+        uint256 maxDelta,
+        uint256 decimals
+    ) external pure;
 
     /// Compares two `int256` values. Expects difference to be less than or equal to `maxDelta`.
     /// Formats values with decimals in failure message. Includes error message into revert string on failure.
@@ -978,9 +949,12 @@ interface VmSafe {
 
     /// Compares two `uint256` values. Expects difference to be less than or equal to `maxDelta`.
     /// Includes error message into revert string on failure.
-    function assertApproxEqAbs(uint256 left, uint256 right, uint256 maxDelta, string calldata error)
-        external
-        pure;
+    function assertApproxEqAbs(
+        uint256 left,
+        uint256 right,
+        uint256 maxDelta,
+        string calldata error
+    ) external pure;
 
     /// Compares two `int256` values. Expects difference to be less than or equal to `maxDelta`.
     function assertApproxEqAbs(int256 left, int256 right, uint256 maxDelta) external pure;
@@ -1035,9 +1009,7 @@ interface VmSafe {
 
     /// Compares two `uint256` values. Expects relative difference in percents to be less than or equal to `maxPercentDelta`.
     /// `maxPercentDelta` is an 18 decimal fixed point number, where 1e18 == 100%
-    function assertApproxEqRel(uint256 left, uint256 right, uint256 maxPercentDelta)
-        external
-        pure;
+    function assertApproxEqRel(uint256 left, uint256 right, uint256 maxPercentDelta) external pure;
 
     /// Compares two `uint256` values. Expects relative difference in percents to be less than or equal to `maxPercentDelta`.
     /// `maxPercentDelta` is an 18 decimal fixed point number, where 1e18 == 100%
@@ -1478,10 +1450,7 @@ interface VmSafe {
     // ::::::: Toml :::::::
 
     /// Checks if `key` exists in a TOML table.
-    function keyExistsToml(string calldata toml, string calldata key)
-        external
-        view
-        returns (bool);
+    function keyExistsToml(string calldata toml, string calldata key) external view returns (bool);
 
     /// Parses a string of TOML data at `key` and coerces it to `address`.
     function parseTomlAddress(string calldata toml, string calldata key)
@@ -1496,10 +1465,7 @@ interface VmSafe {
         returns (address[] memory);
 
     /// Parses a string of TOML data at `key` and coerces it to `bool`.
-    function parseTomlBool(string calldata toml, string calldata key)
-        external
-        pure
-        returns (bool);
+    function parseTomlBool(string calldata toml, string calldata key) external pure returns (bool);
 
     /// Parses a string of TOML data at `key` and coerces it to `bool[]`.
     function parseTomlBoolArray(string calldata toml, string calldata key)
@@ -1532,10 +1498,7 @@ interface VmSafe {
         returns (bytes[] memory);
 
     /// Parses a string of TOML data at `key` and coerces it to `int256`.
-    function parseTomlInt(string calldata toml, string calldata key)
-        external
-        pure
-        returns (int256);
+    function parseTomlInt(string calldata toml, string calldata key) external pure returns (int256);
 
     /// Parses a string of TOML data at `key` and coerces it to `int256[]`.
     function parseTomlIntArray(string calldata toml, string calldata key)
@@ -1605,10 +1568,7 @@ interface VmSafe {
         returns (address);
 
     /// Compute the address a contract will be deployed at for a given deployer address and nonce.
-    function computeCreateAddress(address deployer, uint256 nonce)
-        external
-        pure
-        returns (address);
+    function computeCreateAddress(address deployer, uint256 nonce) external pure returns (address);
 
     /// Derives a private key from the name, labels the account with that name, and returns the wallet.
     function createWallet(string calldata walletLabel) external returns (Wallet memory wallet);
@@ -1781,8 +1741,7 @@ interface Vm is VmSafe {
     function makePersistent(address[] calldata accounts) external;
 
     /// Reverts a call to an address with specified revert data.
-    function mockCallRevert(address callee, bytes calldata data, bytes calldata revertData)
-        external;
+    function mockCallRevert(address callee, bytes calldata data, bytes calldata revertData) external;
 
     /// Reverts a call to an address with a specific `msg.value`, with specified revert data.
     function mockCallRevert(
@@ -1930,8 +1889,7 @@ interface Vm is VmSafe {
         external;
 
     /// Expect a call to an address with the specified `msg.value`, gas, and calldata.
-    function expectCall(address callee, uint256 msgValue, uint64 gas, bytes calldata data)
-        external;
+    function expectCall(address callee, uint256 msgValue, uint64 gas, bytes calldata data) external;
 
     /// Expects given number of calls to an address with the specified `msg.value`, gas, and calldata.
     function expectCall(

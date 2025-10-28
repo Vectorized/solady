@@ -29,7 +29,8 @@ library ECDSA {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev The order of the secp256k1 elliptic curve.
-    uint256 internal constant N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+    uint256 internal constant N =
+        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
 
     /// @dev `N/2 + 1`. Used for checking the malleability of the signature.
     uint256 private constant _HALF_N_PLUS_1 =

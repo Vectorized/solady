@@ -396,22 +396,23 @@ contract LibTransientTest is SoladyTest {
             bool success;
             if (newAdminRaw >> 160 == 0) {
                 if (_randomChance(2)) {
-                    (success,) = LibTransient.REGISTRY.call(
-                        abi.encodeWithSignature("changeAdmin(bytes32,address)", key, newAdminRaw)
-                    );
+                    (success,) = LibTransient.REGISTRY
+                        .call(
+                            abi.encodeWithSignature(
+                                "changeAdmin(bytes32,address)", key, newAdminRaw
+                            )
+                        );
                     assertTrue(success);
                 } else {
                     this.registryChangeAdmin(key, newAdmin);
                 }
             } else {
-                (success,) = LibTransient.REGISTRY.call(
-                    abi.encodeWithSignature("changeAdmin(bytes32,address)", key, newAdminRaw)
-                );
+                (success,) = LibTransient.REGISTRY
+                    .call(abi.encodeWithSignature("changeAdmin(bytes32,address)", key, newAdminRaw));
                 assertFalse(success);
                 newAdminRaw = (newAdminRaw << 96) >> 96;
-                (success,) = LibTransient.REGISTRY.call(
-                    abi.encodeWithSignature("changeAdmin(bytes32,address)", key, newAdminRaw)
-                );
+                (success,) = LibTransient.REGISTRY
+                    .call(abi.encodeWithSignature("changeAdmin(bytes32,address)", key, newAdminRaw));
                 assertTrue(success);
             }
 

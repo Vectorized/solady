@@ -40,8 +40,10 @@ library DelegateCheckerLib {
             isValid := eq(mload(staticcall(gas(), DELEGATE_REGISTRY_V2, 0x1c, 0x64, 0x01, 0x20)), 1)
             if iszero(isValid) {
                 mstore(0x01, 0x9c395bc200) // `checkDelegateForAll(address,address)`.
-                isValid :=
-                    eq(mload(staticcall(gas(), DELEGATE_REGISTRY_V1, 0x1c, 0x44, 0x01, 0x20)), 1)
+                isValid := eq(
+                    mload(staticcall(gas(), DELEGATE_REGISTRY_V1, 0x1c, 0x44, 0x01, 0x20)),
+                    1
+                )
             }
             mstore(0x40, m) // Restore the free memory pointer.
         }
@@ -67,8 +69,10 @@ library DelegateCheckerLib {
             isValid := eq(mload(staticcall(gas(), DELEGATE_REGISTRY_V2, 0x1c, 0x64, 0x01, 0x20)), 1)
             if iszero(or(rights, isValid)) {
                 mstore(0x01, 0x9c395bc200) // `checkDelegateForAll(address,address)`.
-                isValid :=
-                    eq(mload(staticcall(gas(), DELEGATE_REGISTRY_V1, 0x1c, 0x44, 0x01, 0x20)), 1)
+                isValid := eq(
+                    mload(staticcall(gas(), DELEGATE_REGISTRY_V1, 0x1c, 0x44, 0x01, 0x20)),
+                    1
+                )
             }
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero pointer.

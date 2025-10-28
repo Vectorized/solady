@@ -145,11 +145,13 @@ contract MockERC1155WithHooks is MockERC1155 {
         beforeCounter++;
     }
 
-    function _afterTokenTransfer(address, address, uint256[] memory, uint256[] memory, bytes memory)
-        internal
-        virtual
-        override
-    {
+    function _afterTokenTransfer(
+        address,
+        address,
+        uint256[] memory,
+        uint256[] memory,
+        bytes memory
+    ) internal virtual override {
         afterCounter++;
     }
 }
@@ -360,9 +362,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         _expectBurnEvent(address(this), from, id, amount);
     }
 
-    function _expectBurnEvent(address operator, address from, uint256 id, uint256 amount)
-        internal
-    {
+    function _expectBurnEvent(address operator, address from, uint256 id, uint256 amount) internal {
         _expectTransferEvent(operator, from, address(0), id, amount);
     }
 
@@ -381,9 +381,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         emit TransferSingle(operator, from, to, id, amount);
     }
 
-    function _expectMintEvent(address to, uint256[] memory ids, uint256[] memory amounts)
-        internal
-    {
+    function _expectMintEvent(address to, uint256[] memory ids, uint256[] memory amounts) internal {
         _expectMintEvent(address(this), to, ids, amounts);
     }
 
@@ -435,9 +433,7 @@ contract ERC1155Test is SoladyTest, ERC1155TokenReceiver {
         _expectApprovalForAllEvent(address(this), operator, isApproved);
     }
 
-    function _expectApprovalForAllEvent(address owner, address operator, bool isApproved)
-        internal
-    {
+    function _expectApprovalForAllEvent(address owner, address operator, bool isApproved) internal {
         vm.expectEmit(true, true, true, true);
         emit ApprovalForAll(owner, operator, isApproved);
     }

@@ -159,9 +159,8 @@ contract ERC6551Test is SoladyTest {
                 t[i] = _testTemps();
                 if (i != 0) {
                     vm.prank(t[i].owner);
-                    MockERC721(_erc721).safeTransferFrom(
-                        t[i].owner, address(t[i - 1].account), t[i].tokenId
-                    );
+                    MockERC721(_erc721)
+                        .safeTransferFrom(t[i].owner, address(t[i - 1].account), t[i].tokenId);
                     t[i].owner = address(t[i - 1].account);
                 }
             }
@@ -169,19 +168,16 @@ contract ERC6551Test is SoladyTest {
                 for (uint256 j = i; j != n; ++j) {
                     vm.prank(t[i].owner);
                     vm.expectRevert(ERC6551.SelfOwnDetected.selector);
-                    MockERC721(_erc721).safeTransferFrom(
-                        t[i].owner, address(t[j].account), t[i].tokenId
-                    );
+                    MockERC721(_erc721)
+                        .safeTransferFrom(t[i].owner, address(t[j].account), t[i].tokenId);
                 }
                 for (uint256 j; j != i; ++j) {
                     vm.prank(t[i].owner);
-                    MockERC721(_erc721).safeTransferFrom(
-                        t[i].owner, address(t[j].account), t[i].tokenId
-                    );
+                    MockERC721(_erc721)
+                        .safeTransferFrom(t[i].owner, address(t[j].account), t[i].tokenId);
                     vm.prank(address(t[j].account));
-                    MockERC721(_erc721).safeTransferFrom(
-                        address(t[j].account), t[i].owner, t[i].tokenId
-                    );
+                    MockERC721(_erc721)
+                        .safeTransferFrom(address(t[j].account), t[i].owner, t[i].tokenId);
                 }
             }
 
@@ -199,9 +195,8 @@ contract ERC6551Test is SoladyTest {
                 t[i] = _testTemps();
                 if (i != 0) {
                     vm.prank(t[i].owner);
-                    MockERC721(_erc721).safeTransferFrom(
-                        t[i].owner, address(t[i - 1].account), t[i].tokenId
-                    );
+                    MockERC721(_erc721)
+                        .safeTransferFrom(t[i].owner, address(t[i - 1].account), t[i].tokenId);
                     t[i].owner = address(t[i - 1].account);
                 }
             }
@@ -269,15 +264,13 @@ contract ERC6551Test is SoladyTest {
 
         vm.prank(t.owner);
         vm.expectRevert(abi.encodeWithSignature("TargetError(bytes)", data));
-        t.account.execute(
-            target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data), 0
-        );
+        t.account
+            .execute(target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data), 0);
 
         vm.prank(t.owner);
         vm.expectRevert(ERC6551.OperationNotSupported.selector);
-        t.account.execute(
-            target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data), 1
-        );
+        t.account
+            .execute(target, 123, abi.encodeWithSignature("revertWithTargetError(bytes)", data), 1);
     }
 
     function testExecuteBatch() public {

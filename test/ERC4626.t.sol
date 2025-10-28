@@ -37,12 +37,10 @@ contract ERC4626Test is SoladyTest {
 
     function testDifferentialFullMulDiv(uint256 x, uint256 y, uint256 d) public {
         d = type(uint256).max - d % 4;
-        (bool success0,) = address(this).call(
-            abi.encodeWithSignature("fullMulDivChecked(uint256,uint256,uint256)", x, y, d)
-        );
-        (bool success1,) = address(this).call(
-            abi.encodeWithSignature("fullMulDivUnchecked(uint256,uint256,uint256)", x, y, d)
-        );
+        (bool success0,) = address(this)
+            .call(abi.encodeWithSignature("fullMulDivChecked(uint256,uint256,uint256)", x, y, d));
+        (bool success1,) = address(this)
+            .call(abi.encodeWithSignature("fullMulDivUnchecked(uint256,uint256,uint256)", x, y, d));
         if (d == type(uint256).max) {
             assertFalse(success0);
             assertFalse(success1);

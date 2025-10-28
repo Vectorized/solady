@@ -114,7 +114,9 @@ abstract contract ERC1271 is EIP712 {
         virtual
         returns (bool result)
     {
-        if (_erc1271CallerIsSafe()) result = _erc1271IsValidSignatureNowCalldata(hash, signature);
+        if (_erc1271CallerIsSafe()) {
+            result = _erc1271IsValidSignatureNowCalldata(hash, signature);
+        }
     }
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).

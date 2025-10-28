@@ -168,9 +168,7 @@ contract JSONParserLibTest is SoladyTest {
         }
     }
 
-    function _checkSoloEmptyObject(JSONParserLib.Item memory item, string memory trimmed)
-        internal
-    {
+    function _checkSoloEmptyObject(JSONParserLib.Item memory item, string memory trimmed) internal {
         for (uint256 i; i != 2; ++i) {
             assertEq(item.getType(), JSONParserLib.TYPE_OBJECT);
             assertEq(item.isObject(), true);
@@ -771,12 +769,7 @@ contract JSONParserLibTest is SoladyTest {
         this.decodeString(s);
     }
 
-    function decodeString(string memory s)
-        public
-        view
-        miniBrutalizeMemory
-        returns (string memory)
-    {
+    function decodeString(string memory s) public view miniBrutalizeMemory returns (string memory) {
         return JSONParserLib.decodeString(s);
     }
 

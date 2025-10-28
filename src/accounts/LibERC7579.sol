@@ -248,8 +248,9 @@ library LibERC7579 {
     function hasOpData(bytes calldata executionData) internal pure returns (bool result) {
         /// @solidity memory-safe-assembly
         assembly {
-            result :=
-                iszero(or(lt(executionData.length, 0x40), lt(calldataload(executionData.offset), 0x40)))
+            result := iszero(
+                or(lt(executionData.length, 0x40), lt(calldataload(executionData.offset), 0x40))
+            )
         }
     }
 

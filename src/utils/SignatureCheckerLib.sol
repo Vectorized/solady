@@ -278,11 +278,13 @@ library SignatureCheckerLib {
 
     /// @dev Returns whether the signature (`v`, `r`, `s`) is valid for `hash`
     /// for an ERC1271 `signer` contract.
-    function isValidERC1271SignatureNow(address signer, bytes32 hash, uint8 v, bytes32 r, bytes32 s)
-        internal
-        view
-        returns (bool isValid)
-    {
+    function isValidERC1271SignatureNow(
+        address signer,
+        bytes32 hash,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal view returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40)

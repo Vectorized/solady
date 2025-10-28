@@ -8,8 +8,7 @@ import {FixedPointMathLib} from "../../../src/utils/FixedPointMathLib.sol";
 interface IDelegateRegistryV1 {
     function delegateForAll(address delegate, bool value) external;
     function delegateForContract(address delegate, address contract_, bool value) external;
-    function delegateForToken(address delegate, address contract_, uint256 id, bool value)
-        external;
+    function delegateForToken(address delegate, address contract_, uint256 id, bool value) external;
     function checkDelegateForAll(address delegate, address vault) external view returns (bool);
     function checkDelegateForContract(address delegate, address vault, address contract_)
         external
