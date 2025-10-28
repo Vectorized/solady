@@ -196,6 +196,22 @@ contract ERC7821Test is SoladyTest {
         }
     }
 
+    function testERC7821OptimizedBatchWithCorruptedCalldataReverts(bytes32 x) public {
+        bytes memory corrupted = new bytes(_bound(_randomUniform(), 32, 8192));
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x00, x)
+            mstore(0x20, "corrupt")
+            mstore(0x00, keccak256(0x00, 0x40))
+            for { let i := 0 } lt(i, mload(corrupted)) { i := add(i, 0x20) } {
+                mstore(0x20, i)
+                mstore(add(add(corrupted, 0x20), i), keccak256(0x00, 0x40))
+            }
+        }
+        vm.expectRevert(ERC7821.OptimizedBatchDecodingError.selector);
+        mbe.execute(_OPTIMIZED_BATCH_MODE, corrupted);
+    }
+
     function _totalValue(ERC7821.Call[] memory calls) internal pure returns (uint256 result) {
         unchecked {
             for (uint256 i; i < calls.length; ++i) {
