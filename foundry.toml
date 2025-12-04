@@ -4,8 +4,8 @@
 
 # The Default Profile
 [profile.default]
-solc_version = "0.8.30"
-evm_version = "paris" # Cancun will be tested in the CI.
+solc_version = "0.8.31"
+evm_version = "paris" # osaka will be tested in the CI.
 auto_detect_solc = false
 optimizer = true
 optimizer_runs = 1_000
@@ -20,8 +20,8 @@ remappings = [
 skip = ["*/g/*", "*/*7702*", "*/*BlockHashLib*", "*/*Transient*", "*/ext/ithaca/*", "*/ext/zksync/*"]
 
 
-[profile.post_prague]
-evm_version = "prague"
+[profile.post_osaka]
+evm_version = "osaka"
 skip = ["*/ext/ithaca/*"]
 
 [profile.zksync]
