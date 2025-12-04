@@ -105,7 +105,9 @@ library LibBit {
             let l := shl(5, shr(5, n))
             s := add(s, 0x20)
             for { let i } xor(i, l) { i := add(i, 0x20) } { c := add(czb(mload(add(s, i))), c) }
-            if lt(l, n) { c := add(czb(or(shr(shl(3, sub(n, l)), not(0)), mload(add(s, l)))), c) }
+            if lt(l, n) {
+                c := add(czb(or(shr(shl(3, sub(n, l)), not(0)), mload(add(s, l)))), c)
+            }
         }
     }
 
@@ -209,8 +211,8 @@ library LibBit {
                 mstore(add(o, add(i, i)),
                     and(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f, or(shl(4, x), x)))
             }
-            mstore(add(o, add(s, s)), 0) // Zeroize slot after result.
-            mstore(0x40, add(0x40, add(o, add(s, s)))) // Allocate memory.
+            mstore(add(o, mload(result)), 0) // Zeroize slot after result.
+            mstore(0x40, add(0x40, add(o, mload(result)))) // Allocate memory.
         }
     }
 

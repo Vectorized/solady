@@ -167,12 +167,10 @@ abstract contract TimedRoles {
     }
 
     /// @dev Checks that the caller is authorized to set the timed role.
-    function _authorizeSetTimedRole(
-        address holder,
-        uint256 timedRole,
-        uint40 start,
-        uint40 expires
-    ) internal virtual {
+    function _authorizeSetTimedRole(address holder, uint256 timedRole, uint40 start, uint40 expires)
+        internal
+        virtual
+    {
         if (!_timedRolesSenderIsContractOwner()) _revertTimedRolesUnauthorized();
         // Silence compiler warning on unused variables.
         (holder, timedRole, start, expires) = (holder, timedRole, start, expires);

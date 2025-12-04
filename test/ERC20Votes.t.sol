@@ -466,7 +466,9 @@ contract ERC20VotesTest is SoladyTest {
             let checkpointPacked := sload(add(i, lengthSlot))
             checkpointClock := and(0xffffffffffff, checkpointPacked)
             checkpointValue := shr(96, checkpointPacked)
-            if eq(checkpointValue, address()) { checkpointValue := sload(not(add(i, lengthSlot))) }
+            if eq(checkpointValue, address()) {
+                checkpointValue := sload(not(add(i, lengthSlot)))
+            }
         }
     }
 

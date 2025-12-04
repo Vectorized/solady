@@ -145,13 +145,11 @@ contract MockERC1155WithHooks is MockERC1155 {
         beforeCounter++;
     }
 
-    function _afterTokenTransfer(
-        address,
-        address,
-        uint256[] memory,
-        uint256[] memory,
-        bytes memory
-    ) internal virtual override {
+    function _afterTokenTransfer(address, address, uint256[] memory, uint256[] memory, bytes memory)
+        internal
+        virtual
+        override
+    {
         afterCounter++;
     }
 }

@@ -187,7 +187,9 @@ contract LibZipTest is SoladyTest {
                         let d := byte(31, mload(data))
                         // Fill with either 0xff or 0x00.
                         mstore(o, not(0))
-                        if iszero(gt(d, 0x7f)) { calldatacopy(o, calldatasize(), add(d, 1)) }
+                        if iszero(gt(d, 0x7f)) {
+                            calldatacopy(o, calldatasize(), add(d, 1))
+                        }
                         o := add(o, add(and(d, 0x7f), 1))
                         continue
                     }

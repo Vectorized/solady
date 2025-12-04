@@ -466,7 +466,9 @@ contract LibStringTest is SoladyTest {
         assertEq(keccak256(raw), hashBefore);
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(eq(mload(add(raw, add(0x20, mload(raw)))), hashBefore)) { revert(0, 0) }
+            if iszero(eq(mload(add(raw, add(0x20, mload(raw)))), hashBefore)) {
+                revert(0, 0)
+            }
         }
     }
 
@@ -493,7 +495,9 @@ contract LibStringTest is SoladyTest {
         assertEq(keccak256(raw), hashBefore);
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(eq(mload(add(raw, add(0x20, mload(raw)))), hashBefore)) { revert(0, 0) }
+            if iszero(eq(mload(add(raw, add(0x20, mload(raw)))), hashBefore)) {
+                revert(0, 0)
+            }
         }
     }
 

@@ -550,12 +550,10 @@ abstract contract Test is Script {
         vm.assertApproxEqAbs(left, right, maxDelta, err);
     }
 
-    function assertApproxEqAbsDecimal(
-        int256 left,
-        int256 right,
-        uint256 maxDelta,
-        uint256 decimals
-    ) internal virtual {
+    function assertApproxEqAbsDecimal(int256 left, int256 right, uint256 maxDelta, uint256 decimals)
+        internal
+        virtual
+    {
         vm.assertApproxEqAbsDecimal(left, right, maxDelta, decimals);
     }
 

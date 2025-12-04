@@ -330,7 +330,9 @@ library RedBlackTreeLib {
                     for {} 1 {} {
                         if iszero(result) { break }
                         packed := sload(or(nodes, result))
-                        if iszero(eq(target, and(shr(R, packed), _BITMASK_KEY))) { break }
+                        if iszero(eq(target, and(shr(R, packed), _BITMASK_KEY))) {
+                            break
+                        }
                         target := result
                         result := and(shr(_BITPOS_PARENT, packed), _BITMASK_KEY)
                     }
@@ -431,7 +433,9 @@ library RedBlackTreeLib {
                         let s_ := or(nodes_, cursor_)
                         let cPacked_ := sload(s_)
                         let cValue_ := shr(_BITPOS_PACKED_VALUE, cPacked_)
-                        if iszero(cValue_) { cValue_ := sload(or(s_, _BIT_FULL_VALUE_SLOT)) }
+                        if iszero(cValue_) {
+                            cValue_ := sload(or(s_, _BIT_FULL_VALUE_SLOT))
+                        }
                         if iszero(lt(x_, cValue_)) {
                             sstore(s_, setKey(cPacked_, _BITPOS_RIGHT, totalNodes_))
                             break
@@ -602,7 +606,9 @@ library RedBlackTreeLib {
                     key_ := t_
                 }
 
-                if iszero(and(_BITMASK_RED, cursorPacked_)) { removeFixup(nodes_, probe_) }
+                if iszero(and(_BITMASK_RED, cursorPacked_)) {
+                    removeFixup(nodes_, probe_)
+                }
 
                 // Remove last workflow:
 
