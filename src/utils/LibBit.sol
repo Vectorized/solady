@@ -209,8 +209,8 @@ library LibBit {
                 mstore(add(o, add(i, i)),
                     and(0x0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f, or(shl(4, x), x)))
             }
-            mstore(add(o, add(n, n)), 0) // Zeroize slot after result.
-            mstore(0x40, add(0x40, add(o, add(n, n)))) // Allocate memory.
+            mstore(add(o, mload(result)), 0) // Zeroize slot after result.
+            mstore(0x40, add(0x40, add(o, mload(result)))) // Allocate memory.
         }
     }
 
