@@ -927,12 +927,9 @@ interface VmSafe {
 
     /// Compares two `int256` values. Expects difference to be less than or equal to `maxDelta`.
     /// Formats values with decimals in failure message.
-    function assertApproxEqAbsDecimal(
-        int256 left,
-        int256 right,
-        uint256 maxDelta,
-        uint256 decimals
-    ) external pure;
+    function assertApproxEqAbsDecimal(int256 left, int256 right, uint256 maxDelta, uint256 decimals)
+        external
+        pure;
 
     /// Compares two `int256` values. Expects difference to be less than or equal to `maxDelta`.
     /// Formats values with decimals in failure message. Includes error message into revert string on failure.
@@ -949,12 +946,9 @@ interface VmSafe {
 
     /// Compares two `uint256` values. Expects difference to be less than or equal to `maxDelta`.
     /// Includes error message into revert string on failure.
-    function assertApproxEqAbs(
-        uint256 left,
-        uint256 right,
-        uint256 maxDelta,
-        string calldata error
-    ) external pure;
+    function assertApproxEqAbs(uint256 left, uint256 right, uint256 maxDelta, string calldata error)
+        external
+        pure;
 
     /// Compares two `int256` values. Expects difference to be less than or equal to `maxDelta`.
     function assertApproxEqAbs(int256 left, int256 right, uint256 maxDelta) external pure;

@@ -988,10 +988,9 @@ contract ERC721Test is SoladyTest {
         token.safeMint(to, id);
     }
 
-    function testSafeMintToERC721RecipientWithWrongReturnDataWithData(
-        uint256 id,
-        bytes memory data
-    ) public {
+    function testSafeMintToERC721RecipientWithWrongReturnDataWithData(uint256 id, bytes memory data)
+        public
+    {
         address to = address(new WrongReturnDataERC721Recipient());
         vm.expectRevert(ERC721.TransferToNonERC721ReceiverImplementer.selector);
         token.safeMint(to, id, data);

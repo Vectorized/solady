@@ -107,7 +107,9 @@ library SafeTransferLib {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(0x00, shr(96, shl(96, to)))
-                if iszero(call(gas(), vault, amount, 0x00, 0x20, 0x00, 0x00)) { revert(0x00, 0x00) }
+                if iszero(call(gas(), vault, amount, 0x00, 0x20, 0x00, 0x00)) {
+                    revert(0x00, 0x00)
+                }
             }
             emit SingleUseETHVaultCreated(to, amount, vault);
         }

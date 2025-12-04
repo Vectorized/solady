@@ -139,7 +139,9 @@ library SafeTransferLib {
                 mstore(0x00, to) // Store the address in scratch space.
                 mstore8(0x0b, 0x73) // Opcode `PUSH20`.
                 mstore8(0x20, 0xff) // Opcode `SELFDESTRUCT`.
-                if iszero(create(selfbalance(), 0x0b, 0x16)) { revert(codesize(), codesize()) } // For gas estimation.
+                if iszero(create(selfbalance(), 0x0b, 0x16)) {
+                    revert(codesize(), codesize())
+                } // For gas estimation.
             }
         }
     }

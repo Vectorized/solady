@@ -78,7 +78,9 @@ library LibEIP7702 {
             /// @solidity memory-safe-assembly
             assembly {
                 mstore(0x00, 0)
-                if iszero(staticcall(gas(), account, 0x00, 0x01, 0x00, 0x20)) { revert(0x00, 0x00) }
+                if iszero(staticcall(gas(), account, 0x00, 0x01, 0x00, 0x20)) {
+                    revert(0x00, 0x00)
+                }
                 implementation := mload(0x00)
             }
         }
@@ -91,7 +93,9 @@ library LibEIP7702 {
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, 0)
-            if iszero(staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20)) { revert(0x00, 0x00) }
+            if iszero(staticcall(gas(), target, 0x00, 0x01, 0x00, 0x20)) {
+                revert(0x00, 0x00)
+            }
             result := mload(0x00)
         }
     }

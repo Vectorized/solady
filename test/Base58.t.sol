@@ -6,7 +6,6 @@ import {Base58} from "../src/utils/Base58.sol";
 import {LibString} from "../src/utils/LibString.sol";
 import {LibBytes} from "../src/utils/LibBytes.sol";
 
-
 contract Base58Test is SoladyTest {
     function testBase58DecodeRevertsIfInvalidCharacter(bytes1 c) public {
         if (isValidBase58Character(c)) {
@@ -33,7 +32,7 @@ contract Base58Test is SoladyTest {
         if (data.length > 1000) {
             LibBytes.truncate(data, 1000);
         }
-        
+
         if (r & 0x00f == 0) {
             _brutalizeMemory();
         }

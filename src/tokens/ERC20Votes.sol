@@ -228,7 +228,9 @@ abstract contract ERC20Votes is ERC20 {
             let checkpointPacked := sload(add(i, lengthSlot))
             checkpointClock := and(0xffffffffffff, checkpointPacked)
             checkpointValue := shr(96, checkpointPacked)
-            if eq(checkpointValue, address()) { checkpointValue := sload(not(add(i, lengthSlot))) }
+            if eq(checkpointValue, address()) {
+                checkpointValue := sload(not(add(i, lengthSlot)))
+            }
         }
     }
 

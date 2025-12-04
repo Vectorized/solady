@@ -1207,7 +1207,9 @@ contract LibCloneTest is SoladyTest {
             mstore(0x00, 0x57eca1a5) // `revertWithError()`.
             switch staticcall(gasBudget, instance, 0x1c, 0x04, 0x20, 0x20)
             case 0 {
-                if iszero(or(iszero(returndatasize()), eq(returndatasize(), 0x24))) { invalid() }
+                if iszero(or(iszero(returndatasize()), eq(returndatasize(), 0x24))) {
+                    invalid()
+                }
             }
             default { invalid() }
         }
@@ -1231,7 +1233,9 @@ contract LibCloneTest is SoladyTest {
             mstore(0x00, 0x57eca1a5) // `revertWithError()`.
             switch staticcall(gasBudget, instance, 0x1c, 0x04, 0x20, 0x20)
             case 0 {
-                if iszero(or(iszero(returndatasize()), eq(returndatasize(), 0x24))) { invalid() }
+                if iszero(or(iszero(returndatasize()), eq(returndatasize(), 0x24))) {
+                    invalid()
+                }
             }
             default { invalid() }
         }
@@ -1616,11 +1620,11 @@ contract LibCloneTest is SoladyTest {
         assertEq(instance, predicted);
     }
 
-    function deployDeterministicERC1967IBeaconProxy(
-        address beacon,
-        bytes memory args,
-        bytes32 salt
-    ) external maybeBrutalizeMemory returns (address instance) {
+    function deployDeterministicERC1967IBeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
         instance = LibClone.deployDeterministicERC1967IBeaconProxy(_brutalized(beacon), args, salt);
         address predicted = LibClone.predictDeterministicAddressERC1967IBeaconProxy(
             beacon, args, salt, address(this)
@@ -1704,11 +1708,11 @@ contract LibCloneTest is SoladyTest {
         assertEq(instance, predicted);
     }
 
-    function createDeterministicERC1967IBeaconProxy(
-        address beacon,
-        bytes memory args,
-        bytes32 salt
-    ) external maybeBrutalizeMemory returns (address instance) {
+    function createDeterministicERC1967IBeaconProxy(address beacon, bytes memory args, bytes32 salt)
+        external
+        maybeBrutalizeMemory
+        returns (address instance)
+    {
         address predicted = LibClone.predictDeterministicAddressERC1967IBeaconProxy(
             beacon, args, salt, address(this)
         );
