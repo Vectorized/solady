@@ -45,6 +45,8 @@ jobs:
             FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.11 --fuzz-runs 16 &&
             FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.12 --fuzz-runs 16
           ) ||
+          # NOTE: skipping solc 0.8.32 due to compiler bug
+          # https://github.com/argotorg/solidity/issues/16360
           ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&
             forge test --use 0.8.13 --fuzz-runs 16 &&
             forge test --use 0.8.14 --fuzz-runs 16 &&
@@ -64,9 +66,7 @@ jobs:
             forge test --use 0.8.28 --fuzz-runs 16 &&
             forge test --use 0.8.29 --fuzz-runs 16 &&
             forge test --use 0.8.30 --fuzz-runs 16 &&
-            forge test --use 0.8.31 --fuzz-runs 16 &&
-            forge test --use 0.8.32 --fuzz-runs 16
-
+            forge test --use 0.8.31 --fuzz-runs 16
           ) ||
           ( [ "${{ matrix.profile }}" = "via-ir" ] &&
             forge test --via-ir
