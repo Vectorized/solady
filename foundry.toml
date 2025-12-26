@@ -4,7 +4,7 @@
 
 # The Default Profile
 [profile.default]
-solc_version = "0.8.31"
+solc_version = "0.8.33"
 evm_version = "paris" # osaka will be tested in the CI.
 auto_detect_solc = false
 optimizer = true
