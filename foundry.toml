@@ -33,7 +33,7 @@ skip = []
 gas_limit = 16_777_216 # To prevent EVM error.
 evm_version = "prague"
 test = "test/ext/ithaca"
-skip = []
+skip = ["*/clz/*"]
 
 [profile.solx]
 solc_version = "/usr/local/bin/solx"
