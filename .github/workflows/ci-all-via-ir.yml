@@ -45,7 +45,11 @@ jobs:
             forge test --use 0.8.16 --via-ir &&
             forge test --use 0.8.17 --via-ir
           ) ||
+          # NOTE: skipping solc 0.8.32 due to compiler bug
+          # https://github.com/argotorg/solidity/issues/16360
           ( [ "${{ matrix.profile }}" = "via-ir-3" ] &&
+            forge test --use 0.8.33 --via-ir &&
+            forge test --use 0.8.31 --via-ir &&
             forge test --use 0.8.30 --via-ir &&
             forge test --use 0.8.29 --via-ir &&
             forge test --use 0.8.28 --via-ir &&
