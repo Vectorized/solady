@@ -17,7 +17,7 @@ remappings = [
 ]
 
 [profile.pre_global_structs]
-skip = ["*/g/*", "*/*7702*", "*/*BlockHashLib*", "*/*Transient*", "*/ext/ithaca/*", "*/ext/zksync/*"]
+skip = ["*/g/*", "*/*7702*", "*/*BlockHashLib*", "*/*Transient*", "*/ext/ithaca/*", "*/clz/*", "*/ext/zksync/*"]
 
 
 [profile.post_osaka]
@@ -27,7 +27,7 @@ skip = ["*/ext/ithaca/*"]
 [profile.zksync]
 match_path = "*/ext/zksync/*"
 evm_version = "cancun"
-skip = []
+skip = ["*/clz/*"]
 
 [profile.ithaca]
 gas_limit = 16_777_216 # To prevent EVM error.
