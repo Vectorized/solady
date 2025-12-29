@@ -12,16 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      actions: read
     steps:
       - name: Download gas diff artifact
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v6
         with:
           name: gas-diff
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          workflow: ci.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          
       - name: Read PR number
         id: pr
         run: echo "number=$(cat pr-number.txt)" >> $GITHUB_OUTPUT
+        
       - name: Read gas diff
         id: gas_diff
         run: |
@@ -30,9 +33,10 @@ jobs:
             cat comment.md >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           fi
+          
       - name: Add gas diff to sticky comment
+        if: steps.gas_diff.outputs.markdown
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           number: ${{ steps.pr.outputs.number }}
-          delete: ${{ !steps.gas_diff.outputs.markdown }}
           message: ${{ steps.gas_diff.outputs.markdown }}
