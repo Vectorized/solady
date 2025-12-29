@@ -1,0 +1,38 @@
+name: Post Gas Diff Comment
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types:
+      - completed
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download gas diff artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gas-diff
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - name: Read PR number
+        id: pr
+        run: echo "number=$(cat pr-number.txt)" >> $GITHUB_OUTPUT
+      - name: Read gas diff
+        id: gas_diff
+        run: |
+          if [ -f comment.md ]; then
+            echo "markdown<<EOF" >> $GITHUB_OUTPUT
+            cat comment.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+      - name: Add gas diff to sticky comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ steps.pr.outputs.number }}
+          delete: ${{ !steps.gas_diff.outputs.markdown }}
+          message: ${{ steps.gas_diff.outputs.markdown }}
