@@ -15,6 +15,8 @@ fs_permissions = [{ access = "read", path = "./test/data"}]
 remappings = [
   "forge-std=test/utils/forge-std/"
 ]
+# remove memory-safe-assembly warning from complier
+ignored_error_codes = [2424,8429,4591]
 
 [profile.pre_global_structs]
 skip = ["*/g/*", "*/*7702*", "*/*BlockHashLib*", "*/*Transient*", "*/ext/ithaca/*", "*/ext/zksync/*"]
@@ -45,6 +47,9 @@ fs_permissions = [{ access = "read", path = "./test/data"}]
 remappings = [
   "forge-std=test/utils/forge-std/"
 ]
+
+[lint]
+lint_on_build = false
 
 [fmt]
 line_length = 100 # While we allow up to 120, we lint at 100 for readability.
