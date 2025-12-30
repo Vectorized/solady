@@ -930,7 +930,7 @@ library LibString {
             result := mul(
                 or( // Load the length and the bytes of `a` and `b`.
                     shl(shl(3, sub(0x1f, aLen)), mload(add(a, aLen))),
-                    mload(sub(add(b, 0x1e), aLen))
+                    shr(shl(3, add(aLen, 1)), mload(add(b, 0x1f)))
                 ),
                 // `totalLen != 0 && totalLen < 31`. Abuses underflow.
                 // Assumes that the lengths are valid and within the block gas limit.
