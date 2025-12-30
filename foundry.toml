@@ -15,7 +15,7 @@ fs_permissions = [{ access = "read", path = "./test/data"}]
 remappings = [
   "forge-std=test/utils/forge-std/"
 ]
-# remove memory-safe-assembly warning from complier
+# remove memory-safe-assembly warning from compiler
 ignored_error_codes = [2424,8429,4591]
 
 [profile.pre_global_structs]
