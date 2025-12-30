@@ -1447,7 +1447,7 @@ contract LibStringTest is SoladyTest {
         }
     }
 
-    function testStringPackAndUnpackTwo_O() public {
+    function testStringPackAndUnpackTwo() public {
         unchecked {
             testStringPackAndUnpackTwo("", "");
             testStringPackAndUnpackTwo("", "");
