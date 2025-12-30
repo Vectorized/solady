@@ -1456,8 +1456,14 @@ contract LibStringTest is SoladyTest {
             testStringPackAndUnpackTwo("abcdefghijklmnopqrstuvwxyzABCD", "");
             testStringPackAndUnpackTwo("The strongest community I've ever seen", "NGL");
             testStringPackAndUnpackTwo("", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-            testStringPackAndUnpackTwo("01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search","");
-            testStringPackAndUnpackTwoDifferential("01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search","");
+            testStringPackAndUnpackTwo(
+                "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search",
+                ""
+            );
+            testStringPackAndUnpackTwoDifferential(
+                "01234567890123456789012345678901_search_search_search_search_search_search_23456789012345678901234567890123456789_search_search_search_search_search_search",
+                ""
+            );
         }
     }
 
