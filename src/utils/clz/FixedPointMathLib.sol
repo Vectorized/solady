@@ -774,14 +774,16 @@ library FixedPointMathLib {
             // n = floor(log2(x))
             // For x ≈ 2^n, we know sqrt(x) ≈ 2^(n/2)
             // We use (n+1)/2 instead of n/2 to round up slightly
-            // This gives a better initial approximation
+            // This gives a better initial approximation. This seed gives
+            // ε₁ = 0.0607 after one Babylonian step for all inputs. With
+            // ε_{n+1} ≈ ε²/2, 6 steps yield 2⁻¹⁶⁰ relative error (>128 correct
+            // bits).
             //
             // Formula: z = 2^((n+1)/2) = 2^(floor((n+1)/2))
             // Implemented as: z = 1 << ((n+1) >> 1)
             z := shl(shr(1, sub(256, clz(x))), 1)
 
-            /// (x/z + z) / 2
-            z := shr(1, add(z, div(x, z)))
+            // 6 Babylonian steps; z = (x/z + z) / 2
             z := shr(1, add(z, div(x, z)))
             z := shr(1, add(z, div(x, z)))
             z := shr(1, add(z, div(x, z)))
@@ -799,23 +801,25 @@ library FixedPointMathLib {
     /// @dev Returns the cube root of `x`, rounded down.
     /// Credit to bout3fiddy and pcaversaccio under AGPLv3 license:
     /// https://github.com/pcaversaccio/snekmate/blob/main/src/snekmate/utils/math.vy
-    /// Formally verified by xuwinnie:
-    /// https://github.com/vectorized/solady/blob/main/audits/xuwinnie-solady-cbrt-proof.pdf
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Initial guess z = 2^ceil((log2(x) + 2) / 3).
-            // Since log2(x) = 255 - clz(x), the expression shl((257 - clz(x)) / 3, 1)
-            // computes this over-estimate. Guaranteed ≥ cbrt(x) and safe for Newton-Raphson's.
-            z := shl(div(sub(257, clz(x)), 3), 1)
-            // Newton-Raphson's.
+            // Initial guess z ≈ ∛(3/4) · 2𐞥 where q = ⌊(257 − clz(x)) / 3⌋. The
+            // multiplier 233/256 ≈ 0.909 ≈ ∛(3/4) balances the worst-case
+            // over/underestimate across each octave triplet (ε_over ≈ 0.445,
+            // ε_under ≈ −0.278), giving >85 bits of precision after 6 N-R
+            // iterations. The `lt(0, x)` term ensures z ≥ 1 when x > 0 (the
+            // `shr` can produce 0 for small `q`)
+            z := add(shr(8, shl(div(sub(257, clz(x)), 3), 233)), lt(0, x))
+
+            // 6 Newton-Raphson iterations.
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
-            z := div(add(add(div(x, mul(z, z)), z), z), 3)
+
             // Round down.
             z := sub(z, lt(div(x, mul(z, z)), z))
         }
