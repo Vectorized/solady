@@ -73,6 +73,19 @@ import "./utils/UpgradeableBeacon.sol";
 import "./utils/WebAuthn.sol";
 import "./utils/ext/delegatexyz/DelegateCheckerLib.sol";
 
+/// @title Milady - A Solady Facade for Rapid Prototyping
+/// @notice This is a convenience "facade" file that imports all modules of the
+/// solady library. This allows for rapid prototyping by enabling a single
+/// import statement to access the entire library:
+///
+/// ```
+/// import "solady/Milady.sol";
+/// ```
+///
+/// For production deployments, it is recommended to import only the specific
+/// modules you need to minimize bytecode size.
+///
+/// The Milady library also contains constants for the Milady Maker ecosystem.
 library Milady {
     string internal constant WEBSITE = "https://miladymaker.net";
 
