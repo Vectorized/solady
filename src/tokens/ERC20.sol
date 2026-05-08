@@ -683,7 +683,8 @@ abstract contract ERC20 {
             if iszero(eq(allowance_, _ALLOWANCE_VALUE_MASK)) {
                 // Revert if the amount to be transferred exceeds the allowance.
                 if and(
-                    iszero(iszero(amount)), or(gt(amount, allowance_), lt(expiration, timestamp()))
+                    iszero(iszero(amount)),
+                    or(gt(amount, allowance_), lt(expiration, timestamp()))
                 ) {
                     mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                     revert(0x1c, 0x04)
