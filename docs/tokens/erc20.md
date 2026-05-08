@@ -1,6 +1,6 @@
 # ERC20
 
-Simple ERC20 + EIP-2612 implementation.
+Simple ERC20 + EIP-2612 + ERC-8255 implementation.
 
 
 <b>Note:</b>
@@ -46,6 +46,22 @@ error AllowanceUnderflow()
 ```
 
 The allowance has underflowed.
+
+### ApprovalDurationTooLong()
+
+```solidity
+error ApprovalDurationTooLong()
+```
+
+The approval duration is greater than `maxApprovalDuration()`.
+
+### ApprovalExpirationOverflow()
+
+```solidity
+error ApprovalExpirationOverflow()
+```
+
+The approval expiration timestamp has overflowed.
 
 ### InsufficientBalance()
 
@@ -107,6 +123,16 @@ event Approval(
 
 Emitted when `amount` tokens is approved by `owner` to be used by `spender`.
 
+### ApprovalExpiration(address,address,uint64)
+
+```solidity
+event ApprovalExpiration(
+    address indexed owner, address indexed spender, uint64 expiration
+)
+```
+
+Emitted when an approval expiration is set.
+
 ## Constants
 
 ### _PERMIT2
@@ -121,6 +147,14 @@ For signature-based allowance granting for single transaction ERC20 `transferFro
 Enabled by default. To disable, override `_givePermit2InfiniteAllowance()`.   
 [Github](https://github.com/Uniswap/permit2)   
 [Etherscan](https://etherscan.io/address/0x000000000022D473030F116dDEE9F6B43aC78BA3)
+
+### _MAX_APPROVAL_DURATION
+
+```solidity
+uint32 internal constant _MAX_APPROVAL_DURATION = 1 days
+```
+
+The default maximum approval duration, in seconds.
 
 ## ERC20
 
@@ -156,6 +190,27 @@ function allowance(address owner, address spender)
 
 Returns the amount of tokens that `spender` can spend on behalf of `owner`.
 
+### allowanceAndExpiration(address,address)
+
+```solidity
+function allowanceAndExpiration(address owner, address spender)
+    public
+    view
+    virtual
+    returns (uint64 expiration, uint256 amount)
+```
+
+Returns the stored allowance expiration and amount for `spender` over `owner`.
+The amount is returned even if the approval has expired.
+
+### maxApprovalDuration()
+
+```solidity
+function maxApprovalDuration() public pure virtual returns (uint32)
+```
+
+Returns the maximum approval duration, in seconds.
+
 ### approve(address,uint256)
 
 ```solidity
@@ -167,7 +222,21 @@ function approve(address spender, uint256 amount)
 
 Sets `amount` as the allowance of `spender` over the caller's tokens.   
 
-Emits a `Approval` event.
+Emits `Approval` and `ApprovalExpiration` events.
+
+### approveForDuration(address,uint256,uint32)
+
+```solidity
+function approveForDuration(address spender, uint256 amount, uint32 duration)
+    public
+    virtual
+    returns (bool)
+```
+
+Sets `amount` as the allowance of `spender` over the caller's tokens
+for `duration` seconds. `duration` must not exceed `maxApprovalDuration()`.
+
+Emits `Approval` and `ApprovalExpiration` events.
 
 ### transfer(address,uint256)
 
@@ -266,7 +335,7 @@ function permit(
 Sets `value` as the allowance of `spender` over the tokens of `owner`,   
 authorized by a signed approval by `owner`.   
 
-Emits a `Approval` event.
+Emits `Approval` and `ApprovalExpiration` events.
 
 ### DOMAIN_SEPARATOR()
 
@@ -334,7 +403,23 @@ function _approve(address owner, address spender, uint256 amount)
 
 Sets `amount` as the allowance of `spender` over the tokens of `owner`.   
 
-Emits a `Approval` event.
+Emits `Approval` and `ApprovalExpiration` events.
+
+### _approve(address,address,uint256,uint32)
+
+```solidity
+function _approve(
+    address owner,
+    address spender,
+    uint256 amount,
+    uint32 duration
+) internal virtual
+```
+
+Sets `amount` as the allowance of `spender` over the tokens of `owner`
+for `duration` seconds.
+
+Emits `Approval` and `ApprovalExpiration` events.
 
 ## Hooks To Override
 

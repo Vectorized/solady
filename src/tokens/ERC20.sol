@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-/// @notice Simple ERC20 + EIP-2612 implementation.
+/// @notice Simple ERC20 + EIP-2612 + ERC-8255 implementation.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/tokens/ERC20.sol)
 /// @author Modified from Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC20.sol)
 /// @author Modified from OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol)
@@ -32,6 +32,12 @@ abstract contract ERC20 {
     /// @dev The allowance has underflowed.
     error AllowanceUnderflow();
 
+    /// @dev The approval duration is greater than `maxApprovalDuration()`.
+    error ApprovalDurationTooLong();
+
+    /// @dev The approval expiration timestamp has overflowed.
+    error ApprovalExpirationOverflow();
+
     /// @dev Insufficient balance.
     error InsufficientBalance();
 
@@ -57,6 +63,9 @@ abstract contract ERC20 {
     /// @dev Emitted when `amount` tokens is approved by `owner` to be used by `spender`.
     event Approval(address indexed owner, address indexed spender, uint256 amount);
 
+    /// @dev Emitted when an approval expiration is set.
+    event ApprovalExpiration(address indexed owner, address indexed spender, uint64 expiration);
+
     /// @dev `keccak256(bytes("Transfer(address,address,uint256)"))`.
     uint256 private constant _TRANSFER_EVENT_SIGNATURE =
         0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef;
@@ -64,6 +73,10 @@ abstract contract ERC20 {
     /// @dev `keccak256(bytes("Approval(address,address,uint256)"))`.
     uint256 private constant _APPROVAL_EVENT_SIGNATURE =
         0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925;
+
+    /// @dev `keccak256(bytes("ApprovalExpiration(address,address,uint64)"))`.
+    uint256 private constant _APPROVAL_EXPIRATION_EVENT_SIGNATURE =
+        0x9054e94048932437d646ffcd10359273e99618e4eecefff84e546606dd9ff6bf;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          STORAGE                           */
@@ -124,6 +137,13 @@ abstract contract ERC20 {
     /// [Etherscan](https://etherscan.io/address/0x000000000022D473030F116dDEE9F6B43aC78BA3)
     address internal constant _PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
+    /// @dev The default maximum approval duration, in seconds.
+    uint32 internal constant _MAX_APPROVAL_DURATION = 1 days;
+
+    /// @dev The mask for extracting the allowance amount from a packed ERC-8255 allowance.
+    uint256 private constant _ALLOWANCE_VALUE_MASK =
+        0xffffffffffffffffffffffffffffffffffffffffffffffff;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ERC20 METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -176,35 +196,62 @@ abstract contract ERC20 {
             mstore(0x20, spender)
             mstore(0x0c, _ALLOWANCE_SLOT_SEED)
             mstore(0x00, owner)
-            result := sload(keccak256(0x0c, 0x34))
+            let packed := sload(keccak256(0x0c, 0x34))
+            result := and(packed, _ALLOWANCE_VALUE_MASK)
+            if result {
+                if lt(shr(192, packed), timestamp()) { result := 0 }
+                if eq(result, _ALLOWANCE_VALUE_MASK) { result := not(0) }
+            }
         }
+    }
+
+    /// @dev Returns the stored allowance expiration and amount for `spender` over `owner`.
+    /// The amount is returned even if the approval has expired.
+    function allowanceAndExpiration(address owner, address spender)
+        public
+        view
+        virtual
+        returns (uint64 expiration, uint256 amount)
+    {
+        if (_givePermit2InfiniteAllowance()) {
+            if (spender == _PERMIT2) return (type(uint64).max, type(uint256).max);
+        }
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, spender)
+            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
+            mstore(0x00, owner)
+            let packed := sload(keccak256(0x0c, 0x34))
+            expiration := shr(192, packed)
+            amount := and(packed, _ALLOWANCE_VALUE_MASK)
+            if iszero(amount) { expiration := 0 }
+            if eq(amount, _ALLOWANCE_VALUE_MASK) { amount := not(0) }
+        }
+    }
+
+    /// @dev Returns the maximum approval duration, in seconds.
+    function maxApprovalDuration() public pure virtual returns (uint32) {
+        return _MAX_APPROVAL_DURATION;
     }
 
     /// @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
     ///
-    /// Emits a {Approval} event.
+    /// Emits {Approval} and {ApprovalExpiration} events.
     function approve(address spender, uint256 amount) public virtual returns (bool) {
-        if (_givePermit2InfiniteAllowance()) {
-            /// @solidity memory-safe-assembly
-            assembly {
-                // If `spender == _PERMIT2 && amount != type(uint256).max`.
-                if iszero(or(xor(shr(96, shl(96, spender)), _PERMIT2), iszero(not(amount)))) {
-                    mstore(0x00, 0x3f68539a) // `Permit2AllowanceIsFixedAtInfinity()`.
-                    revert(0x1c, 0x04)
-                }
-            }
-        }
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Compute the allowance slot and store the amount.
-            mstore(0x20, spender)
-            mstore(0x0c, _ALLOWANCE_SLOT_SEED)
-            mstore(0x00, caller())
-            sstore(keccak256(0x0c, 0x34), amount)
-            // Emit the {Approval} event.
-            mstore(0x00, amount)
-            log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, caller(), shr(96, mload(0x2c)))
-        }
+        _approve(msg.sender, spender, amount);
+        return true;
+    }
+
+    /// @dev Sets `amount` as the allowance of `spender` over the caller's tokens
+    /// for `duration` seconds. `duration` must not exceed `maxApprovalDuration()`.
+    ///
+    /// Emits {Approval} and {ApprovalExpiration} events.
+    function approveForDuration(address spender, uint256 amount, uint32 duration)
+        public
+        virtual
+        returns (bool)
+    {
+        _approve(msg.sender, spender, amount, duration);
         return true;
     }
 
@@ -266,16 +313,32 @@ abstract contract ERC20 {
                     mstore(0x20, caller())
                     mstore(0x0c, or(from_, _ALLOWANCE_SLOT_SEED))
                     let allowanceSlot := keccak256(0x0c, 0x34)
-                    let allowance_ := sload(allowanceSlot)
-                    // If the allowance is not the maximum uint256 value.
-                    if not(allowance_) {
+                    let packedAllowance := sload(allowanceSlot)
+                    let allowance_ := and(packedAllowance, _ALLOWANCE_VALUE_MASK)
+                    let expiration := shr(192, packedAllowance)
+                    // If the allowance is not the maximum uint256 value sentinel.
+                    if iszero(eq(allowance_, _ALLOWANCE_VALUE_MASK)) {
                         // Revert if the amount to be transferred exceeds the allowance.
-                        if gt(amount, allowance_) {
+                        if and(
+                            iszero(iszero(amount)),
+                            or(gt(amount, allowance_), lt(expiration, timestamp()))
+                        ) {
                             mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                             revert(0x1c, 0x04)
                         }
                         // Subtract and store the updated allowance.
-                        sstore(allowanceSlot, sub(allowance_, amount))
+                        allowance_ := sub(allowance_, amount)
+                        sstore(
+                            allowanceSlot,
+                            mul(iszero(iszero(allowance_)), or(shl(192, expiration), allowance_))
+                        )
+                    }
+                    // If the allowance is the maximum uint256 value sentinel.
+                    if eq(allowance_, _ALLOWANCE_VALUE_MASK) {
+                        if and(iszero(iszero(amount)), lt(expiration, timestamp())) {
+                            mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
+                            revert(0x1c, 0x04)
+                        }
                     }
                 }
                 // Compute the balance slot and load its value.
@@ -308,16 +371,32 @@ abstract contract ERC20 {
                 mstore(0x20, caller())
                 mstore(0x0c, or(from_, _ALLOWANCE_SLOT_SEED))
                 let allowanceSlot := keccak256(0x0c, 0x34)
-                let allowance_ := sload(allowanceSlot)
-                // If the allowance is not the maximum uint256 value.
-                if not(allowance_) {
+                let packedAllowance := sload(allowanceSlot)
+                let allowance_ := and(packedAllowance, _ALLOWANCE_VALUE_MASK)
+                let expiration := shr(192, packedAllowance)
+                // If the allowance is not the maximum uint256 value sentinel.
+                if iszero(eq(allowance_, _ALLOWANCE_VALUE_MASK)) {
                     // Revert if the amount to be transferred exceeds the allowance.
-                    if gt(amount, allowance_) {
+                    if and(
+                        iszero(iszero(amount)),
+                        or(gt(amount, allowance_), lt(expiration, timestamp()))
+                    ) {
                         mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                         revert(0x1c, 0x04)
                     }
                     // Subtract and store the updated allowance.
-                    sstore(allowanceSlot, sub(allowance_, amount))
+                    allowance_ := sub(allowance_, amount)
+                    sstore(
+                        allowanceSlot,
+                        mul(iszero(iszero(allowance_)), or(shl(192, expiration), allowance_))
+                    )
+                }
+                // If the allowance is the maximum uint256 value sentinel.
+                if eq(allowance_, _ALLOWANCE_VALUE_MASK) {
+                    if and(iszero(iszero(amount)), lt(expiration, timestamp())) {
+                        mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
+                        revert(0x1c, 0x04)
+                    }
                 }
                 // Compute the balance slot and load its value.
                 mstore(0x0c, or(from_, _BALANCE_SLOT_SEED))
@@ -385,7 +464,7 @@ abstract contract ERC20 {
     /// @dev Sets `value` as the allowance of `spender` over the tokens of `owner`,
     /// authorized by a signed approval by `owner`.
     ///
-    /// Emits a {Approval} event.
+    /// Emits {Approval} and {ApprovalExpiration} events.
     function permit(
         address owner,
         address spender,
@@ -457,15 +536,10 @@ abstract contract ERC20 {
             }
             // Increment and store the updated nonce.
             sstore(nonceSlot, add(nonceValue, t)) // `t` is 1 if ecrecover succeeds.
-            // Compute the allowance slot and store the value.
-            // The `owner` is already at slot 0x20.
-            mstore(0x40, or(shl(160, _ALLOWANCE_SLOT_SEED), spender))
-            sstore(keccak256(0x2c, 0x34), value)
-            // Emit the {Approval} event.
-            log3(add(m, 0x60), 0x20, _APPROVAL_EVENT_SIGNATURE, owner, spender)
             mstore(0x40, m) // Restore the free memory pointer.
             mstore(0x60, 0) // Restore the zero pointer.
         }
+        _approve(owner, spender, value);
     }
 
     /// @dev Returns the EIP-712 domain separator for the EIP-2612 permit.
@@ -602,24 +676,50 @@ abstract contract ERC20 {
             mstore(0x0c, _ALLOWANCE_SLOT_SEED)
             mstore(0x00, owner)
             let allowanceSlot := keccak256(0x0c, 0x34)
-            let allowance_ := sload(allowanceSlot)
-            // If the allowance is not the maximum uint256 value.
-            if not(allowance_) {
+            let packedAllowance := sload(allowanceSlot)
+            let allowance_ := and(packedAllowance, _ALLOWANCE_VALUE_MASK)
+            let expiration := shr(192, packedAllowance)
+            // If the allowance is not the maximum uint256 value sentinel.
+            if iszero(eq(allowance_, _ALLOWANCE_VALUE_MASK)) {
                 // Revert if the amount to be transferred exceeds the allowance.
-                if gt(amount, allowance_) {
+                if and(
+                    iszero(iszero(amount)), or(gt(amount, allowance_), lt(expiration, timestamp()))
+                ) {
                     mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                     revert(0x1c, 0x04)
                 }
                 // Subtract and store the updated allowance.
-                sstore(allowanceSlot, sub(allowance_, amount))
+                allowance_ := sub(allowance_, amount)
+                sstore(
+                    allowanceSlot,
+                    mul(iszero(iszero(allowance_)), or(shl(192, expiration), allowance_))
+                )
+            }
+            // If the allowance is the maximum uint256 value sentinel.
+            if eq(allowance_, _ALLOWANCE_VALUE_MASK) {
+                if and(iszero(iszero(amount)), lt(expiration, timestamp())) {
+                    mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
+                    revert(0x1c, 0x04)
+                }
             }
         }
     }
 
     /// @dev Sets `amount` as the allowance of `spender` over the tokens of `owner`.
     ///
-    /// Emits a {Approval} event.
+    /// Emits {Approval} and {ApprovalExpiration} events.
     function _approve(address owner, address spender, uint256 amount) internal virtual {
+        _approve(owner, spender, amount, maxApprovalDuration());
+    }
+
+    /// @dev Sets `amount` as the allowance of `spender` over the tokens of `owner`
+    /// for `duration` seconds.
+    ///
+    /// Emits {Approval} and {ApprovalExpiration} events.
+    function _approve(address owner, address spender, uint256 amount, uint32 duration)
+        internal
+        virtual
+    {
         if (_givePermit2InfiniteAllowance()) {
             /// @solidity memory-safe-assembly
             assembly {
@@ -630,16 +730,40 @@ abstract contract ERC20 {
                 }
             }
         }
+        if (duration > maxApprovalDuration()) revert ApprovalDurationTooLong();
         /// @solidity memory-safe-assembly
         assembly {
+            if iszero(or(lt(amount, _ALLOWANCE_VALUE_MASK), iszero(not(amount)))) {
+                mstore(0x00, 0xf9067066) // `AllowanceOverflow()`.
+                revert(0x1c, 0x04)
+            }
+            let expiration := 0
+            if amount {
+                expiration := add(timestamp(), duration)
+                if or(shr(64, expiration), lt(expiration, timestamp())) {
+                    mstore(0x00, 0xf915ba85) // `ApprovalExpirationOverflow()`.
+                    revert(0x1c, 0x04)
+                }
+            }
+            let storedAmount := amount
+            if iszero(not(amount)) { storedAmount := _ALLOWANCE_VALUE_MASK }
             let owner_ := shl(96, owner)
             // Compute the allowance slot and store the amount.
             mstore(0x20, spender)
             mstore(0x0c, or(owner_, _ALLOWANCE_SLOT_SEED))
-            sstore(keccak256(0x0c, 0x34), amount)
+            sstore(keccak256(0x0c, 0x34), or(shl(192, expiration), storedAmount))
             // Emit the {Approval} event.
             mstore(0x00, amount)
             log3(0x00, 0x20, _APPROVAL_EVENT_SIGNATURE, shr(96, owner_), shr(96, mload(0x2c)))
+            // Emit the {ApprovalExpiration} event.
+            mstore(0x00, expiration)
+            log3(
+                0x00,
+                0x20,
+                _APPROVAL_EXPIRATION_EVENT_SIGNATURE,
+                shr(96, owner_),
+                shr(96, mload(0x2c))
+            )
         }
     }
 
