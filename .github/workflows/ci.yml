@@ -133,13 +133,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+        uses: foundry-rs/foundry-toolchain@v1.8.0
         with:
           version: stable
       - name: Install Dependencies
         run: forge install
       - name: Generate gas diff
-        uses: atarpara/foundry-snapshot-diff@v0.8
+        uses: atarpara/foundry-snapshot-diff@v0.9
+        with:
+          foundry-profile: "profile.post_osaka"
         id: gas_diff
       - name: Save gas diff output
         if: steps.gas_diff.outputs.markdown
