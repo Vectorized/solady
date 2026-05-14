@@ -14,22 +14,27 @@ jobs:
       pull-requests: write
     steps:
       - name: Download gas diff artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
           name: gas-diff
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+
       - name: Read PR number
         id: pr
-        run: echo "number=$(cat pr-number.txt)" >> $GITHUB_OUTPUT
+        run: echo "number=$(cat pr-number.txt)" >> "$GITHUB_OUTPUT"
+
       - name: Read gas diff
         id: gas_diff
         run: |
-          if [ -f comment.md ]; then
-            echo "markdown<<EOF" >> $GITHUB_OUTPUT
-            cat comment.md >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+          if [ -f comment.md ] && [ -s comment.md ]; then
+            {
+              echo "markdown<<__GASDIFF_EOF__"
+              cat comment.md
+              echo "__GASDIFF_EOF__"
+            } >> "$GITHUB_OUTPUT"
           fi
+
       - name: Add gas diff to sticky comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:

@@ -143,15 +143,21 @@ jobs:
         with:
           foundry-profile: "post_osaka"
         id: gas_diff
+
       - name: Save gas diff output
-        if: steps.gas_diff.outputs.markdown
+        env:
+          MARKDOWN: ${{ steps.gas_diff.outputs.markdown }}
+          PR_NUMBER: ${{ github.event.number }}
+
         run: |
           mkdir -p ./gas-diff
-          echo "${{ steps.gas_diff.outputs.markdown }}" > ./gas-diff/comment.md
-          echo "${{ github.event.number }}" > ./gas-diff/pr-number.txt
+          printf '%s' "$PR_NUMBER" > gas-diff/pr-number.txt
+          if [ -n "$MARKDOWN" ]; then
+            printf '%s' "$MARKDOWN" > gas-diff/comment.md
+          fi
+
       - name: Upload gas diff artifact
-        if: steps.gas_diff.outputs.markdown
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: gas-diff
           path: gas-diff/
