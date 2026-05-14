@@ -801,10 +801,12 @@ library FixedPointMathLib {
     /// @dev Returns the cube root of `x`, rounded down.
     /// Credit to bout3fiddy and pcaversaccio under AGPLv3 license:
     /// https://github.com/pcaversaccio/snekmate/blob/main/src/snekmate/utils/math.vy
+    /// Credit to duncancmt
+    /// https://github.com/0xProject/0x-settler/blob/2577ae61a3ca26a5b37ef8769b05f05de5115e93/src/vendor/Cbrt.sol
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Initial guess z ≈ c · 2𐞥 where b = ⌊log₂(x)⌋, q = ⌊b / 3⌋. The
+            // Initial guess z ≈ c · 2^q where b = ⌊log₂(x)⌋, q = ⌊b / 3⌋. The
             // 8-bit fixed-point multipliers `c`: 144/128, 181/128, and 229/128
             // are selected by `b mod 3` to balance each octave's worst-case
             // final error. This gives >98 bits of precision after only 5
