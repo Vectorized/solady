@@ -38,6 +38,9 @@ abstract contract ERC20 {
     /// @dev The approval expiration timestamp has overflowed.
     error ApprovalExpirationOverflow();
 
+    /// @dev The stored approval has an invalid packed representation.
+    error InvalidStoredApproval();
+
     /// @dev Insufficient balance.
     error InsufficientBalance();
 
@@ -191,15 +194,21 @@ abstract contract ERC20 {
         if (_givePermit2InfiniteAllowance()) {
             if (spender == _PERMIT2) return type(uint256).max;
         }
+        uint256 maxApprovalDuration_ = maxApprovalDuration();
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, spender)
             mstore(0x0c, _ALLOWANCE_SLOT_SEED)
             mstore(0x00, owner)
             let packed := sload(keccak256(0x0c, 0x34))
+            let expiration := shr(192, packed)
             result := and(packed, _ALLOWANCE_VALUE_MASK)
             if result {
-                if lt(shr(192, packed), timestamp()) { result := 0 }
+                if gt(expiration, add(timestamp(), maxApprovalDuration_)) {
+                    mstore(0x00, 0x269f9e51) // `InvalidStoredApproval()`.
+                    revert(0x1c, 0x04)
+                }
+                if lt(expiration, timestamp()) { result := 0 }
                 if eq(result, _ALLOWANCE_VALUE_MASK) { result := not(0) }
             }
         }
@@ -216,6 +225,7 @@ abstract contract ERC20 {
         if (_givePermit2InfiniteAllowance()) {
             if (spender == _PERMIT2) return (type(uint64).max, type(uint256).max);
         }
+        uint256 maxApprovalDuration_ = maxApprovalDuration();
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, spender)
@@ -225,7 +235,13 @@ abstract contract ERC20 {
             expiration := shr(192, packed)
             amount := and(packed, _ALLOWANCE_VALUE_MASK)
             if iszero(amount) { expiration := 0 }
-            if eq(amount, _ALLOWANCE_VALUE_MASK) { amount := not(0) }
+            if amount {
+                if gt(expiration, add(timestamp(), maxApprovalDuration_)) {
+                    mstore(0x00, 0x269f9e51) // `InvalidStoredApproval()`.
+                    revert(0x1c, 0x04)
+                }
+                if eq(amount, _ALLOWANCE_VALUE_MASK) { amount := not(0) }
+            }
         }
     }
 
@@ -303,6 +319,7 @@ abstract contract ERC20 {
     /// Emits a {Transfer} event.
     function transferFrom(address from, address to, uint256 amount) public virtual returns (bool) {
         _beforeTokenTransfer(from, to, amount);
+        uint256 maxApprovalDuration_ = maxApprovalDuration();
         // Code duplication is for zero-cost abstraction if possible.
         if (_givePermit2InfiniteAllowance()) {
             /// @solidity memory-safe-assembly
@@ -316,6 +333,10 @@ abstract contract ERC20 {
                     let packedAllowance := sload(allowanceSlot)
                     let allowance_ := and(packedAllowance, _ALLOWANCE_VALUE_MASK)
                     let expiration := shr(192, packedAllowance)
+                    if and(allowance_, gt(expiration, add(timestamp(), maxApprovalDuration_))) {
+                        mstore(0x00, 0x269f9e51) // `InvalidStoredApproval()`.
+                        revert(0x1c, 0x04)
+                    }
                     // If the allowance is not the maximum uint256 value sentinel.
                     if iszero(eq(allowance_, _ALLOWANCE_VALUE_MASK)) {
                         // Revert if the amount to be transferred exceeds the allowance.
@@ -374,6 +395,10 @@ abstract contract ERC20 {
                 let packedAllowance := sload(allowanceSlot)
                 let allowance_ := and(packedAllowance, _ALLOWANCE_VALUE_MASK)
                 let expiration := shr(192, packedAllowance)
+                if and(allowance_, gt(expiration, add(timestamp(), maxApprovalDuration_))) {
+                    mstore(0x00, 0x269f9e51) // `InvalidStoredApproval()`.
+                    revert(0x1c, 0x04)
+                }
                 // If the allowance is not the maximum uint256 value sentinel.
                 if iszero(eq(allowance_, _ALLOWANCE_VALUE_MASK)) {
                     // Revert if the amount to be transferred exceeds the allowance.
@@ -669,6 +694,7 @@ abstract contract ERC20 {
         if (_givePermit2InfiniteAllowance()) {
             if (spender == _PERMIT2) return; // Do nothing, as allowance is infinite.
         }
+        uint256 maxApprovalDuration_ = maxApprovalDuration();
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the allowance slot and load its value.
@@ -679,6 +705,10 @@ abstract contract ERC20 {
             let packedAllowance := sload(allowanceSlot)
             let allowance_ := and(packedAllowance, _ALLOWANCE_VALUE_MASK)
             let expiration := shr(192, packedAllowance)
+            if and(allowance_, gt(expiration, add(timestamp(), maxApprovalDuration_))) {
+                mstore(0x00, 0x269f9e51) // `InvalidStoredApproval()`.
+                revert(0x1c, 0x04)
+            }
             // If the allowance is not the maximum uint256 value sentinel.
             if iszero(eq(allowance_, _ALLOWANCE_VALUE_MASK)) {
                 // Revert if the amount to be transferred exceeds the allowance.

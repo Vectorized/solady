@@ -212,6 +212,45 @@ contract ERC20Test is SoladyTest {
         token.approve(address(0xBEEF), uint256(type(uint192).max) + 1);
     }
 
+    function testLegacyMaxApprovalSlotReverts() public {
+        vm.warp(1_000_000);
+        address owner = address(0xABCD);
+        address spender = address(this);
+        _storeRawAllowance(owner, spender, type(uint256).max);
+
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowance(owner, spender);
+
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowanceAndExpiration(owner, spender);
+
+        token.mint(owner, 1);
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.transferFrom(owner, address(0xBEEF), 1);
+
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.directSpendAllowance(owner, spender, 1);
+    }
+
+    function testMaxApprovalSentinelExpirationBound() public {
+        vm.warp(1_000_000);
+        address owner = address(0xABCD);
+        address spender = address(this);
+        uint256 sentinel = uint256(type(uint192).max);
+
+        uint256 maxValidExpiration = block.timestamp + token.maxApprovalDuration();
+        _storeRawAllowance(owner, spender, (maxValidExpiration << 192) | sentinel);
+        assertEq(token.allowance(owner, spender), type(uint256).max);
+
+        _storeRawAllowance(owner, spender, ((maxValidExpiration + 1) << 192) | 123);
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowance(owner, spender);
+
+        _storeRawAllowance(owner, spender, ((maxValidExpiration + 1) << 192) | sentinel);
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowance(owner, spender);
+    }
+
     function testTransfer() public {
         token.mint(address(this), 1e18);
 
@@ -579,6 +618,18 @@ contract ERC20Test is SoladyTest {
     function _boundValidAllowance(uint256 amount) internal pure returns (uint256) {
         if (amount == type(uint256).max) return amount;
         return amount % uint256(type(uint192).max);
+    }
+
+    function _storeRawAllowance(address owner, address spender, uint256 packed) internal {
+        bytes32 allowanceSlot;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, spender)
+            mstore(0x0c, 0x7f5e9f20)
+            mstore(0x00, owner)
+            allowanceSlot := keccak256(0x0c, 0x34)
+        }
+        vm.store(address(token), allowanceSlot, bytes32(packed));
     }
 
     function _expectedDefaultExpiration(uint256 amount) internal view returns (uint64) {
