@@ -807,14 +807,13 @@ library FixedPointMathLib {
         /// @solidity memory-safe-assembly
         assembly {
             // Initial guess z ≈ c · 2^q where b = ⌊log₂(x)⌋, q = ⌊b / 3⌋. The
-            // 8-bit fixed-point multipliers `c`: 144/128, 181/128, and 229/128
+            // 8-bit fixed-point multipliers `c`: 140/128, 172/128, and 236/128
             // are selected by `b mod 3` to balance each octave's worst-case
             // final error. This gives >98 bits of precision after only 5
             // Newton-Raphson iterations. The `or(..., 1)` keeps z ≥ 1 when the
             // shifted estimate is 0.
             let b := sub(255, clz(x))
-            z := or(shr(7, shl(div(b, 3), byte(add(mod(b, 3), 29), 0x90b5e5))), 1)
-
+            z := or(shr(7, shl(div(b, 3), add(108, shl(mod(b, 3), 32)))), 1)
             // 5 Newton-Raphson iterations
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
