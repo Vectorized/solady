@@ -806,14 +806,13 @@ library FixedPointMathLib {
     function cbrt(uint256 x) internal pure returns (uint256 z) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Initial guess z ≈ c · 2^q where b = ⌊log₂(x)⌋, q = ⌊b / 3⌋. The
-            // 8-bit fixed-point multipliers `c`: 144/128, 181/128, and 229/128
+            // Initial guess z ≈ c · 2^q where b = ⌊log₂(x) + 2⌋, q = ⌊b / 3⌋. The
+            // 8-bit fixed-point multipliers `c`: 90/128, 116/128, and 142/128
             // are selected by `b mod 3` to balance each octave's worst-case
-            // final error. This gives >98 bits of precision after only 5
-            // Newton-Raphson iterations. The `or(..., 1)` keeps z ≥ 1 when the
-            // shifted estimate is 0.
-            let b := sub(255, clz(x))
-            z := or(shr(7, shl(div(b, 3), byte(add(mod(b, 3), 29), 0x90b5e5))), 1)
+            // final error. This gives >94 bits of precision after only 5
+            // Newton-Raphson iterations.
+            z := sub(257, clz(x))
+            z := shr(7, shl(div(z, 3), add(90, mul(26, mod(z, 3)))))
 
             // 5 Newton-Raphson iterations
             z := div(add(add(div(x, mul(z, z)), z), z), 3)
