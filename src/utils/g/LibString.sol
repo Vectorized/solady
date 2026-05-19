@@ -379,23 +379,57 @@ library LibString {
             // 0x02 bytes for the prefix, and 0x28 bytes for the digits.
             // The next multiple of 0x20 above (0x20 + 0x20 + 0x02 + 0x28) is 0x80.
             mstore(0x40, add(result, 0x80))
-            mstore(0x0f, 0x30313233343536373839616263646566) // Store the "0123456789abcdef" lookup.
-
             result := add(result, 2)
+
             mstore(result, 40) // Store the length.
-            let o := add(result, 0x20)
-            mstore(add(o, 40), 0) // Zeroize the slot after the string.
-            value := shl(96, value)
-            // We write the string from rightmost digit to leftmost digit.
-            // The following is essentially a do-while loop that also handles the zero case.
-            for { let i := 0 } 1 {} {
-                let p := add(o, add(i, i))
-                let temp := byte(i, value)
-                mstore8(add(p, 1), mload(and(temp, 15)))
-                mstore8(p, mload(shr(4, temp)))
-                i := add(i, 1)
-                if eq(i, 20) { break }
-            }
+            codecopy(add(result, 0x40), codesize(), 0x40) // Zeroize the last slot & slot after the string.
+
+            let w :=
+                or(
+                    shl(64, and(value, 0xffffffffffffffff0000000000000000)),
+                    and(value, 0xffffffffffffffff)
+                )
+
+            w :=
+                and(
+                    0x00000000ffffffff00000000ffffffff00000000ffffffff00000000ffffffff,
+                    or(shl(32, w), w)
+                )
+            w :=
+                and(
+                    0x0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff,
+                    or(shl(16, w), w)
+                )
+            w :=
+                and(
+                    0x00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff, or(shl(8, w), w)
+                )
+            let ones := div(not(0), 255)
+            let m := mul(ones, 0x0f)
+            w := or(shl(4, and(w, not(m))), and(w, m))
+
+            let letter_map := and(w, mul(ones, 0x06))
+            letter_map := and(shr(3, and(w, shl(1, or(letter_map, shl(1, letter_map))))), ones)
+            w :=
+                sub(
+                    xor(
+                        xor(w, 0x3030303030303030303030303030303030303030303030303030303030303030),
+                        mul(0x58, letter_map)
+                    ),
+                    letter_map
+                )
+
+            mstore(add(result, 0x28), w)
+
+            let alphabet := 0x3031323334353637383961626364656600000000000000000000000000000000
+            mstore8(add(result, 0x20), byte(and(shr(156, value), 15), alphabet))
+            mstore8(add(result, 0x21), byte(and(shr(152, value), 15), alphabet))
+            mstore8(add(result, 0x22), byte(and(shr(148, value), 15), alphabet))
+            mstore8(add(result, 0x23), byte(and(shr(144, value), 15), alphabet))
+            mstore8(add(result, 0x24), byte(and(shr(140, value), 15), alphabet))
+            mstore8(add(result, 0x25), byte(and(shr(136, value), 15), alphabet))
+            mstore8(add(result, 0x26), byte(and(shr(132, value), 15), alphabet))
+            mstore8(add(result, 0x27), byte(and(shr(128, value), 15), alphabet))
         }
     }
 
