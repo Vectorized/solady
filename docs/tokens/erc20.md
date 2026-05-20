@@ -445,6 +445,22 @@ function _afterTokenTransfer(address from, address to, uint256 amount)
 Hook that is called after any transfer of tokens.   
 This includes minting and burning.
 
+### _isLegacySpender(address)
+
+```solidity
+function _isLegacySpender(address spender)
+    internal
+    view
+    virtual
+    returns (bool)
+```
+
+Returns whether `spender` should be treated as ERC-8255 legacy-compatible.
+This must be overridden by concrete implementations.
+
+Legacy-compatible spenders can use unrevoked allowances after their stored
+expirations, and `allowanceAndExpiration` may report the current timestamp.
+
 ## Permit2
 
 ### _givePermit2InfiniteAllowance()

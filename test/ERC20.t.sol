@@ -190,6 +190,50 @@ contract ERC20Test is SoladyTest {
         assertEq(allowance, 100);
     }
 
+    function testLegacyCompatibleSpender() public {
+        vm.warp(1_000_000);
+        address owner = address(0xABCD);
+        address spender = address(0xBEEF);
+        address recipient = address(0xCAFE);
+
+        token.mint(owner, 100);
+        vm.prank(owner);
+        token.approveForDuration(spender, 100, 3600);
+
+        vm.warp(1_003_601);
+        assertEq(token.allowance(owner, spender), 0);
+        (uint64 expiration, uint256 allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, 1_003_600);
+        assertEq(allowance, 100);
+
+        token.setLegacySpender(spender, true);
+        assertEq(token.allowance(owner, spender), 100);
+        (expiration, allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, uint64(block.timestamp));
+        assertEq(allowance, 100);
+
+        vm.prank(spender);
+        token.transferFrom(owner, recipient, 40);
+        assertEq(token.balanceOf(recipient), 40);
+        assertEq(token.allowance(owner, spender), 60);
+
+        token.directSpendAllowance(owner, spender, 10);
+        assertEq(token.allowance(owner, spender), 50);
+
+        token.setLegacySpender(spender, false);
+        assertEq(token.allowance(owner, spender), 0);
+        (expiration, allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, 1_003_600);
+        assertEq(allowance, 50);
+
+        token.setLegacySpender(spender, true);
+        vm.prank(owner);
+        token.approve(spender, 0);
+        (expiration, allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, 0);
+        assertEq(allowance, 0);
+    }
+
     function testApproveForDurationRevertsIfTooLong() public {
         vm.expectRevert(ERC20.ApprovalDurationTooLong.selector);
         token.approveForDuration(address(0xBEEF), 100, 1 days + 1);
@@ -217,6 +261,7 @@ contract ERC20Test is SoladyTest {
         address owner = address(0xABCD);
         address spender = address(this);
         _storeRawAllowance(owner, spender, type(uint256).max);
+        token.setLegacySpender(spender, true);
 
         vm.expectRevert(ERC20.InvalidStoredApproval.selector);
         token.allowance(owner, spender);

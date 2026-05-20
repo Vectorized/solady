@@ -195,6 +195,7 @@ abstract contract ERC20 {
             if (spender == _PERMIT2) return type(uint256).max;
         }
         uint256 maxApprovalDuration_ = maxApprovalDuration();
+        bool isLegacySpender = _isLegacySpender(spender);
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, spender)
@@ -208,7 +209,7 @@ abstract contract ERC20 {
                     mstore(0x00, 0x269f9e51) // `InvalidStoredApproval()`.
                     revert(0x1c, 0x04)
                 }
-                if lt(expiration, timestamp()) { result := 0 }
+                if and(iszero(isLegacySpender), lt(expiration, timestamp())) { result := 0 }
                 if eq(result, _ALLOWANCE_VALUE_MASK) { result := not(0) }
             }
         }
@@ -226,6 +227,7 @@ abstract contract ERC20 {
             if (spender == _PERMIT2) return (type(uint64).max, type(uint256).max);
         }
         uint256 maxApprovalDuration_ = maxApprovalDuration();
+        bool isLegacySpender = _isLegacySpender(spender);
         /// @solidity memory-safe-assembly
         assembly {
             mstore(0x20, spender)
@@ -239,6 +241,9 @@ abstract contract ERC20 {
                 if gt(expiration, add(timestamp(), maxApprovalDuration_)) {
                     mstore(0x00, 0x269f9e51) // `InvalidStoredApproval()`.
                     revert(0x1c, 0x04)
+                }
+                if and(isLegacySpender, lt(expiration, timestamp())) {
+                    expiration := timestamp()
                 }
                 if eq(amount, _ALLOWANCE_VALUE_MASK) { amount := not(0) }
             }
@@ -320,6 +325,7 @@ abstract contract ERC20 {
     function transferFrom(address from, address to, uint256 amount) public virtual returns (bool) {
         _beforeTokenTransfer(from, to, amount);
         uint256 maxApprovalDuration_ = maxApprovalDuration();
+        bool isLegacySpender = _isLegacySpender(msg.sender);
         // Code duplication is for zero-cost abstraction if possible.
         if (_givePermit2InfiniteAllowance()) {
             /// @solidity memory-safe-assembly
@@ -342,7 +348,10 @@ abstract contract ERC20 {
                         // Revert if the amount to be transferred exceeds the allowance.
                         if and(
                             iszero(iszero(amount)),
-                            or(gt(amount, allowance_), lt(expiration, timestamp()))
+                            or(
+                                gt(amount, allowance_),
+                                and(iszero(isLegacySpender), lt(expiration, timestamp()))
+                            )
                         ) {
                             mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                             revert(0x1c, 0x04)
@@ -356,7 +365,10 @@ abstract contract ERC20 {
                     }
                     // If the allowance is the maximum uint256 value sentinel.
                     if eq(allowance_, _ALLOWANCE_VALUE_MASK) {
-                        if and(iszero(iszero(amount)), lt(expiration, timestamp())) {
+                        if and(
+                            iszero(iszero(amount)),
+                            and(iszero(isLegacySpender), lt(expiration, timestamp()))
+                        ) {
                             mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                             revert(0x1c, 0x04)
                         }
@@ -404,7 +416,10 @@ abstract contract ERC20 {
                     // Revert if the amount to be transferred exceeds the allowance.
                     if and(
                         iszero(iszero(amount)),
-                        or(gt(amount, allowance_), lt(expiration, timestamp()))
+                        or(
+                            gt(amount, allowance_),
+                            and(iszero(isLegacySpender), lt(expiration, timestamp()))
+                        )
                     ) {
                         mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                         revert(0x1c, 0x04)
@@ -418,7 +433,10 @@ abstract contract ERC20 {
                 }
                 // If the allowance is the maximum uint256 value sentinel.
                 if eq(allowance_, _ALLOWANCE_VALUE_MASK) {
-                    if and(iszero(iszero(amount)), lt(expiration, timestamp())) {
+                    if and(
+                        iszero(iszero(amount)),
+                        and(iszero(isLegacySpender), lt(expiration, timestamp()))
+                    ) {
                         mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                         revert(0x1c, 0x04)
                     }
@@ -695,6 +713,7 @@ abstract contract ERC20 {
             if (spender == _PERMIT2) return; // Do nothing, as allowance is infinite.
         }
         uint256 maxApprovalDuration_ = maxApprovalDuration();
+        bool isLegacySpender = _isLegacySpender(spender);
         /// @solidity memory-safe-assembly
         assembly {
             // Compute the allowance slot and load its value.
@@ -714,7 +733,10 @@ abstract contract ERC20 {
                 // Revert if the amount to be transferred exceeds the allowance.
                 if and(
                     iszero(iszero(amount)),
-                    or(gt(amount, allowance_), lt(expiration, timestamp()))
+                    or(
+                        gt(amount, allowance_),
+                        and(iszero(isLegacySpender), lt(expiration, timestamp()))
+                    )
                 ) {
                     mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                     revert(0x1c, 0x04)
@@ -728,7 +750,10 @@ abstract contract ERC20 {
             }
             // If the allowance is the maximum uint256 value sentinel.
             if eq(allowance_, _ALLOWANCE_VALUE_MASK) {
-                if and(iszero(iszero(amount)), lt(expiration, timestamp())) {
+                if and(
+                    iszero(iszero(amount)),
+                    and(iszero(isLegacySpender), lt(expiration, timestamp()))
+                ) {
                     mstore(0x00, 0x13be252b) // `InsufficientAllowance()`.
                     revert(0x1c, 0x04)
                 }
@@ -809,6 +834,12 @@ abstract contract ERC20 {
     /// @dev Hook that is called after any transfer of tokens.
     /// This includes minting and burning.
     function _afterTokenTransfer(address from, address to, uint256 amount) internal virtual {}
+
+    /// @dev Returns whether `spender` should be treated as ERC-8255 legacy-compatible.
+    ///
+    /// Legacy-compatible spenders can use unrevoked allowances after their stored
+    /// expirations, and `allowanceAndExpiration` may report the current timestamp.
+    function _isLegacySpender(address spender) internal view virtual returns (bool);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          PERMIT2                           */
