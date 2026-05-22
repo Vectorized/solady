@@ -327,7 +327,7 @@ abstract contract ERC4626 is ERC20 {
         maxAssets = type(uint256).max;
     }
 
-    /// @dev Returns the maximum amount of the Vault shares that can be minter for `to`,
+    /// @dev Returns the maximum amount of the Vault shares that can be minted for `to`,
     /// via a mint call.
     ///
     /// - MUST return a limited value if `to` is subject to some mint limit.
