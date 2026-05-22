@@ -455,7 +455,7 @@ library SafeTransferLib {
     }
 
     /// @dev Performs a `token.balanceOf(account)` check.
-    /// `implemented` denotes whether the `token` does not implement `balanceOf`.
+    /// `implemented` denotes whether the `token` implements `balanceOf`.
     /// `amount` is zero if the `token` does not implement `balanceOf`.
     function checkBalanceOf(address token, address account)
         internal
