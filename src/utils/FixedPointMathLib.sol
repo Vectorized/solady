@@ -489,7 +489,7 @@ library FixedPointMathLib {
                     // Invert `d mod 2**256`
                     // Now that `d` is an odd number, it has an inverse
                     // modulo `2**256` such that `d * inv = 1 mod 2**256`.
-                    // Compute the inverse by starting with a seed that is correct
+                    // Compute the inverse by starting with a seed that is
                     // correct for four bits. That is, `d * inv = 1 mod 2**4`.
                     let inv := xor(2, mul(3, d))
                     // Now use Newton-Raphson iteration to improve the precision.
@@ -1178,7 +1178,7 @@ library FixedPointMathLib {
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`,
     /// with `t` clamped between `begin` and `end` (inclusive).
     /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
-    /// If `begins == end`, returns `t <= begin ? a : b`.
+    /// If `begin == end`, returns `t <= begin ? a : b`.
     function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end)
         internal
         pure
@@ -1196,7 +1196,7 @@ library FixedPointMathLib {
     /// @dev Returns `a + (b - a) * (t - begin) / (end - begin)`.
     /// with `t` clamped between `begin` and `end` (inclusive).
     /// Agnostic to the order of (`a`, `b`) and (`end`, `begin`).
-    /// If `begins == end`, returns `t <= begin ? a : b`.
+    /// If `begin == end`, returns `t <= begin ? a : b`.
     function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end)
         internal
         pure
