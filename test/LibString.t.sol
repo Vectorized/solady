@@ -12,6 +12,14 @@ contract SimpleStringSetAndGet {
     }
 }
 
+contract SimpleStringSetAndGetWithNativeStorageString {
+    string public x;
+
+    function setX(string calldata x_) public {
+        LibString.setCalldata(x, x_);
+    }
+}
+
 contract SimpleStringSetAndGetWithStringStorage {
     LibString.StringStorage internal _x;
 
@@ -25,8 +33,19 @@ contract SimpleStringSetAndGetWithStringStorage {
 }
 
 contract LibStringTest is SoladyTest {
+    function testDelete() public brutalizeMemory {
+        string storage $ = _getNativeStorageString();
+        _set($, "Milady");
+        _testDelete($);
+        _set($, "MiladyMiladyMiladyMiladyMiladyMiladyMilady");
+        _testDelete($);
+    }
+
     function testSimpleStringSetAndGetGas() public {
         _testSimpleStringSetAndGet(new SimpleStringSetAndGet());
+        _testSimpleStringSetAndGet(
+            SimpleStringSetAndGet(address(new SimpleStringSetAndGetWithNativeStorageString()))
+        );
         _testSimpleStringSetAndGet(
             SimpleStringSetAndGet(address(new SimpleStringSetAndGetWithStringStorage()))
         );
@@ -336,10 +355,10 @@ contract LibStringTest is SoladyTest {
                 let c0 := byte(0, mload(p))
                 let c1 := byte(1, mload(p))
                 if and(gt(c1, 58), gt(and(temp, 15), 7)) {
-                    mstore8(add(p, 1), sub(c1, 32))    
+                    mstore8(add(p, 1), sub(c1, 32))
                 }
                 if and(gt(c0, 58), gt(shr(4, temp), 7)) {
-                    mstore8(p, sub(c0, 32))    
+                    mstore8(p, sub(c0, 32))
                 }
             }
         }
@@ -1594,6 +1613,19 @@ contract LibStringTest is SoladyTest {
         return LibString.toSmallString(s);
     }
 
+    function testSetAndGetNativeStorageString() public {
+        string memory emptyString;
+        _testSetAndGetNativeStorageString(emptyString);
+        _testSetAndGetNativeStorageString("");
+        _testSetAndGetNativeStorageString("a");
+        _testSetAndGetNativeStorageString("ab");
+        unchecked {
+            for (uint256 i = 0; i != 300; ++i) {
+                _testSetAndGetNativeStorageString(_randomUniformString(i), false);
+            }
+        }
+    }
+
     function testSetAndGetStringStorage() public {
         string memory emptyString;
         _testSetAndGetStringStorage(emptyString);
@@ -1605,6 +1637,20 @@ contract LibStringTest is SoladyTest {
                 _testSetAndGetStringStorage(_randomUniformString(i), false);
             }
         }
+    }
+
+    function testSetAndGetNativeStorageString(bytes32) public {
+        vm.pauseGasMetering();
+        if (_randomChance(32)) {
+            assertEq(bytes(_getNativeStorageString()).length, 0);
+            assertEq(_get(_getNativeStorageString()), "");
+        }
+        if (_randomChance(2)) _testSetAndGetNativeStorageString(string(_randomBytes()));
+        if (_randomChance(16)) _testSetAndGetNativeStorageString(string(_randomBytes()));
+        if (_randomChance(32)) {
+            _testSetAndGetNativeStorageString(_randomUniformString(_randomUniform() & 0xfff));
+        }
+        vm.resumeGasMetering();
     }
 
     function testSetAndGetStringStorage(bytes32) public {
@@ -1622,8 +1668,17 @@ contract LibStringTest is SoladyTest {
         vm.resumeGasMetering();
     }
 
+    function testSetAndGetNativeStorageString2(string memory s) public {
+        _testSetAndGetNativeStorageString(s);
+    }
+
     function testSetAndGetStringStorage2(string memory s) public {
         _testSetAndGetStringStorage(s);
+    }
+
+    function testSetAndGetNativeStorageStringCalldata(string calldata s) public {
+        LibString.setCalldata(_getNativeStorageString(), s);
+        assertEq(_getNativeStorageString(), s);
     }
 
     function testSetAndGetStringStorageCalldata(string calldata s) public {
@@ -1631,8 +1686,31 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.get(_getStringStorage()), s);
     }
 
+    function _testSetAndGetNativeStorageString(string memory s) internal {
+        _testSetAndGetNativeStorageString(s, _randomChance(8));
+    }
+
     function _testSetAndGetStringStorage(string memory s) internal {
         _testSetAndGetStringStorage(s, _randomChance(8));
+    }
+
+    function _testSetAndGetNativeStorageString(string memory s0, bool writeTo1) internal {
+        _set(_getNativeStorageString(0), s0);
+        string memory s1;
+        if (writeTo1) {
+            s1 = string(_randomBytes());
+            _set(_getNativeStorageString(1), s1);
+            if (_randomChance(16)) {
+                _misalignFreeMemoryPointer();
+                _brutalizeMemory();
+            }
+        }
+        assertEq(_get(_getNativeStorageString(0)), s0);
+        if (writeTo1) {
+            assertEq(_get(_getNativeStorageString(1)), s1);
+            if (_randomChance(16)) _testDelete(_getNativeStorageString(0));
+            if (_randomChance(16)) _testDelete(_getNativeStorageString(1));
+        }
     }
 
     function _testSetAndGetStringStorage(string memory s0, bool writeTo1) internal {
@@ -1654,6 +1732,34 @@ contract LibStringTest is SoladyTest {
         }
     }
 
+    function _testDelete(string storage $) internal {
+        uint256 length = bytes($).length;
+        LibString.delete_($);
+        assertEq($, "");
+        assertEq(bytes($).length, 0);
+        uint256 packed;
+        assembly {
+            packed := sload($.slot)
+        }
+        assertEq(packed, 0, "Expected the length slot to be zero");
+        if (length >= 32) {
+            uint256 p;
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0, $.slot)
+                p := keccak256(0, 0x20)
+            }
+            uint256 words = (length + 31) / 32;
+            for (uint256 i; i < words; ++i) {
+                uint256 word;
+                assembly {
+                    word := sload(add(p, i))
+                }
+                assertEq(word, 0, "Expected every word to be zero");
+            }
+        }
+    }
+
     function _testClear(LibString.StringStorage storage $) internal {
         if (_randomChance(2)) {
             LibString.clear($);
@@ -1664,10 +1770,21 @@ contract LibStringTest is SoladyTest {
         assertTrue(LibString.isEmpty($));
     }
 
+    function _set(string storage $, string memory s) internal {
+        LibString.set($, s);
+        assertEq(bytes($).length, bytes(s).length);
+    }
+
     function _set(LibString.StringStorage storage $, string memory s) internal {
         LibString.set($, s);
         assertEq(LibString.length($), bytes(s).length);
         assertEq(LibString.isEmpty($), bytes(s).length == 0);
+    }
+
+    function _get(string storage $) internal returns (string memory result) {
+        result = $;
+        _checkMemory(result);
+        assertEq(bytes($).length, bytes(result).length);
     }
 
     function _get(LibString.StringStorage storage $) internal returns (string memory result) {
@@ -1677,8 +1794,19 @@ contract LibStringTest is SoladyTest {
         assertEq(LibString.length($), bytes(result).length);
     }
 
+    function _getNativeStorageString() internal pure returns (string storage) {
+        return _getNativeStorageString(0);
+    }
+
     function _getStringStorage() internal pure returns (LibString.StringStorage storage) {
         return _getStringStorage(0);
+    }
+
+    function _getNativeStorageString(uint256 o) internal pure returns (string storage $) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            $.slot := add(0x39be4c398aefe47a0e, o)
+        }
     }
 
     function _getStringStorage(uint256 o)
