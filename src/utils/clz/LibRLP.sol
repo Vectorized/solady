@@ -219,7 +219,7 @@ library LibRLP {
                     leave
                 }
                 returndatacopy(returndatasize(), returndatasize(), shr(32, n_))
-                let r_ := add(1, add(lt(0xff, n_), add(lt(0xffff, n_), lt(0xffffff, n_))))
+                let r_ := sub(0x20, shr(3, clz(n_)))
                 mstore(o_, shl(248, add(r_, add(c_, 55)))) // Store the prefix.
                 // Copy `x`.
                 let i_ := add(r_, _o)
@@ -346,7 +346,7 @@ library LibRLP {
                     break
                 }
                 returndatacopy(returndatasize(), returndatasize(), shr(32, n))
-                let r := add(2, add(lt(0xff, n), add(lt(0xffff, n), lt(0xffffff, n))))
+                let r := sub(0x21, shr(3, clz(n)))
                 // Copy `x`.
                 let i := add(r, add(0x20, result))
                 let end := add(i, n)
