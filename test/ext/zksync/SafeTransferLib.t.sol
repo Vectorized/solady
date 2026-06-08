@@ -345,6 +345,7 @@ contract SafeTransferLibTest is SoladyTest {
     }
 
     function testTransferFromWithStandardERC20(address from, address to, uint256 amount) public {
+        amount = _boundValidAllowance(amount);
         verifySafeTransferFrom(address(erc20), from, to, amount, _SUCCESS);
     }
 
@@ -378,6 +379,7 @@ contract SafeTransferLibTest is SoladyTest {
 
     function testApproveWithStandardERC20(address to, uint256 amount) public {
         if (to == _REGULAR_EVM_PERMIT2) return;
+        amount = _boundValidAllowance(amount);
         verifySafeApprove(address(erc20), to, amount, _SUCCESS);
     }
 
@@ -419,6 +421,8 @@ contract SafeTransferLibTest is SoladyTest {
 
     function testApproveWithRetry(address to, uint256 amount0, uint256 amount1) public {
         if (to == _REGULAR_EVM_PERMIT2) return;
+        amount0 = _boundValidAllowance(amount0);
+        amount1 = _boundValidAllowance(amount1);
         MockERC20LikeUSDT usdt = new MockERC20LikeUSDT();
         assertEq(usdt.allowance(address(this), to), 0);
         SafeTransferLib.safeApproveWithRetry(address(usdt), _brutalized(to), amount0);
@@ -641,7 +645,12 @@ contract SafeTransferLibTest is SoladyTest {
                 mstore(0x00, from)
                 allowanceSlot := keccak256(0x0c, 0x34)
             }
-            vm.store(token, allowanceSlot, bytes32(uint256(amount)));
+            uint256 packed;
+            if (amount != 0) {
+                packed = (uint256(uint64(block.timestamp + erc20.maxApprovalDuration())) << 192)
+                    | (amount == type(uint256).max ? type(uint192).max : amount);
+            }
+            vm.store(token, allowanceSlot, bytes32(packed));
         } else {
             vm.store(
                 token,
@@ -651,6 +660,11 @@ contract SafeTransferLibTest is SoladyTest {
         }
 
         assertEq(ERC20(token).allowance(from, to), amount, "wrong allowance");
+    }
+
+    function _boundValidAllowance(uint256 amount) internal pure returns (uint256) {
+        if (amount == type(uint256).max) return amount;
+        return amount % uint256(type(uint192).max);
     }
 
     function forceSafeTransferETH(address to, uint256 amount, uint256 gasStipend) public {

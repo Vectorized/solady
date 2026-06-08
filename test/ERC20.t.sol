@@ -99,6 +99,10 @@ contract ERC20Test is SoladyTest {
 
     event Approval(address indexed owner, address indexed spender, uint256 amount);
 
+    event ApprovalExpiration(address indexed owner, address indexed spender, uint64 expiration);
+
+    uint256 internal constant _MAX_PACKED_ALLOWANCE = uint256(type(uint192).max) - 1;
+
     struct _TestTemps {
         address owner;
         address to;
@@ -154,6 +158,142 @@ contract ERC20Test is SoladyTest {
         assertTrue(token.approve(address(0xBEEF), 1e18));
 
         assertEq(token.allowance(address(this), address(0xBEEF)), 1e18);
+        (uint64 expiration, uint256 allowance) =
+            token.allowanceAndExpiration(address(this), address(0xBEEF));
+        assertEq(expiration, uint64(block.timestamp + token.maxApprovalDuration()));
+        assertEq(allowance, 1e18);
+    }
+
+    function testApproveForDuration() public {
+        vm.warp(1_000_000);
+        assertEq(token.maxApprovalDuration(), 1 days);
+
+        vm.expectEmit(true, true, true, true);
+        emit Approval(address(this), address(0xBEEF), 100);
+        vm.expectEmit(true, true, true, true);
+        emit ApprovalExpiration(address(this), address(0xBEEF), uint64(block.timestamp + 3600));
+        assertTrue(token.approveForDuration(address(0xBEEF), 100, 3600));
+
+        (uint64 expiration, uint256 allowance) =
+            token.allowanceAndExpiration(address(this), address(0xBEEF));
+        assertEq(expiration, 1_003_600);
+        assertEq(allowance, 100);
+        assertEq(token.allowance(address(this), address(0xBEEF)), 100);
+
+        vm.warp(1_003_600);
+        assertEq(token.allowance(address(this), address(0xBEEF)), 100);
+
+        vm.warp(1_003_601);
+        assertEq(token.allowance(address(this), address(0xBEEF)), 0);
+        (expiration, allowance) = token.allowanceAndExpiration(address(this), address(0xBEEF));
+        assertEq(expiration, 1_003_600);
+        assertEq(allowance, 100);
+    }
+
+    function testLegacyCompatibleSpender() public {
+        vm.warp(1_000_000);
+        address owner = address(0xABCD);
+        address spender = address(0xBEEF);
+        address recipient = address(0xCAFE);
+
+        token.mint(owner, 100);
+        vm.prank(owner);
+        token.approveForDuration(spender, 100, 3600);
+
+        vm.warp(1_003_601);
+        assertEq(token.allowance(owner, spender), 0);
+        (uint64 expiration, uint256 allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, 1_003_600);
+        assertEq(allowance, 100);
+
+        token.setLegacySpender(spender, true);
+        assertEq(token.allowance(owner, spender), 100);
+        (expiration, allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, uint64(block.timestamp));
+        assertEq(allowance, 100);
+
+        vm.prank(spender);
+        token.transferFrom(owner, recipient, 40);
+        assertEq(token.balanceOf(recipient), 40);
+        assertEq(token.allowance(owner, spender), 60);
+
+        token.directSpendAllowance(owner, spender, 10);
+        assertEq(token.allowance(owner, spender), 50);
+
+        token.setLegacySpender(spender, false);
+        assertEq(token.allowance(owner, spender), 0);
+        (expiration, allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, 1_003_600);
+        assertEq(allowance, 50);
+
+        token.setLegacySpender(spender, true);
+        vm.prank(owner);
+        token.approve(spender, 0);
+        (expiration, allowance) = token.allowanceAndExpiration(owner, spender);
+        assertEq(expiration, 0);
+        assertEq(allowance, 0);
+    }
+
+    function testApproveForDurationRevertsIfTooLong() public {
+        vm.expectRevert(ERC20.ApprovalDurationTooLong.selector);
+        token.approveForDuration(address(0xBEEF), 100, 1 days + 1);
+    }
+
+    function testApproveZeroClearsExpiration() public {
+        token.approve(address(0xBEEF), 100);
+        token.approve(address(0xBEEF), 0);
+        (uint64 expiration, uint256 allowance) =
+            token.allowanceAndExpiration(address(this), address(0xBEEF));
+        assertEq(expiration, 0);
+        assertEq(allowance, 0);
+    }
+
+    function testApproveUnsupportedPackedAllowanceReverts() public {
+        vm.expectRevert(ERC20.AllowanceOverflow.selector);
+        token.approve(address(0xBEEF), type(uint192).max);
+
+        vm.expectRevert(ERC20.AllowanceOverflow.selector);
+        token.approve(address(0xBEEF), uint256(type(uint192).max) + 1);
+    }
+
+    function testLegacyMaxApprovalSlotReverts() public {
+        vm.warp(1_000_000);
+        address owner = address(0xABCD);
+        address spender = address(this);
+        _storeRawAllowance(owner, spender, type(uint256).max);
+        token.setLegacySpender(spender, true);
+
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowance(owner, spender);
+
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowanceAndExpiration(owner, spender);
+
+        token.mint(owner, 1);
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.transferFrom(owner, address(0xBEEF), 1);
+
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.directSpendAllowance(owner, spender, 1);
+    }
+
+    function testMaxApprovalSentinelExpirationBound() public {
+        vm.warp(1_000_000);
+        address owner = address(0xABCD);
+        address spender = address(this);
+        uint256 sentinel = uint256(type(uint192).max);
+
+        uint256 maxValidExpiration = block.timestamp + token.maxApprovalDuration();
+        _storeRawAllowance(owner, spender, (maxValidExpiration << 192) | sentinel);
+        assertEq(token.allowance(owner, spender), type(uint256).max);
+
+        _storeRawAllowance(owner, spender, ((maxValidExpiration + 1) << 192) | 123);
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowance(owner, spender);
+
+        _storeRawAllowance(owner, spender, ((maxValidExpiration + 1) << 192) | sentinel);
+        vm.expectRevert(ERC20.InvalidStoredApproval.selector);
+        token.allowance(owner, spender);
     }
 
     function testTransfer() public {
@@ -206,6 +346,7 @@ contract ERC20Test is SoladyTest {
 
     function testPermit() public {
         _TestTemps memory t = _testTemps();
+        t.amount = _boundValidAllowance(t.amount);
         t.deadline = block.timestamp;
 
         _signPermit(t);
@@ -276,6 +417,8 @@ contract ERC20Test is SoladyTest {
     function testApprove(address to, uint256 amount) public {
         if (to == _PERMIT2) {
             amount = type(uint256).max;
+        } else {
+            amount = _boundValidAllowance(amount);
         }
         assertTrue(token.approve(to, amount));
         assertEq(token.allowance(address(this), to), amount);
@@ -305,6 +448,7 @@ contract ERC20Test is SoladyTest {
         uint256 amount
     ) public {
         vm.assume(spender != _PERMIT2);
+        approval = _boundValidAllowance(approval);
         amount = _bound(amount, 0, approval);
 
         token.mint(from, amount);
@@ -355,7 +499,7 @@ contract ERC20Test is SoladyTest {
 
     function testDirectSpendAllowance(uint256) public {
         _TestTemps memory t = _testTemps();
-        uint256 allowance = _random();
+        uint256 allowance = _boundValidAllowance(_random());
         vm.prank(t.owner);
         token.approve(t.to, allowance);
         assertEq(token.allowance(t.owner, t.to), allowance);
@@ -373,6 +517,7 @@ contract ERC20Test is SoladyTest {
 
     function testPermit(uint256) public {
         _TestTemps memory t = _testTemps();
+        t.amount = _boundValidAllowance(t.amount);
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
         _signPermit(t);
@@ -385,6 +530,9 @@ contract ERC20Test is SoladyTest {
 
     function _checkAllowanceAndNonce(_TestTemps memory t) internal {
         assertEq(token.allowance(t.owner, t.to), t.amount);
+        (uint64 expiration, uint256 allowance) = token.allowanceAndExpiration(t.owner, t.to);
+        assertEq(expiration, _expectedDefaultExpiration(t.amount));
+        assertEq(allowance, t.amount);
         assertEq(token.nonces(t.owner), t.nonce + 1);
     }
 
@@ -418,7 +566,8 @@ contract ERC20Test is SoladyTest {
         uint256 amount
     ) public {
         if (approval == type(uint256).max) approval--;
-        amount = _bound(amount, approval + 1, type(uint256).max);
+        approval = _bound(approval, 0, _MAX_PACKED_ALLOWANCE - 1);
+        amount = _bound(amount, approval + 1, _MAX_PACKED_ALLOWANCE);
 
         address from = address(0xABCD);
 
@@ -436,8 +585,8 @@ contract ERC20Test is SoladyTest {
         uint256 mintAmount,
         uint256 sendAmount
     ) public {
-        if (mintAmount == type(uint256).max) mintAmount--;
-        sendAmount = _bound(sendAmount, mintAmount + 1, type(uint256).max);
+        sendAmount = _bound(sendAmount, 1, _MAX_PACKED_ALLOWANCE);
+        mintAmount = _bound(mintAmount, 0, sendAmount - 1);
 
         address from = address(0xABCD);
 
@@ -485,6 +634,7 @@ contract ERC20Test is SoladyTest {
 
     function testPermitReplayReverts(uint256) public {
         _TestTemps memory t = _testTemps();
+        t.amount = _boundValidAllowance(t.amount);
         if (t.deadline < block.timestamp) t.deadline = block.timestamp;
 
         _signPermit(t);
@@ -506,6 +656,30 @@ contract ERC20Test is SoladyTest {
     function _expectPermitEmitApproval(_TestTemps memory t) internal {
         vm.expectEmit(true, true, true, true);
         emit Approval(t.owner, t.to, t.amount);
+        vm.expectEmit(true, true, true, true);
+        emit ApprovalExpiration(t.owner, t.to, _expectedDefaultExpiration(t.amount));
+    }
+
+    function _boundValidAllowance(uint256 amount) internal pure returns (uint256) {
+        if (amount == type(uint256).max) return amount;
+        return amount % uint256(type(uint192).max);
+    }
+
+    function _storeRawAllowance(address owner, address spender, uint256 packed) internal {
+        bytes32 allowanceSlot;
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(0x20, spender)
+            mstore(0x0c, 0x7f5e9f20)
+            mstore(0x00, owner)
+            allowanceSlot := keccak256(0x0c, 0x34)
+        }
+        vm.store(address(token), allowanceSlot, bytes32(packed));
+    }
+
+    function _expectedDefaultExpiration(uint256 amount) internal view returns (uint64) {
+        if (amount == 0) return 0;
+        return uint64(block.timestamp + token.maxApprovalDuration());
     }
 
     function _permit(_TestTemps memory t) internal {
