@@ -109,6 +109,7 @@ utils
 ├─ UpgradeableBeacon — "Upgradeable beacon for ERC1967 beacon proxies"
 ├─ WebAuthn — "WebAuthn helper"
 ├─ legacy — "Legacy support"
+├─ clz - "Libraries with clz opcode"
 └─ ext — "Utilities for external protocols"
 ```
 
