@@ -248,6 +248,11 @@ library DynamicArrayLib {
                     if iszero(o) { break }
                 }
             }
+            if iszero(lt(start, end)) {
+                result := mload(0x40)
+                mstore(result, 0)
+                mstore(0x40, add(result, 0x20))
+            }
         }
     }
 

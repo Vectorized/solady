@@ -465,10 +465,14 @@ library LibBytes {
                     j := add(j, w) // `sub(j, 0x20)`.
                     if iszero(j) { break }
                 }
-                let o := add(add(result, 0x20), n)
-                mstore(o, 0) // Zeroize the slot after the bytes.
-                mstore(0x40, add(o, 0x20)) // Allocate memory.
                 mstore(result, n) // Store the length.
+                mstore(add(add(result, n), 0x20), 0) // Zeroize the slot after the bytes.
+                mstore(0x40, add(add(result, n), 0x40)) // Allocate memory.
+            }
+            if iszero(lt(start, end)) {
+                result := mload(0x40)
+                mstore(result, 0)
+                mstore(0x40, add(result, 0x20))
             }
         }
     }
