@@ -276,7 +276,7 @@ library FixedPointMathLib {
     /// @dev Let L = 10²⁷ ⋅ ln(x / 10¹⁸) be the exact, infinite-precision result. This function
     ///      returns either ⌊L⌋ or ⌊L⌋ - 1; it never overestimates. `lnWadToRay(10**18) == 0`
     ///      exactly, and the result is negative iff `x < 10**18`. `lnWadToRay` is monotonic; x₁ <
-    ///      x₂ → lnWadToRay(x₁) ≤ lnWadToRay(x₂). Reverts with `Panic(18)` when `x <= 0`.
+    ///      x₂ → lnWadToRay(x₁) ≤ lnWadToRay(x₂). Reverts with `LnWadUndefined()` when `x <= 0`.
     /// Implementation and formal verification by duncancmt https://github.com/0xProject/0x-settler/pull/585
     function lnWadToRay(int256 x) internal pure returns (int256 r) {
         // Equivalent pseudocode; fixed-point truncations are accounted for below:
