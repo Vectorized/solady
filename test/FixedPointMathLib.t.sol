@@ -762,7 +762,7 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.lnWad(2718281828459045235), 999999999999999999);
 
         // Actual: 2461607324344817917.963296…
-        assertEq(FixedPointMathLib.lnWad(11723640096265400935), 2461607324344817918);
+        assertEq(FixedPointMathLib.lnWad(11723640096265400935), 2461607324344817917);
     }
 
     function testLnWadSmall() public {
