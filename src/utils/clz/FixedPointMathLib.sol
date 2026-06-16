@@ -332,7 +332,7 @@ library FixedPointMathLib {
 
         /// @solidity memory-safe-assembly
         assembly {
-            if iszero(slt(0x00, x)) {
+            if iszero(sgt(x, 0)) {
                 mstore(0x00, 0x1615e638) // `LnWadUndefined()`.
                 revert(0x1c, 0x04)
             }
@@ -340,59 +340,59 @@ library FixedPointMathLib {
             // Normalize: x := m, a Q95 fixnum, m ∈ [1, 2), truncated from x / 2ᵏ. Truncation
             // underestimates ln(x) by less than 2⁻⁹⁵ (only possible when k > 0).
             let c := clz(x)
-            let k := sub(0xa0, c)
-            x := shr(0xa0, shl(c, x))
+            let k := sub(160, c)
+            x := shr(160, shl(c, x))
 
             // z = (s - m)/(m + s) in Q100, truncated toward zero, where the Q95 constant s =
-            // 0xb504f333f9de6484597d89b3 = round(√2 ⋅ 2⁹⁵). Centering at s makes |z| ≤ 3 - 2⋅√2 ≈
-            // 0.17157 over m ∈ [1, 2).
-            let s := 0xb504f333f9de6484597d89b3
-            let z := sdiv(shl(0x64, sub(s, x)), add(x, s))
+            // 56022770974786139918731938227 = round(√2 ⋅ 2⁹⁵). Centering at s makes |z| ≤ 3 - 2⋅√2
+            // ≈ 0.17157 over m ∈ [1, 2).
+            let s := 56022770974786139918731938227
+            let z := sdiv(shl(100, sub(s, x)), add(x, s))
 
             // u = z² in Q96, truncated; u ∈ [0, 0.029438 ⋅ 2⁹⁶].
-            let u := shr(0x68, mul(z, z))
+            let u := shr(104, mul(z, z))
 
             // Constant terms of p and q in Q94; p(0) = -q(0) by construction, so the literal is
             // shared.
-            let c0 := 0xb05a8b41cf51c04d1b8a08d473
+            let c0 := 13972178604861559108982341686387
 
             // Numerator p(u), Horner up the basis staircase Q68 → Q80 → Q86 → Q85 → Q94. p(u)/2⁹⁴ ∈
             // [663.7, 705.5] on the domain. The leading product is nonnegative, so the first shift
             // may be logical.
-            let p := sub(shr(0x54, mul(0xf642b0ed5372ff45e0, u)), 0xede142e73a9acbb00e9c42)
-            p := add(sar(0x5a, mul(p, u)), 0xf2a56533e74a454c9d585f70)
-            p := sub(sar(0x61, mul(p, u)), 0xb44d9253cd61fb87dc7efcfc)
-            p := add(sar(0x57, mul(p, u)), c0)
+            let p := sub(shr(84, mul(u, 4542704643877621417440)), 287579185854221620442209346)
+            p := add(sar(90, mul(p, u)), 75095323053466847604974837616)
+            p := sub(sar(97, mul(p, u)), 55801080067338082314461576444)
+            p := add(sar(87, mul(p, u)), c0)
 
             // Denominator q(u), monic, Horner up the staircase Q96 → Q79 → Q85 → Q93 →
             // Q94. q(u)/2⁹⁴ ∈ [-705.5, -656.0] on the domain: bounded away from zero, and
             // p(u)/-q(u) ∈ [1, 1.01].
-            let q := sub(u, 0x364589193443b48661938f59dc)
-            q := add(sar(0x71, mul(q, u)), 0xe904c4e76307954df78fef)
-            q := sub(sar(0x5a, mul(q, u)), 0xad960ab2f600bd9765c15ffd)
-            q := add(sar(0x58, mul(q, u)), 0xd1b1fedec544f0ea0bc812bbca)
-            q := sub(sar(0x5f, mul(q, u)), c0)
+            let q := sub(u, 4299840983308505679614339668444)
+            q := add(sar(113, mul(q, u)), 281702237671157106654810095)
+            q := sub(sar(90, mul(q, u)), 53722296096946541673620529149)
+            q := add(sar(88, mul(q, u)), 16613772931382142257332678212554)
+            q := sub(sar(95, mul(q, u)), c0)
 
             // h = atanh(-z/2¹⁰⁰) in Q100: |p ⋅ z| < 2²⁰¹ ∧ |q| > 656 ⋅ 2⁹⁴, so the quotient fits in
             // 98 bits.
             r := sdiv(mul(p, z), q)
 
             // Double h and rescale to ray in Q72: 5²⁷ = 2 ⋅ 10²⁷ ⋅ 2⁷² / 2¹⁰⁰; exact.
-            r := mul(0x6765c793fa10079d, r)
+            r := mul(r, 7450580596923828125)
 
             // Add k ⋅ round(ln(2) ⋅ 10²⁷ ⋅ 2⁷²). k is two's complement (k ∈ [-95, 159])
-            r := add(mul(0x23d5b9ff36551802aa5d6f9754b0f3fad83b19450, k), r)
+            r := add(r, mul(k, 3273295013171879848905889459134067659407864468560))
 
             // Add ⌊(ln(s/2⁹⁵) + 95⋅ln(2) - 18⋅ln(10)) ⋅ 10²⁷ ⋅ 2⁷²⌋ minus the one-sided error
             // margin described above.
-            r := add(0x4ff7e9b32826a6aec97ea1e696bd71eb764c77277c, r)
+            r := add(r, 116873961749927929127912020551506849476088469858172)
 
             // Q72 → integer ray result (`SAR` floors).
-            r := sar(0x48, r)
+            r := sar(72, r)
 
             // lnWadToRay(1⋅10¹⁸) = 0 is the only input whose exact result is an integer. The
             // approximation above lands on -1; correct this to get exactly 0.
-            r := add(iszero(not(r)), r)
+            r := add(r, iszero(not(r)))
         }
     }
 
@@ -410,7 +410,7 @@ library FixedPointMathLib {
 
         /// @solidity memory-safe-assembly
         assembly {
-            r := sdiv(sub(r, mul(0x3b9ac9ff, sgt(0x00, r))), 0x3b9aca00)
+            r := sdiv(sub(r, mul(slt(r, 0), 999999999)), 1000000000)
         }
     }
 
