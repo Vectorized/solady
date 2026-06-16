@@ -278,6 +278,7 @@ library FixedPointMathLib {
     ///      exactly, and the result is negative iff `x < 10**18`. `lnWadToRay` is monotonic; x₁ <
     ///      x₂ → lnWadToRay(x₁) ≤ lnWadToRay(x₂). Reverts with `LnWadUndefined()` when `x <= 0`.
     /// Implementation and formal verification by duncancmt https://github.com/0xProject/0x-settler/pull/585
+    /// This technique was popularized by Remco Bloemen https://2π.com/22/approximation https://2π.com/22/exp-ln
     function lnWadToRay(int256 x) internal pure returns (int256 r) {
         // Equivalent pseudocode; fixed-point truncations are accounted for below:
         //     require(x > 0);
