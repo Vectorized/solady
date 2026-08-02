@@ -259,6 +259,21 @@ contract Base58Test is SoladyTest {
         this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFH@");
     }
 
+    function testDecodeWordLowCharacterReverts() public {
+        // Characters below '1' (0x31) underflow the lookup index. The
+        // sanitizer must run before `mload(c)`, otherwise the out-of-bounds
+        // load expands memory and reverts with out-of-gas instead of a clean
+        // `Base58DecodingError`. See https://github.com/Vectorized/solady/issues/1543.
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("0");
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("\x00");
+        // Also cover an underflowing byte after a valid character, where
+        // `result` is already nonzero (loop position > 0).
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("z0");
+    }
+
     function decodeWord(string memory encoded) public pure returns (bytes32) {
         return Base58.decodeWord(encoded);
     }
