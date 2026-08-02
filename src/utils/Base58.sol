@@ -189,9 +189,7 @@ library Base58 {
 
             for { let j := 0 } 1 {} {
                 let c := sub(byte(0, mload(add(s, j))), 49)
-                // Check if the input character is valid before `mload(c)`.
-                // Otherwise an out-of-bounds `c` expands memory and reverts
-                // with out-of-gas instead of `Base58DecodingError`.
+                // Check if the input character is valid.
                 if iszero(and(shl(c, 1), 0x3fff7ff03ffbeff01ff)) {
                     mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
                     revert(0x1c, 0x04)

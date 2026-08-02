@@ -260,14 +260,36 @@ contract Base58Test is SoladyTest {
     }
 
     function testDecodeWordLowCharacterReverts() public {
-        // Characters below '1' (0x31) underflow the lookup index. The
-        // sanitizer must run before `mload(c)`, otherwise the out-of-bounds
-        // load expands memory and reverts with out-of-gas instead of a clean
-        // `Base58DecodingError`. See https://github.com/Vectorized/solady/issues/1543.
+        // 0 - 48 (before '1')
+        for (uint256 i = 0; i < 48; i++) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
+        // 58 - 64 (: ; < = > ? @)
+        for (uint256 i = 58; i <= 64; ++i) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
         vm.expectRevert(Base58.Base58DecodingError.selector);
-        this.decodeWord("0");
+        this.decodeWord("I");
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("O");
+        // 91 - 96 ([ \ ] ^ _ `)
+        for (uint256 i = 91; i <= 96; ++i) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("l");
+
+        // 123 - 127 ({ | } ~ DEL)
+        for (uint256 i = 123; i <= 255; ++i) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
         vm.expectRevert(Base58.Base58DecodingError.selector);
         this.decodeWord("\x00");
+
         // Also cover an underflowing byte after a valid character, where
         // `result` is already nonzero (loop position > 0).
         vm.expectRevert(Base58.Base58DecodingError.selector);
