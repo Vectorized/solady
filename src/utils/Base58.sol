@@ -189,10 +189,15 @@ library Base58 {
 
             for { let j := 0 } 1 {} {
                 let c := sub(byte(0, mload(add(s, j))), 49)
+                // Check if the input character is valid.
+                if iszero(and(shl(c, 1), 0x3fff7ff03ffbeff01ff)) {
+                    mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
+                    revert(0x1c, 0x04)
+                }
                 let p := mul(result, 58)
                 let acc := add(byte(0, mload(c)), p)
-                // Check if the input character is valid.
-                if iszero(and(0x3fff7ff03ffbeff01ff, shl(c, lt(lt(acc, p), lt(result, t))))) {
+                // Check for multiplication or addition overflow.
+                if iszero(lt(lt(acc, p), lt(result, t))) {
                     mstore(0x00, 0xe8fad793) // `Base58DecodingError()`.
                     revert(0x1c, 0x04)
                 }

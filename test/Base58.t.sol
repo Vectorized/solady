@@ -259,6 +259,43 @@ contract Base58Test is SoladyTest {
         this.decodeWord("JEKNVnkbo3jma5nREBBJCDoXFVeKkD56V3xKrvRmWxFH@");
     }
 
+    function testDecodeWordLowCharacterReverts() public {
+        // 0 - 48 (before '1')
+        for (uint256 i = 0; i < 48; i++) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
+        // 58 - 64 (: ; < = > ? @)
+        for (uint256 i = 58; i <= 64; ++i) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("I");
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("O");
+        // 91 - 96 ([ \ ] ^ _ `)
+        for (uint256 i = 91; i <= 96; ++i) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("l");
+
+        // 123 - 127 ({ | } ~ DEL)
+        for (uint256 i = 123; i <= 255; ++i) {
+            vm.expectRevert(Base58.Base58DecodingError.selector);
+            this.decodeWord(LibString.toHexString(i));
+        }
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("\x00");
+
+        // Also cover an underflowing byte after a valid character, where
+        // `result` is already nonzero (loop position > 0).
+        vm.expectRevert(Base58.Base58DecodingError.selector);
+        this.decodeWord("z0");
+    }
+
     function decodeWord(string memory encoded) public pure returns (bytes32) {
         return Base58.decodeWord(encoded);
     }
