@@ -8,12 +8,17 @@ on:
 
 jobs:
   comment:
-    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      actions: read
     steps:
       - name: Download gas diff artifact
+        id: download
+        continue-on-error: true
         uses: actions/download-artifact@v8.0.1
         with:
           name: gas-diff
@@ -21,10 +26,12 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Read PR number
+        if: steps.download.outcome == 'success'
         id: pr
         run: echo "number=$(cat pr-number.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Read gas diff
+        if: steps.download.outcome == 'success'
         id: gas_diff
         run: |
           if [ -f comment.md ] && [ -s comment.md ]; then
@@ -36,6 +43,7 @@ jobs:
           fi
 
       - name: Add gas diff to sticky comment
+        if: steps.download.outcome == 'success'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           number: ${{ steps.pr.outputs.number }}
