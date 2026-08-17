@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        profile: [post-osaka,post-osaka-via-ir,solc-past-versions-0,solc-past-versions-1,via-ir,min-solc,min-solc-via-ir,intense]
+        profile: [post-osaka,post-osaka-via-ir,solc-past-versions-0,solc-past-versions-1,solc-past-versions-2,via-ir,min-solc,min-solc-via-ir,intense]
     steps:
       - uses: actions/checkout@v5
       - name: Install Foundry Stable
@@ -64,7 +64,9 @@ jobs:
             forge test --use 0.8.26 --fuzz-runs 16 &&
             forge test --use 0.8.27 --fuzz-runs 16 &&
             forge test --use 0.8.28 --fuzz-runs 16 &&
-            forge test --use 0.8.29 --fuzz-runs 16 &&
+            forge test --use 0.8.29 --fuzz-runs 16
+          ) ||
+          ( [ "${{ matrix.profile }}" = "solc-past-versions-2" ] &&
             forge test --use 0.8.30 --fuzz-runs 16 &&
             forge test --use 0.8.31 --fuzz-runs 16 &&
             forge test --use 0.8.33 --fuzz-runs 16 &&
