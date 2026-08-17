@@ -271,10 +271,66 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `ln(x)`, denominated in `WAD`.
-    /// Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln
-    /// Note: This function is an approximation. Monotonically increasing.
-    function lnWad(int256 x) internal pure returns (int256 r) {
+    /// @notice Compute the natural logarithm `ln(x)` of a positive fixnum `x` with 10**18 (wad)
+    ///         basis, returning the result as a fixnum with 10**27 (ray) basis.
+    /// @dev Let L = 10²⁷ ⋅ ln(x / 10¹⁸) be the exact, infinite-precision result. This function
+    ///      returns either ⌊L⌋ or ⌊L⌋ - 1; it never overestimates. `lnWadToRay(10**18) == 0`
+    ///      exactly, and the result is negative iff `x < 10**18`. `lnWadToRay` is monotonic; x₁ <
+    ///      x₂ → lnWadToRay(x₁) ≤ lnWadToRay(x₂). Reverts with `LnWadUndefined()` when `x <= 0`.
+    /// Implementation and formal verification by duncancmt https://github.com/0xProject/0x-settler/pull/585
+    /// This technique was popularized by Remco Bloemen https://2π.com/22/approximation https://2π.com/22/exp-ln
+    function lnWadToRay(int256 x) internal pure returns (int256 r) {
+        // Equivalent pseudocode; fixed-point truncations are accounted for below:
+        //     require(x > 0);
+        //     k = ⌊log₂(x)⌋ - 95;                       // x = m ⋅ 2ᵏ, m ∈ [2⁹⁵, 2⁹⁶)
+        //     m = x / 2ᵏ;                               // Q95 fixnum ∈ [1, 2)
+        //     z = (s - m) / (m + s);                    // s = √2 ⋅ 2⁹⁵; |z| ≤ 3 - 2√2
+        //     h = atanh(-z) = (p(z²) ⋅ z) / q(z²);      // ln(m / 2⁹⁵) = 2h + ln(s / 2⁹⁵)
+        //     r = ⌊10²⁷ ⋅ (2h + ln(s) + k⋅ln(2) - 18⋅ln(10)) - margin⌋
+        //     return r + (r = -1);
+        //
+        // z is negated (s - m, not m - s) so that every polynomial coefficient below can be written
+        // as a positive literal; q carries the compensating negation. p/-q is a (4,5)-degree
+        // rational polynomial approximation of f(u) = atanh(√u)/√u on u ∈ [0, (3-2√2)²], fit under
+        // the weight √u (the weight the error carries into ln), with q monic and p(0) = -q(0)
+        // constrained so both polynomials share their constant-term literal. The weighted sup-norm
+        // error of the integer-rounded rational 2⋅√u⋅|p/-q - f|⋅10²⁷ is ≤0.327ulp.
+        //
+        // Mixed fixed-point bases, chosen so every renormalizing shift lands a value directly
+        // at the basis its consumer needs (each quantity is rounded exactly once):
+        //     m:      Q95 (truncated from x; error < 2⁻⁹⁵)
+        //     z:      Q100 (one sdiv)
+        //     u = z²: Q96 (one `shr` by 104, straight from the Q200 product)
+        //     Horner stages: a coefficient followed by j more multiplies by u tolerates a shorter
+        //         basis, so the stage bases form a staircase -- p: Q68, Q80, Q86, Q85, Q94; q: Q96
+        //         (the monic stage shares u's basis for free), Q79, Q85, Q93, Q94. Each literal
+        //         then takes the widest basis that fits its minimal `PUSH` width. One `SAR` per
+        //         multiply is forced: ray precision requires ~96 significant bits while each
+        //         multiply by u consumes ~91 bits of headroom, so consecutive unrenormalized steps
+        //         cannot fit in 256 bits.
+        //     p, q final: Q94 (|p ⋅ z| < 2²⁰¹; both final stage shifts land there directly)
+        //     p⋅z/q: one `SDIV` at Q100 (granularity 2⁻¹⁰⁰, ~0.0016 ulp)
+        //     output: the quotient is h in Q100; multiplying by 5²⁷ = 2⋅10²⁷⋅2⁷² / 2¹⁰⁰ folds in
+        //         the factor of 2 and places it on the 10²⁷ ⋅ 2⁷² grid shared by the k⋅ln(2) term
+        //         and the bias, so the closing `sar(72, …)` is the single output-rounding floor
+        //
+        // Error budget in ulps (1 ulp = 10⁻²⁷ of ln; 2⁷² pre-shift units): rational polynomial
+        // approximation and coefficient quantization ≤0.327 combined; mantissa (Q95) truncation
+        // ≤2⁻⁹⁵⋅10²⁷ ≈ 0.026 (downward only); z, u, and `SDIV` truncations ≤0.005 combined; Horner
+        // stage truncations ≤10⁻⁴; ln(2) and bias constant rounding ≤10⁻¹⁹. The bias is reduced by
+        // a margin of ~1.607⋅10²¹ units (0.3403 ulp), so the Q72 accumulator never exceeds L⋅2⁷²;
+        // margin plus downward errors total < 0.699 ⋅ 2⁷², so it always exceeds (L-1)⋅2⁷².
+        // `sar(72, …)` therefore yields ⌊L⌋ or ⌊L⌋ - 1.
+        //
+        // Monotonicity: within an octave, the integer z = sdiv((s-m)⋅2¹⁰⁰, m+s) is strictly
+        // decreasing in m -- ∂/∂m⋅[(s-m)/(m+s)⋅2¹⁰⁰] = -2s⋅2¹⁰⁰/(m+s)² ∈ [-16, -8] over the octave,
+        // so each unit step of m lowers z by 8 to 16 (and `SDIV`, monotone, never reverses that).
+        // The quotient p⋅z/q is an antitone function of the integer z: per unit step of z it moves
+        // by at least Rₘᵢₙ - zₘₐₓ⋅2J > 0.29 quotient units (R = p/-q ≥ 0.939; J bounds the
+        // truncation of R between adjacent u values), so it is antitone across each m-step's
+        // multi-unit z decrease, and `SDIV` truncation toward zero preserves order. The x = 10¹⁸
+        // correction preserves monotonicity because its neighbors' results bracket [0, 999999999].
+
         /// @solidity memory-safe-assembly
         assembly {
             if iszero(sgt(x, 0)) {
@@ -282,59 +338,80 @@ library FixedPointMathLib {
                 revert(0x1c, 0x04)
             }
 
-            // We want to convert `x` from `10**18` fixed point to `2**96` fixed point.
-            // We do this by multiplying by `2**96 / 10**18`. But since
-            // `ln(x * C) = ln(x) + ln(C)`, we can simply do nothing here
-            // and add `ln(2**96 / 10**18)` at the end.
-            // Compute `k = log2(x) - 96`, `r = 159 - k = 255 - log2(x) = 255 - (255 - clz(x))
-            // then k = clz(x)`.
-            r := clz(x)
-            // Reduce range of x to (1, 2) * 2**96
-            // ln(2^k * x) = k * ln(2) + ln(x)
-            x := shr(159, shl(r, x))
+            // Normalize: x := m, a Q95 fixnum, m ∈ [1, 2), truncated from x / 2ᵏ. Truncation
+            // underestimates ln(x) by less than 2⁻⁹⁵ (only possible when k > 0).
+            let c := clz(x)
+            let k := sub(160, c)
+            x := shr(160, shl(c, x))
 
-            // Evaluate using a (8, 8)-term rational approximation.
-            // `p` is made monic, we will multiply by a scale factor later.
-            // forgefmt: disable-next-item
-            let p := sub( // This heavily nested expression is to avoid stack-too-deep for via-ir.
-                sar(96, mul(add(43456485725739037958740375743393,
-                sar(96, mul(add(24828157081833163892658089445524,
-                sar(96, mul(add(3273285459638523848632254066296,
-                    x), x))), x))), x)), 11111509109440967052023855526967)
-            p := sub(sar(96, mul(p, x)), 45023709667254063763336534515857)
-            p := sub(sar(96, mul(p, x)), 14706773417378608786704636184526)
-            p := sub(mul(p, x), shl(96, 795164235651350426258249787498))
-            // We leave `p` in `2**192` basis so we don't need to scale it back up for the division.
+            // z = (s - m)/(m + s) in Q100, truncated toward zero, where the Q95 constant s =
+            // 56022770974786139918731938227 = round(√2 ⋅ 2⁹⁵). Centering at s makes |z| ≤ 3 - 2⋅√2
+            // ≈ 0.17157 over m ∈ [1, 2).
+            let s := 56022770974786139918731938227
+            let z := sdiv(shl(100, sub(s, x)), add(x, s))
 
-            // `q` is monic by convention.
-            let q := add(5573035233440673466300451813936, x)
-            q := add(71694874799317883764090561454958, sar(96, mul(x, q)))
-            q := add(283447036172924575727196451306956, sar(96, mul(x, q)))
-            q := add(401686690394027663651624208769553, sar(96, mul(x, q)))
-            q := add(204048457590392012362485061816622, sar(96, mul(x, q)))
-            q := add(31853899698501571402653359427138, sar(96, mul(x, q)))
-            q := add(909429971244387300277376558375, sar(96, mul(x, q)))
+            // u = z² in Q96, truncated; u ∈ [0, 0.029438 ⋅ 2⁹⁶].
+            let u := shr(104, mul(z, z))
 
-            // `p / q` is in the range `(0, 0.125) * 2**96`.
+            // Constant terms of p and q in Q94; p(0) = -q(0) by construction, so the literal is
+            // shared.
+            let c0 := 13972178604861559108982341686387
 
-            // Finalization, we need to:
-            // - Multiply by the scale factor `s = 5.549…`.
-            // - Add `ln(2**96 / 10**18)`.
-            // - Add `k * ln(2)`.
-            // - Multiply by `10**18 / 2**96 = 5**18 >> 78`.
+            // Numerator p(u), Horner up the basis staircase Q68 → Q80 → Q86 → Q85 → Q94. p(u)/2⁹⁴ ∈
+            // [663.7, 705.5] on the domain. The leading product is nonnegative, so the first shift
+            // may be logical.
+            let p := sub(shr(84, mul(u, 4542704643877621417440)), 287579185854221620442209346)
+            p := add(sar(90, mul(p, u)), 75095323053466847604974837616)
+            p := sub(sar(97, mul(p, u)), 55801080067338082314461576444)
+            p := add(sar(87, mul(p, u)), c0)
 
-            // The q polynomial is known not to have zeros in the domain.
-            // No scaling required because p is already `2**96` too large.
-            p := sdiv(p, q)
-            // Multiply by the scaling factor: `s * 5**18 * 2**96`, base is now `5**18 * 2**192`.
-            p := mul(1677202110996718588342820967067443963516166, p)
-            // Add `ln(2) * k * 5**18 * 2**192`.
-            // forgefmt: disable-next-item
-            p := add(mul(16597577552685614221487285958193947469193820559219878177908093499208371, sub(159, r)), p)
-            // Add `ln(2**96 / 10**18) * 5**18 * 2**192`.
-            p := add(600920179829731861736702779321621459595472258049074101567377883020018308, p)
-            // Base conversion: mul `2**18 / 2**192`.
-            r := sar(174, p)
+            // Denominator q(u), monic, Horner up the staircase Q96 → Q79 → Q85 → Q93 →
+            // Q94. q(u)/2⁹⁴ ∈ [-705.5, -656.0] on the domain: bounded away from zero, and
+            // p(u)/-q(u) ∈ [1, 1.01].
+            let q := sub(u, 4299840983308505679614339668444)
+            q := add(sar(113, mul(q, u)), 281702237671157106654810095)
+            q := sub(sar(90, mul(q, u)), 53722296096946541673620529149)
+            q := add(sar(88, mul(q, u)), 16613772931382142257332678212554)
+            q := sub(sar(95, mul(q, u)), c0)
+
+            // h = atanh(-z/2¹⁰⁰) in Q100: |p ⋅ z| < 2²⁰¹ ∧ |q| > 656 ⋅ 2⁹⁴, so the quotient fits in
+            // 98 bits.
+            r := sdiv(mul(p, z), q)
+
+            // Double h and rescale to ray in Q72: 5²⁷ = 2 ⋅ 10²⁷ ⋅ 2⁷² / 2¹⁰⁰; exact.
+            r := mul(r, 7450580596923828125)
+
+            // Add k ⋅ round(ln(2) ⋅ 10²⁷ ⋅ 2⁷²). k is two's complement (k ∈ [-95, 159])
+            r := add(r, mul(k, 3273295013171879848905889459134067659407864468560))
+
+            // Add ⌊(ln(s/2⁹⁵) + 95⋅ln(2) - 18⋅ln(10)) ⋅ 10²⁷ ⋅ 2⁷²⌋ minus the one-sided error
+            // margin described above.
+            r := add(r, 116873961749927929127912020551506849476088469858172)
+
+            // Q72 → integer ray result (`SAR` floors).
+            r := sar(72, r)
+
+            // lnWadToRay(1⋅10¹⁸) = 0 is the only input whose exact result is an integer. The
+            // approximation above lands on -1; correct this to get exactly 0.
+            r := add(r, iszero(not(r)))
+        }
+    }
+
+    /// @notice Compute the natural logarithm `ln(x)` of a positive fixnum `x` with 10**18 (wad)
+    ///         basis, returning the result as a fixnum with 10**18 (wad) basis.
+    /// @dev Let Lw = 10¹⁸ * ln(x / 10¹⁸) be the exact, infinite-precision result. This function
+    ///      returns either `⌊Lw⌋` or `⌊Lw⌋ - 1`. Like `lnWadToRay`, `lnWad(10**18) == 0` exactly,
+    ///      and `lnWad` is monotonic.
+    function lnWad(int256 x) internal pure returns (int256 r) {
+        r = lnWadToRay(x);
+        // Floor division of the ray result by 10⁹. `SDIV` alone truncates toward zero, which would
+        // round negative results the wrong way. Equivalent Solidity:
+        //     r = (r - (r < 0 ? 10**9 - 1 : 0)) / 10**9;
+        // The subtraction cannot overflow: |r| < 2⁹⁷.
+
+        /// @solidity memory-safe-assembly
+        assembly {
+            r := sdiv(sub(r, mul(slt(r, 0), 999999999)), 1000000000)
         }
     }
 
