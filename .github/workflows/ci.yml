@@ -30,12 +30,12 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "post-osaka" ] &&
-            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.35 &&
-            FOUNDRY_PROFILE=zksync forge test --use 0.8.35
+            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.36 &&
+            FOUNDRY_PROFILE=zksync forge test --use 0.8.36
           ) ||
           ( [ "${{ matrix.profile }}" = "post-osaka-via-ir" ] &&
-            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.35 --via-ir &&
-            FOUNDRY_PROFILE=zksync forge test --use 0.8.35 --via-ir
+            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.36 --via-ir &&
+            FOUNDRY_PROFILE=zksync forge test --use 0.8.36 --via-ir
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
             FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.5 --fuzz-runs 16 &&
@@ -68,7 +68,8 @@ jobs:
             forge test --use 0.8.30 --fuzz-runs 16 &&
             forge test --use 0.8.31 --fuzz-runs 16 &&
             forge test --use 0.8.33 --fuzz-runs 16 &&
-            forge test --use 0.8.34 --fuzz-runs 16
+            forge test --use 0.8.34 --fuzz-runs 16 &&
+            forge test --use 0.8.35 --fuzz-runs 16
           ) ||
           ( [ "${{ matrix.profile }}" = "via-ir" ] &&
             forge test --via-ir
