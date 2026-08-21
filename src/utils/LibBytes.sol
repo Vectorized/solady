@@ -816,7 +816,11 @@ library LibBytes {
             let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
             result.offset := add(a.offset, s)
             result.length := sub(a.length, s)
-            if or(shr(64, or(s, or(l, a.offset))), gt(offset, l)) { revert(l, 0x00) }
+            // `gt(s, a.length)` is required: without it `sub(a.length, s)` underflows and
+            // `result.length` becomes ~2**256, yielding a slice that points past `a`.
+            // The sibling helpers already bound `s` -- `bytesInCalldata` via
+            // `gt(add(s, result.length), l)`, `staticStructInCalldata` via `gt(offset, l)`.
+            if or(shr(64, or(s, or(l, a.offset))), or(gt(offset, l), gt(s, a.length))) { revert(l, 0x00) }
         }
     }
 

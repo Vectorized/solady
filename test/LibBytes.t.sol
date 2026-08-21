@@ -414,4 +414,25 @@ contract LibBytesTest is SoladyTest {
             require(keccak256(expectedChildren[i]) == keccak256(children[i]));
         }
     }
+
+    function testDynamicStructInCalldataRejectsOutOfBoundsOffset() public {
+        // `s` (the relative offset read from calldata) greater than `a.length` used to make
+        // `sub(a.length, s)` underflow, returning a slice with a ~2**256 length pointing past `a`.
+        bytes memory encoded = abi.encodePacked(uint256(0x1000));
+        vm.expectRevert();
+        this.dynamicStructInCalldataAt(encoded, 0x00);
+    }
+
+    function dynamicStructInCalldataAt(bytes calldata a, uint256 offset)
+        public
+        pure
+        returns (uint256 o, uint256 l)
+    {
+        bytes calldata p = LibBytes.dynamicStructInCalldata(a, offset);
+        assembly {
+            o := p.offset
+            l := p.length
+        }
+    }
+
 }
