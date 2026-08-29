@@ -92,11 +92,10 @@ contract ERC1967FactoryTest is SoladyTest {
 
         _checkBehavesLikeProxy(beaconProxy);
     }
-    
+
     function testDeployBeaconProxyDeterministicAndCall() public {
         address beacon = factory.deployBeacon(address(implementation), address(this));
-        bytes memory data =
-            abi.encodeWithSelector(SampleImplementation.setX.selector, uint256(69));
+        bytes memory data = abi.encodeWithSelector(SampleImplementation.setX.selector, uint256(69));
         address beaconProxy = factory.deployBeaconProxyAndCall(beacon, data);
         assertEq(SampleImplementation(beaconProxy).x(), 69);
     }
