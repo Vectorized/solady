@@ -11,6 +11,11 @@ library DynamicArrayLib {
     /// @dev Type to represent a dynamic array in memory.
     /// You can directly assign to `data`, and the `p` function will
     /// take care of the memory allocation.
+    ///
+    /// Note: The capacity is a prime-checksummed word before the array. If you assign
+    /// an array you did not allocate (e.g. from calldata), that word can
+    /// masquerade as a capacity, making `p` skip reallocation and write out of bounds.
+    /// If you are not directly assigning to `data`, you don't have to worry about it.
     struct DynamicArray {
         uint256[] data;
     }
