@@ -4,6 +4,22 @@ pragma solidity ^0.8.4;
 import "./utils/SoladyTest.sol";
 import {LibBytes} from "../src/utils/LibBytes.sol";
 
+contract BytesStore {
+    LibBytes.BytesStorage internal value;
+
+    function set(bytes calldata newValue) external {
+        LibBytes.setCalldata(value, newValue);
+    }
+
+    function length() external view returns (uint256) {
+        return LibBytes.length(value);
+    }
+
+    function at_(uint256 index) external view returns (uint8) {
+        return LibBytes.uint8At(value, index);
+    }
+}
+
 contract LibBytesTest is SoladyTest {
     function testLoad(bytes memory a) public {
         if (a.length < 32) a = abi.encodePacked(a, new bytes(32));
@@ -413,5 +429,48 @@ contract LibBytesTest is SoladyTest {
         for (uint256 i; i < children.length; ++i) {
             require(keccak256(expectedChildren[i]) == keccak256(children[i]));
         }
+    }
+
+    function testUint8AtStaleByteAfterShrink() public {
+        BytesStore store = new BytesStore();
+        bytes memory previous = new bytes(32);
+        previous[31] = 0xbb;
+
+        store.set(previous);
+        store.set(new bytes(31));
+
+        assertEq(store.length(), 31);
+        assertEq(store.at_(31), 0);
+    }
+
+    function testUint8AtPaddingAfterShortValue() public {
+        BytesStore store = _storeWithDirtyPadding(5);
+        assertEq(store.length(), 5);
+        assertEq(store.at_(4), 0x11);
+        assertEq(store.at_(5), 0);
+        assertEq(store.at_(30), 0);
+    }
+
+    function testUint8AtPaddingAfterSpilledValue() public {
+        BytesStore store = _storeWithDirtyPadding(40);
+        assertEq(store.length(), 40);
+        assertEq(store.at_(39), 0x11);
+        assertEq(store.at_(40), 0);
+    }
+
+    function _storeWithDirtyPadding(uint256 n) internal returns (BytesStore store) {
+        store = new BytesStore();
+
+        bytes memory value = new bytes(n);
+        for (uint256 i; i < n; ++i) {
+            value[i] = 0x11;
+        }
+
+        bytes memory data = abi.encodeWithSelector(BytesStore.set.selector, value);
+        for (uint256 i = 4 + 32 + 32 + n; i < data.length; ++i) {
+            data[i] = 0xaa;
+        }
+        (bool success,) = address(store).call(data);
+        require(success);
     }
 }

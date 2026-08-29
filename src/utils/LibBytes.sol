@@ -129,21 +129,19 @@ library LibBytes {
         assembly {
             for { let packed := sload($.slot) } 1 {} {
                 if iszero(eq(or(packed, 0xff), packed)) {
+                    if iszero(lt(i, and(packed, 0xff))) { break }
                     if iszero(gt(i, 0x1e)) {
                         result := byte(i, packed)
                         break
                     }
-                    if iszero(gt(i, and(0xff, packed))) {
-                        mstore(0x00, $.slot)
-                        let j := sub(i, 0x1f)
-                        result := byte(and(j, 0x1f), sload(add(keccak256(0x00, 0x20), shr(5, j))))
-                    }
+                    mstore(0x00, $.slot)
+                    let j := sub(i, 0x1f)
+                    result := byte(and(j, 0x1f), sload(add(keccak256(0x00, 0x20), shr(5, j))))
                     break
                 }
-                if iszero(gt(i, shr(8, packed))) {
-                    mstore(0x00, $.slot)
-                    result := byte(and(i, 0x1f), sload(add(keccak256(0x00, 0x20), shr(5, i))))
-                }
+                if iszero(gt(shr(8, packed), i)) { break }
+                mstore(0x00, $.slot)
+                result := byte(and(i, 0x1f), sload(add(keccak256(0x00, 0x20), shr(5, i))))
                 break
             }
         }
