@@ -75,7 +75,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Equivalent to `(x * y) / WAD` rounded down.
+    /// @dev Equivalent to `(x * y) / WAD` rounded towards zero.
     function sMulWad(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -97,7 +97,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Equivalent to `(x * y) / WAD` rounded down, but without overflow checks.
+    /// @dev Equivalent to `(x * y) / WAD` rounded towards zero, but without overflow checks.
     function rawSMulWad(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -142,7 +142,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Equivalent to `(x * WAD) / y` rounded down.
+    /// @dev Equivalent to `(x * WAD) / y` rounded towards zero.
     function sDivWad(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -164,7 +164,7 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
+    /// @dev Equivalent to `(x * WAD) / y` rounded towards zero, but without overflow and divide by zero checks.
     function rawSDivWad(int256 x, int256 y) internal pure returns (int256 z) {
         /// @solidity memory-safe-assembly
         assembly {
