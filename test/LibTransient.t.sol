@@ -153,42 +153,46 @@ contract LibTransientTest is SoladyTest {
 
     function testUint256IncDecTransient() public {
         for (uint256 c; c < 3; ++c) {
-            vm.chainId(c);
-            uint256 tSlot;
-            LibTransient.TUint256 storage p = LibTransient.tUint256(tSlot);
-            p.setCompat(10);
-            assertEq(this.tUintIncCompat(tSlot), 11);
-            assertEq(p.getCompat(), 11);
-            assertEq(this.tUintIncCompat(tSlot, 20), 31);
-            assertEq(p.getCompat(), 31);
-            p.setCompat(2 ** 256 - 2);
-            assertEq(this.tUintIncCompat(tSlot), 2 ** 256 - 1);
-            assertEq(p.getCompat(), 2 ** 256 - 1);
-            vm.expectRevert();
-            this.tUintIncCompat(tSlot);
-            vm.expectRevert();
-            this.tUintIncCompat(tSlot, 10);
-            assertEq(this.tUintDecCompat(tSlot), 2 ** 256 - 2);
-            assertEq(p.getCompat(), 2 ** 256 - 2);
-            p.setCompat(10);
-            assertEq(this.tUintDecCompat(tSlot, 5), 5);
-            assertEq(p.getCompat(), 5);
-            assertEq(this.tUintDecCompat(tSlot, 5), 0);
-            assertEq(p.getCompat(), 0);
-            vm.expectRevert();
-            this.tUintDecCompat(tSlot);
-            vm.expectRevert();
-            this.tUintDecCompat(tSlot, 5);
-            p.setCompat(10);
-            assertEq(this.tUintIncSignedCompat(tSlot, 1), 11);
-            assertEq(p.getCompat(), 11);
-            assertEq(this.tUintIncSignedCompat(tSlot, -1), 10);
-            assertEq(p.getCompat(), 10);
-            assertEq(this.tUintDecSignedCompat(tSlot, 1), 9);
-            assertEq(p.getCompat(), 9);
-            assertEq(this.tUintDecSignedCompat(tSlot, -1), 10);
-            assertEq(p.getCompat(), 10);
+            this.checkUint256IncDecTransient(c);
         }
+    }
+
+    function checkUint256IncDecTransient(uint256 c) public {
+        vm.chainId(c);
+        uint256 tSlot;
+        LibTransient.TUint256 storage p = LibTransient.tUint256(tSlot);
+        p.setCompat(10);
+        assertEq(this.tUintIncCompat(tSlot), 11);
+        assertEq(p.getCompat(), 11);
+        assertEq(this.tUintIncCompat(tSlot, 20), 31);
+        assertEq(p.getCompat(), 31);
+        p.setCompat(2 ** 256 - 2);
+        assertEq(this.tUintIncCompat(tSlot), 2 ** 256 - 1);
+        assertEq(p.getCompat(), 2 ** 256 - 1);
+        vm.expectRevert();
+        this.tUintIncCompat(tSlot);
+        vm.expectRevert();
+        this.tUintIncCompat(tSlot, 10);
+        assertEq(this.tUintDecCompat(tSlot), 2 ** 256 - 2);
+        assertEq(p.getCompat(), 2 ** 256 - 2);
+        p.setCompat(10);
+        assertEq(this.tUintDecCompat(tSlot, 5), 5);
+        assertEq(p.getCompat(), 5);
+        assertEq(this.tUintDecCompat(tSlot, 5), 0);
+        assertEq(p.getCompat(), 0);
+        vm.expectRevert();
+        this.tUintDecCompat(tSlot);
+        vm.expectRevert();
+        this.tUintDecCompat(tSlot, 5);
+        p.setCompat(10);
+        assertEq(this.tUintIncSignedCompat(tSlot, 1), 11);
+        assertEq(p.getCompat(), 11);
+        assertEq(this.tUintIncSignedCompat(tSlot, -1), 10);
+        assertEq(p.getCompat(), 10);
+        assertEq(this.tUintDecSignedCompat(tSlot, 1), 9);
+        assertEq(p.getCompat(), 9);
+        assertEq(this.tUintDecSignedCompat(tSlot, -1), 10);
+        assertEq(p.getCompat(), 10);
     }
 
     function tUintIncSignedCompat(uint256 tSlot, int256 delta) public returns (uint256) {
@@ -367,6 +371,10 @@ contract LibTransientTest is SoladyTest {
     }
 
     function testRegistry(bytes32 key, bytes memory value) public {
+        this.checkRegistry(key, value);
+    }
+
+    function checkRegistry(bytes32 key, bytes memory value) public {
         _etchTransientRegistry();
         if (_randomChance(2)) {
             vm.expectRevert(bytes4(keccak256("TransientRegistryUnauthorized()")));
@@ -451,6 +459,10 @@ contract LibTransientTest is SoladyTest {
     }
 
     function testRegistryAB() public {
+        this.checkRegistryAB();
+    }
+
+    function checkRegistryAB() public {
         _etchTransientRegistry();
         bytes32 aInitCodeHash = keccak256(type(A).creationCode);
         bytes32 bInitCodeHash = keccak256(type(B).creationCode);
