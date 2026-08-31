@@ -250,7 +250,8 @@ abstract contract ERC20Votes is ERC20 {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @dev Returns the amount of voting units `delegator` has control over.
-    /// Override if you need a different formula.
+    /// Note: Overriding this function may compromise the internal vote accounting.
+    /// `ERC20Votes` assumes tokens map to voting units 1:1 and this is not easy to change.
     function _getVotingUnits(address delegator) internal view virtual returns (uint256) {
         return balanceOf(delegator);
     }
@@ -265,6 +266,8 @@ abstract contract ERC20Votes is ERC20 {
     }
 
     /// @dev Used in `_afterTokenTransfer(address from, address to, uint256 amount)`.
+    /// Note: this moves the raw ERC20 `amount`, and on a mint or burn writes it to the total
+    /// supply checkpoint as well. See the NOTE on `_getVotingUnits`.
     function _transferVotingUnits(address from, address to, uint256 amount) internal virtual {
         if (from == address(0)) {
             _checkpointPushDiff(_ERC20_VOTES_MASTER_SLOT_SEED << 96, clock(), amount, true);
