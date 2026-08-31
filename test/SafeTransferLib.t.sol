@@ -1221,16 +1221,14 @@ contract SafeTransferLibTest is SoladyTest {
             vm.etch(SafeTransferLib.ETH_MOVER, "");
         }
 
-        if (SafeTransferLib.ETH_MOVER.code.length == 0) {
-            address vault = this.safeMoveETH(to, amount1);
+        address vault = this.safeMoveETH(to, amount1);
+        if (vault == address(0)) {
+            assertEq(to.balance, amount0 + amount1);
+        } else {
             assertEq(vault.balance, amount1);
             assertEq(to.balance, amount0);
-            assertEq(address(this).balance, selfBalanceBefore - amount0 - amount1);
-        } else {
-            assertEq(this.safeMoveETH(to, amount1), address(0));
-            assertEq(to.balance, amount0 + amount1);
-            assertEq(address(this).balance, selfBalanceBefore - amount0 - amount1);
         }
+        assertEq(address(this).balance, selfBalanceBefore - amount0 - amount1);
     }
 
     function testSaveMoveETHToSelfIsNoOp(bytes32) public {

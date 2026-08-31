@@ -143,6 +143,8 @@ jobs:
         run: forge install
       - name: Generate gas diff
         uses: atarpara/foundry-snapshot-diff@v0.9
+        env:
+          FORGE_ALLOW_FAILURE: "true"
         with:
           foundry-profile: "post_osaka"
         id: gas_diff

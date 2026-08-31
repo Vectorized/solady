@@ -53,6 +53,7 @@ contract BlockHashLibTest is SoladyTest {
         }
 
         savedBlockedNumber = _bound(savedBlockedNumber, 0, 2 ** 64 - 1);
+        simulationBlockNumber = _bound(simulationBlockNumber, 0, 2 ** 64 - 1);
 
         vm.roll(savedBlockedNumber + 1);
         vm.prank(SYSTEM_ADDRESS);
@@ -66,6 +67,14 @@ contract BlockHashLibTest is SoladyTest {
         assertEq(BlockHashLib.blockHash(queryBlockNumber), _blockHash(queryBlockNumber));
 
         // Some random comment to trigger the CI via a visible diff. 3287623879676
+    }
+
+    function testBlockHashOfOverflowingQuery(uint256 simulationBlockNumber, uint256 offset) public {
+        if (_randomChance(2)) {
+            vm.etch(BlockHashLib.HISTORY_STORAGE_ADDRESS, _HISTORY_STORAGE_BYTECODE);
+        }
+        vm.roll(_bound(simulationBlockNumber, 0, 2 ** 64 - 1));
+        assertEq(BlockHashLib.blockHash(type(uint256).max - _bound(offset, 0, 255)), 0);
     }
 
     function _blockHash(uint256 blockNumber) internal view returns (bytes32) {
