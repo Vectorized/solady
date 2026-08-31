@@ -1350,6 +1350,69 @@ contract LibSortTest is SoladyTest {
         assertEq(_sum(sums), oriSum);
     }
 
+    function testGroupSumSigned() public {
+        int256[] memory keys = new int256[](5);
+        uint256[] memory values = new uint256[](5);
+        keys[0] = 7;
+        keys[1] = -1;
+        keys[2] = 3;
+        keys[3] = -10;
+        keys[4] = 0;
+        unchecked {
+            for (uint256 i; i < 5; ++i) {
+                values[i] = i + 1;
+            }
+        }
+        LibSort.groupSum(keys, values);
+        int256[] memory expectedKeys = new int256[](5);
+        expectedKeys[0] = -10;
+        expectedKeys[1] = -1;
+        expectedKeys[2] = 0;
+        expectedKeys[3] = 3;
+        expectedKeys[4] = 7;
+        uint256[] memory expectedValues = new uint256[](5);
+        expectedValues[0] = 4;
+        expectedValues[1] = 2;
+        expectedValues[2] = 5;
+        expectedValues[3] = 3;
+        expectedValues[4] = 1;
+        assertEq(keys, expectedKeys);
+        assertEq(values, expectedValues);
+    }
+
+    function testGroupSumSigned(bytes32) public {
+        if (_randomChance(2)) {
+            _misalignFreeMemoryPointer();
+            _brutalizeMemory();
+        }
+        uint256 n = _random() & 0x1f;
+        int256[] memory keys = new int256[](n);
+        uint256[] memory values = new uint256[](n);
+        unchecked {
+            for (uint256 i; i < n; ++i) {
+                keys[i] = int256(_randomUniform() & 0xf) - 8; // Straddles zero.
+                values[i] = _randomUniform() & 0xff;
+            }
+        }
+        uint256 oriSum = _sum(values);
+        int256[] memory uniqueKeys = LibSort.copy(keys);
+        LibSort.insertionSort(uniqueKeys);
+        LibSort.uniquifySorted(uniqueKeys);
+        uint256[] memory sums = new uint256[](uniqueKeys.length);
+        unchecked {
+            for (uint256 i; i < n; ++i) {
+                (, uint256 j) = LibSort.searchSorted(uniqueKeys, keys[i]);
+                sums[j] += values[i];
+            }
+        }
+        LibSort.groupSum(keys, values);
+        _checkMemory(sums);
+        assertEq(keys, uniqueKeys);
+        assertEq(values, sums);
+        assertEq(_sum(sums), oriSum);
+        assertTrue(LibSort.isSortedAndUniquified(keys));
+    }
+
     function _sum(uint256[] memory a) internal pure returns (uint256 result) {
         unchecked {
             for (uint256 i; i < a.length; ++i) {

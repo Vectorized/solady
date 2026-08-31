@@ -650,7 +650,9 @@ library LibSort {
 
     /// @dev Sorts and uniquifies `keys`. Updates `values` with the grouped sums by key.
     function groupSum(int256[] memory keys, uint256[] memory values) internal pure {
+        _flipSign(keys);
         groupSum(_toUints(keys), values);
+        _flipSign(keys);
     }
 
     /// @dev Returns if `a` has any duplicate. Does NOT mutate `a`. `O(n)`.
