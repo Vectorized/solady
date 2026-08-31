@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install Foundry Stable
-        uses: foundry-rs/foundry-toolchain@v1.8.0
+        uses: foundry-rs/foundry-toolchain@v1.9.0
         with:
           version: stable
       - name: Install Dependencies
@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install Foundry Stable
-        uses: foundry-rs/foundry-toolchain@v1.8.0
+        uses: foundry-rs/foundry-toolchain@v1.9.0
         with:
           version: stable
       - name: Install Dependencies
@@ -136,7 +136,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1.8.0
+        uses: foundry-rs/foundry-toolchain@v1.9.0
         with:
           version: stable
       - name: Install Dependencies
@@ -176,7 +176,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1.8.0
+        uses: foundry-rs/foundry-toolchain@v1.9.0
         with:
           version: stable
       - name: Install Dependencies
