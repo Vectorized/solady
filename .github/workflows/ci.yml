@@ -30,48 +30,48 @@ jobs:
       - name: Run Tests with ${{ matrix.profile }}
         run: >
           ( [ "${{ matrix.profile }}" = "post-osaka" ] &&
-            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.36 &&
+            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.36 -vvv &&
             FOUNDRY_PROFILE=zksync forge test --use 0.8.36
           ) ||
           ( [ "${{ matrix.profile }}" = "post-osaka-via-ir" ] &&
-            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.36 --via-ir &&
-            FOUNDRY_PROFILE=zksync forge test --use 0.8.36 --via-ir
+            FOUNDRY_PROFILE=post_osaka forge test --use 0.8.36 --via-ir -vvv &&
+            FOUNDRY_PROFILE=zksync forge test --use 0.8.36 --via-ir -vvv
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-0" ] &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.5 --fuzz-runs 16 &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.6 --fuzz-runs 16 &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.7 --fuzz-runs 16 &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.8 --fuzz-runs 16 &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.9 --fuzz-runs 16 &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.10 --fuzz-runs 16 &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.11 --fuzz-runs 16 &&
-            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.12 --fuzz-runs 16
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.5 --fuzz-runs 16 -vvv &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.6 --fuzz-runs 16 -vvv &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.7 --fuzz-runs 16 -vvv &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.8 --fuzz-runs 16 -vvv &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.9 --fuzz-runs 16 -vvv &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.10 --fuzz-runs 16 -vvv &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.11 --fuzz-runs 16 -vvv &&
+            FOUNDRY_PROFILE=pre_global_structs forge test --use 0.8.12 --fuzz-runs 16 -vvv
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-1" ] &&
-            forge test --use 0.8.13 --fuzz-runs 16 &&
-            forge test --use 0.8.14 --fuzz-runs 16 &&
-            forge test --use 0.8.15 --fuzz-runs 16 &&
-            forge test --use 0.8.16 --fuzz-runs 16 &&
-            forge test --use 0.8.17 --fuzz-runs 16 &&
-            forge test --use 0.8.18 --fuzz-runs 16 &&
-            forge test --use 0.8.19 --fuzz-runs 16 &&
-            forge test --use 0.8.20 --fuzz-runs 16 &&
-            forge test --use 0.8.21 --fuzz-runs 16 &&
-            forge test --use 0.8.22 --fuzz-runs 16 &&
-            forge test --use 0.8.23 --fuzz-runs 16 &&
-            forge test --use 0.8.24 --fuzz-runs 16 &&
-            forge test --use 0.8.25 --fuzz-runs 16 &&
-            forge test --use 0.8.26 --fuzz-runs 16 &&
-            forge test --use 0.8.27 --fuzz-runs 16 &&
-            forge test --use 0.8.28 --fuzz-runs 16 &&
-            forge test --use 0.8.29 --fuzz-runs 16
+            forge test --use 0.8.13 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.14 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.15 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.16 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.17 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.18 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.19 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.20 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.21 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.22 --fuzz-runs 16 -vvv&&
+            forge test --use 0.8.23 --fuzz-runs 16 -vvv&& 
+            forge test --use 0.8.24 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.25 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.26 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.27 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.28 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.29 --fuzz-runs 16 -vvv
           ) ||
           ( [ "${{ matrix.profile }}" = "solc-past-versions-2" ] &&
-            forge test --use 0.8.30 --fuzz-runs 16 &&
-            forge test --use 0.8.31 --fuzz-runs 16 &&
-            forge test --use 0.8.33 --fuzz-runs 16 &&
-            forge test --use 0.8.34 --fuzz-runs 16 &&
-            forge test --use 0.8.35 --fuzz-runs 16
+            forge test --use 0.8.30 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.31 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.33 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.34 --fuzz-runs 16 -vvv &&
+            forge test --use 0.8.35 --fuzz-runs 16 -vvv
           ) ||
           ( [ "${{ matrix.profile }}" = "via-ir" ] &&
             forge test --via-ir
