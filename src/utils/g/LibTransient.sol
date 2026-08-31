@@ -788,7 +788,7 @@ library LibTransient {
         /// @solidity memory-safe-assembly
         assembly {
             topPtr := tload(ptr.slot)
-            if iszero(topPtr) {
+            if iszero(shl(128, topPtr)) {
                 mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
                 revert(0x1c, 0x04)
             }
@@ -803,7 +803,7 @@ library LibTransient {
         /// @solidity memory-safe-assembly
         assembly {
             lastTopPtr := tload(ptr.slot)
-            if iszero(lastTopPtr) {
+            if iszero(shl(128, lastTopPtr)) {
                 mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
                 revert(0x1c, 0x04)
             }
