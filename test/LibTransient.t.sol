@@ -362,6 +362,54 @@ contract LibTransientTest is SoladyTest {
         this.stackPop(0);
     }
 
+    function testClearedStackTopReverts(uint256 stackSlot, uint256 clears) public {
+        vm.expectRevert(LibTransient.StackIsEmpty.selector);
+        this.stackPlaceClearThenTop(stackSlot, _bound(clears, 1, 3));
+    }
+
+    function testClearedStackPopReverts(uint256 stackSlot, uint256 clears) public {
+        vm.expectRevert(LibTransient.StackIsEmpty.selector);
+        this.stackPlaceClearThenPop(stackSlot, _bound(clears, 1, 3));
+    }
+
+    function stackPlaceClearThenTop(uint256 stackSlot, uint256 clears) public returns (bytes32) {
+        LibTransient.TStack storage stack = LibTransient.tStack(stackSlot);
+        stack.place();
+        for (uint256 i; i < clears; ++i) {
+            stack.clear();
+        }
+        assertEq(stack.length(), 0);
+        assertEq(stack.peek(), 0);
+        return stack.top();
+    }
+
+    function stackPlaceClearThenPop(uint256 stackSlot, uint256 clears) public returns (bytes32) {
+        LibTransient.TStack storage stack = LibTransient.tStack(stackSlot);
+        stack.place();
+        for (uint256 i; i < clears; ++i) {
+            stack.clear();
+        }
+        assertEq(stack.length(), 0);
+        assertEq(stack.peek(), 0);
+        return stack.pop();
+    }
+
+    function testStackClearIsolatesItems(uint256 stackSlot) public {
+        bytes32 oldPtr = LibTransient.tStack(stackSlot).place();
+        LibTransient.tBytes32(oldPtr).set(bytes32(uint256(0xa11ce)));
+
+        LibTransient.tStack(stackSlot).clear();
+
+        bytes32 freshPtr = LibTransient.tStack(stackSlot).place();
+        assertTrue(freshPtr != oldPtr);
+        assertEq(LibTransient.tBytes32(freshPtr).get(), 0);
+        assertEq(LibTransient.tStack(stackSlot).length(), 1);
+        assertEq(LibTransient.tStack(stackSlot).top(), freshPtr);
+        assertEq(LibTransient.tStack(stackSlot).peek(), freshPtr);
+        // `clear` only abandons the old region, it does not wipe it.
+        assertEq(LibTransient.tBytes32(oldPtr).get(), bytes32(uint256(0xa11ce)));
+    }
+
     function stackTop(uint256 stackSlot) public view returns (bytes32) {
         return LibTransient.tStack(stackSlot).top();
     }
