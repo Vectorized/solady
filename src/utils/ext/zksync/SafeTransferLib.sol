@@ -94,15 +94,16 @@ library SafeTransferLib {
     {
         if (amount == uint256(0)) return address(0); // Early return if `amount` is zero.
         uint256 selfBalanceBefore = address(this).balance;
+        bool success;
         /// @solidity memory-safe-assembly
         assembly {
             if lt(selfBalanceBefore, amount) {
                 mstore(0x00, 0xb12d13eb) // `ETHTransferFailed()`.
                 revert(0x1c, 0x04)
             }
-            pop(call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00))
+            success := call(gasStipend, to, amount, 0x00, 0x00, 0x00, 0x00)
         }
-        if (address(this).balance == selfBalanceBefore) {
+        if (!success && address(this).balance == selfBalanceBefore) {
             vault = address(new SingleUseETHVault());
             /// @solidity memory-safe-assembly
             assembly {

@@ -52,6 +52,83 @@ contract Griefer {
     }
 }
 
+contract Refunder {
+    uint256 public refundAmount;
+    bool public reverts;
+
+    function setRefundAmount(uint256 amount) public {
+        refundAmount = amount;
+    }
+
+    function setReverts(bool value) public {
+        reverts = value;
+    }
+
+    function execute(address to, bytes memory data) public {
+        (bool success,) = to.call(data);
+        require(success);
+    }
+
+    receive() external payable {
+        if (reverts) revert();
+        uint256 amount = refundAmount;
+        if (amount != 0) {
+            (bool success,) = msg.sender.call{value: amount}("");
+            require(success);
+        }
+    }
+}
+
+contract ForceSender {
+    function forceSend(address to, uint256 amount) public returns (address vault) {
+        vault = SafeTransferLib.forceSafeTransferETH(to, amount);
+    }
+
+    receive() external payable {}
+}
+
+contract Pool {
+    mapping(address => uint256) public credit;
+
+    function depositFor(address to) public payable {
+        credit[to] += msg.value;
+    }
+
+    function withdraw() public returns (address vault) {
+        uint256 amount = credit[msg.sender];
+        credit[msg.sender] = 0;
+        vault = SafeTransferLib.forceSafeTransferETH(msg.sender, amount);
+    }
+}
+
+contract PoolPayee {
+    Pool public immutable pool;
+    bool public redepositOnReceive;
+
+    constructor(Pool pool_) {
+        pool = pool_;
+    }
+
+    function deposit() public payable {
+        pool.depositFor{value: msg.value}(address(this));
+    }
+
+    function setRedepositOnReceive(bool value) public {
+        redepositOnReceive = value;
+    }
+
+    function withdraw() public returns (address vault) {
+        vault = pool.withdraw();
+    }
+
+    receive() external payable {
+        if (msg.sender == address(pool) && redepositOnReceive) {
+            redepositOnReceive = false;
+            pool.depositFor{value: msg.value}(address(this));
+        }
+    }
+}
+
 contract SafeTransferLibTest is SoladyTest {
     uint256 internal constant _SUCCESS = 1;
     uint256 internal constant _REVERTS_WITH_SELECTOR = 2;
@@ -794,5 +871,68 @@ contract SafeTransferLibTest is SoladyTest {
         griefer.setReceiveNumLoops(0);
         griefer.execute(vault, abi.encodePacked(address(anotherRecipient)));
         assertEq(address(anotherRecipient).balance, 0.1 ether);
+    }
+
+    function testForceSafeTransferETHWithExactRefund() public {
+        ForceSender sender = new ForceSender();
+        vm.deal(address(sender), 1 ether);
+        Refunder refunder = new Refunder();
+        refunder.setRefundAmount(0.1 ether);
+
+        address vault = sender.forceSend(address(refunder), 0.1 ether);
+        assertEq(vault, address(0));
+        assertEq(address(sender).balance, 1 ether);
+        assertEq(address(refunder).balance, 0);
+    }
+
+    function testForceSafeTransferETHWithPartialRefund() public {
+        ForceSender sender = new ForceSender();
+        vm.deal(address(sender), 1 ether);
+        Refunder refunder = new Refunder();
+        refunder.setRefundAmount(0.04 ether);
+
+        address vault = sender.forceSend(address(refunder), 0.1 ether);
+        assertEq(vault, address(0));
+        assertEq(address(sender).balance, 0.94 ether);
+        assertEq(address(refunder).balance, 0.06 ether);
+    }
+
+    function testForceSafeTransferETHToRevertingRecipient() public {
+        ForceSender sender = new ForceSender();
+        vm.deal(address(sender), 1 ether);
+        Refunder refunder = new Refunder();
+        refunder.setReverts(true);
+
+        address vault = sender.forceSend(address(refunder), 0.1 ether);
+        assertNotEq(vault, address(0));
+        assertEq(vault.balance, 0.1 ether);
+        assertEq(address(sender).balance, 0.9 ether);
+
+        refunder.setReverts(false);
+        refunder.execute(vault, "");
+        assertEq(address(refunder).balance, 0.1 ether);
+    }
+
+    function testForceSafeTransferETHPooledWithdrawalStaysSolvent() public {
+        Pool pool = new Pool();
+        PoolPayee victim = new PoolPayee(pool);
+        PoolPayee attacker = new PoolPayee(pool);
+
+        vm.deal(address(this), 2 ether);
+        victim.deposit{value: 1 ether}();
+        attacker.deposit{value: 1 ether}();
+
+        // The callback recreates the attacker's claim with the very ETH it was just paid.
+        // The pool must not also fund a vault for that same payout.
+        attacker.setRedepositOnReceive(true);
+        assertEq(attacker.withdraw(), address(0));
+
+        assertEq(address(pool).balance, 2 ether);
+        assertEq(pool.credit(address(attacker)), 1 ether);
+        assertEq(pool.credit(address(victim)), 1 ether);
+
+        // The victim is still able to withdraw in full.
+        assertEq(victim.withdraw(), address(0));
+        assertEq(address(victim).balance, 1 ether);
     }
 }
