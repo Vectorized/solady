@@ -780,6 +780,7 @@ library EnumerableSetLib {
         bytes32 rootSlot = _rootSlot(set);
         /// @solidity memory-safe-assembly
         assembly {
+            value := shr(96, shl(96, value))
             if iszero(value) { value := _ZERO_SENTINEL }
             result := not(0)
             let rootPacked := sload(rootSlot)

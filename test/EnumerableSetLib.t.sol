@@ -904,4 +904,36 @@ contract EnumerableSetLibTest is SoladyTest {
             }
         }
     }
+
+    function testIndexOfDirtyUpperBits() public {
+        addressSet.add(address(0));
+        for (uint256 i = 1; i != 5; ++i) {
+            addressSet.add(address(uint160(i)));
+        }
+        assertEq(addressSet.length(), 5);
+
+        address dirtyZero = _dirtyAddress(address(0), 1);
+        assertTrue(addressSet.contains(dirtyZero));
+        assertEq(addressSet.indexOf(dirtyZero), 0);
+
+        address dirtyThree = _dirtyAddress(address(uint160(3)), 0xabc);
+        assertTrue(addressSet.contains(dirtyThree));
+        assertEq(addressSet.indexOf(dirtyThree), addressSet.indexOf(address(uint160(3))));
+    }
+
+    function testIndexOfDirtyUpperBitsLazy() public {
+        addressSet.add(address(0));
+        addressSet.add(address(uint160(1)));
+        assertEq(addressSet.length(), 2);
+
+        assertEq(addressSet.indexOf(_dirtyAddress(address(0), 1)), 0);
+        assertEq(addressSet.indexOf(_dirtyAddress(address(uint160(1)), 0xabc)), 1);
+    }
+
+    function _dirtyAddress(address a, uint256 dirt) internal pure returns (address result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := or(a, shl(160, dirt))
+        }
+    }
 }
