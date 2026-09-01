@@ -674,6 +674,68 @@ contract FixedPointMathLibTest is SoladyTest {
         assertEq(FixedPointMathLib.sDivWad(0, 1e18), 0);
     }
 
+    function testSMulWadRoundsTowardsZero() public {
+        assertEq(FixedPointMathLib.sMulWad(-1, 1), 0);
+        assertEq(FixedPointMathLib.sMulWad(1, -1), 0);
+        assertEq(FixedPointMathLib.sMulWad(-1, 3), 0);
+        assertEq(FixedPointMathLib.sMulWad(-0.5e18, 1), 0);
+        // Exact quotient is -3.000000000000000003.
+        assertEq(FixedPointMathLib.sMulWad(-1000000000000000001, 3), -3);
+        assertEq(FixedPointMathLib.sMulWad(1000000000000000001, -3), -3);
+        assertEq(FixedPointMathLib.sMulWad(-1, -1), 0);
+        assertEq(FixedPointMathLib.sMulWad(1000000000000000001, 3), 3);
+    }
+
+    function testSDivWadRoundsTowardsZero() public {
+        assertEq(FixedPointMathLib.sDivWad(-1, 3), -333333333333333333);
+        assertEq(FixedPointMathLib.sDivWad(1, -3), -333333333333333333);
+        assertEq(FixedPointMathLib.sDivWad(-1e18, 3), -333333333333333333333333333333333333);
+        assertEq(FixedPointMathLib.sDivWad(1e18, -3), -333333333333333333333333333333333333);
+        assertEq(FixedPointMathLib.sDivWad(-1, -3), 333333333333333333);
+        assertEq(FixedPointMathLib.sDivWad(1, 3), 333333333333333333);
+    }
+
+    function testRawSMulWadEdgeCases() public {
+        assertEq(FixedPointMathLib.rawSMulWad(-1, 1), 0);
+        assertEq(FixedPointMathLib.rawSMulWad(-1000000000000000001, 3), -3);
+        assertEq(FixedPointMathLib.rawSMulWad(type(int256).max, 2), 0);
+        vm.expectRevert(FixedPointMathLib.SMulWadFailed.selector);
+        this.sMulWad(type(int256).max, 2);
+    }
+
+    function testRawSDivWadEdgeCases() public {
+        assertEq(FixedPointMathLib.rawSDivWad(-1, 3), -333333333333333333);
+        assertEq(FixedPointMathLib.rawSDivWad(1e18, 0), 0);
+        vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
+        this.sDivWad(1e18, 0);
+        assertEq(FixedPointMathLib.rawSDivWad(type(int256).max, 1), -1e18);
+        vm.expectRevert(FixedPointMathLib.SDivWadFailed.selector);
+        this.sDivWad(type(int256).max, 1);
+    }
+
+    function testSMulWadRoundsTowardsZero(uint256 xSeed, uint256 ySeed) public {
+        int256 x = int256(_bound(xSeed, 0, 2e24)) - 1e24;
+        int256 y = int256(_bound(ySeed, 0, 2e24)) - 1e24;
+        int256 z = FixedPointMathLib.sMulWad(x, y);
+        assertEq(z, (x * y) / 1e18); // Solidity's `/` on `int256` truncates towards zero.
+        assertEq(FixedPointMathLib.rawSMulWad(x, y), z);
+        assertEq(FixedPointMathLib.sMulWad(-x, y), -z); // Flooring would not be sign symmetric.
+        assertLe(FixedPointMathLib.abs(z) * 1e18, FixedPointMathLib.abs(x * y));
+    }
+
+    function testSDivWadRoundsTowardsZero(uint256 xSeed, uint256 ySeed) public {
+        int256 x = int256(_bound(xSeed, 0, 2e24)) - 1e24;
+        int256 y = int256(_bound(ySeed, 0, 2e24)) - 1e24;
+        if (y == 0) y = 1;
+        int256 z = FixedPointMathLib.sDivWad(x, y);
+        assertEq(z, (x * 1e18) / y);
+        assertEq(FixedPointMathLib.rawSDivWad(x, y), z);
+        assertEq(FixedPointMathLib.sDivWad(-x, y), -z);
+        assertLe(
+            FixedPointMathLib.abs(z) * FixedPointMathLib.abs(y), FixedPointMathLib.abs(x) * 1e18
+        );
+    }
+
     function testDivWadZeroDenominatorReverts() public {
         vm.expectRevert(FixedPointMathLib.DivWadFailed.selector);
         this.divWad(1e18, 0);
