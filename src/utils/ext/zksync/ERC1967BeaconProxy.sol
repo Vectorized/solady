@@ -19,8 +19,8 @@ contract ERC1967BeaconProxy {
     /*                          STORAGE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @dev The ERC-1967 storage slot for the implementation in the proxy.
-    /// `uint256(keccak256("eip1967.proxy.implementation")) - 1`.
+    /// @dev The ERC-1967 storage slot for the beacon in the proxy.
+    /// `uint256(keccak256("eip1967.proxy.beacon")) - 1`.
     bytes32 internal constant _ERC1967_BEACON_SLOT =
         0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
 
@@ -57,9 +57,24 @@ contract ERC1967BeaconProxy {
             }
             // Deployer workflow.
             if eq(caller(), sload(_ERC1967_BEACON_PROXY_DEPLOYER_SLOT)) {
-                sstore(_ERC1967_BEACON_SLOT, calldataload(0x00))
-                // Emit the {Upgraded} event.
-                log2(0x00, 0x00, _BEACON_UPGRADED_EVENT_SIGNATURE, calldataload(0x00))
+                let beacon := calldataload(0x00)
+                sstore(_ERC1967_BEACON_SLOT, beacon)
+                // Make the initialization call
+                if gt(calldatasize(), 0x20) {
+                    mstore(0x00, 0x5c60da1b) // `implementation()`.
+                    let t := staticcall(gas(), beacon, 0x1c, 0x04, 0x00, 0x20)
+                    if iszero(and(gt(returndatasize(), 0x1f), t)) { revert(0x00, 0x00) }
+                    let implementation := mload(0x00)
+                    let n := sub(calldatasize(), 0x20)
+                    calldatacopy(0x00, 0x20, n)
+                    if iszero(delegatecall(gas(), implementation, 0x00, n, 0x00, 0x00)) {
+                        // Bubble up the revert if the call reverts.
+                        returndatacopy(0x00, 0x00, returndatasize())
+                        revert(0x00, returndatasize())
+                    }
+                }
+                // Emit the {BeaconUpgraded} event.
+                log2(0x00, 0x00, _BEACON_UPGRADED_EVENT_SIGNATURE, beacon)
                 stop() // End the context.
             }
             // Query the beacon.
