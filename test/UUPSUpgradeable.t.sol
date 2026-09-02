@@ -5,6 +5,7 @@ import "./utils/SoladyTest.sol";
 import {CallContextChecker, UUPSUpgradeable} from "../src/utils/UUPSUpgradeable.sol";
 import {LibClone} from "../src/utils/LibClone.sol";
 import {MockUUPSImplementation} from "../test/utils/mocks/MockUUPSImplementation.sol";
+import "./utils/mocks/MockUUPSWithDifferentLayout.sol";
 
 contract UUPSUpgradeableTest is SoladyTest {
     MockUUPSImplementation impl1;
@@ -69,5 +70,19 @@ contract UUPSUpgradeableTest is SoladyTest {
         vm.prank(address(0xBEEF));
         vm.expectRevert(MockUUPSImplementation.Unauthorized.selector);
         MockUUPSImplementation(proxy).upgradeToAndCall(address(0xABCD), "");
+    }
+
+    function testUpgradeRevertsOnStorageLayoutMismatch() public {
+        MockUUPSWithDifferentLayout bad = new MockUUPSWithDifferentLayout();
+
+        vm.prank(address(this));
+        vm.expectRevert(UUPSUpgradeable.StorageLayoutMismatch.selector);
+        MockUUPSImplementation(proxy).upgradeToAndCall(address(bad), "");
+    }
+
+    function testUpgradeAllowsCompatibleImplementation() public {
+        MockUUPSImplementation compatible = new MockUUPSImplementation();
+        MockUUPSImplementation(proxy).upgradeToAndCall(address(compatible), "");
+        // passes silently
     }
 }
