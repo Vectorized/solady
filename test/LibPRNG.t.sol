@@ -571,11 +571,14 @@ contract LibPRNGTest is SoladyTest {
     function testLazyShufflerRevertsOnGrowWithInvalidLength(uint256 n, uint256 nGrow) public {
         n = _bound(n, 1, 2 ** 32 - 2);
         this.lazyShufflerInitialize(n);
-        nGrow = _bound(n, 0, 2 ** 32 - 2);
-        if (nGrow < n) {
+        nGrow = _bound(nGrow, 0, 2 ** 32 - 2);
+        uint256 limit = n > 65534 ? 2 ** 32 - 2 : 65534;
+        bool reverts = nGrow < n || nGrow > limit;
+        if (reverts) {
             vm.expectRevert(LibPRNG.InvalidNewLazyShufflerLength.selector);
         }
-        this.lazyShufflerGrow(n);
+        this.lazyShufflerGrow(nGrow);
+        assertEq(_lazyShuffler0.length(), reverts ? n : nGrow);
     }
 
     function testLazyShufflerRevertsOnDoubleInit() public {
