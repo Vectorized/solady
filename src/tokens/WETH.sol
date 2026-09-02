@@ -51,6 +51,11 @@ contract WETH is ERC20 {
         }
     }
 
+    /// @dev WETH is immutable and intentionally has no owner-controlled spender policy.
+    function _isLegacySpender(address) internal view virtual override returns (bool) {
+        return true;
+    }
+
     /// @dev Equivalent to `deposit()`.
     receive() external payable virtual {
         deposit();

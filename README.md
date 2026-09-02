@@ -52,7 +52,7 @@ auth
 ├─ TimedRoles — "Timed multiroles authorization mixin"
 tokens
 ├─ ERC1155 — "Simple ERC1155 implementation"
-├─ ERC20 — "Simple ERC20 + EIP-2612 implementation"
+├─ ERC20 — "Simple ERC20 + EIP-2612 + ERC-8255 implementation"
 ├─ ERC20Votes — "ERC20 with votes based on ERC5805 and ERC6372"
 ├─ ERC2981 — "Simple ERC2981 NFT Royalty Standard implementation"
 ├─ ERC4626 — "Simple ERC4626 tokenized Vault implementation"
