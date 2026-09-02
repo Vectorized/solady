@@ -571,11 +571,14 @@ contract LibPRNGTest is SoladyTest {
     function testLazyShufflerRevertsOnGrowWithInvalidLength(uint256 n, uint256 nGrow) public {
         n = _bound(n, 1, 2 ** 32 - 2);
         this.lazyShufflerInitialize(n);
-        nGrow = _bound(n, 0, 2 ** 32 - 2);
-        if (nGrow < n) {
+        nGrow = _bound(nGrow, 0, 2 ** 32 - 2);
+        uint256 limit = n > 65534 ? 2 ** 32 - 2 : 65534;
+        bool reverts = nGrow < n || nGrow > limit;
+        if (reverts) {
             vm.expectRevert(LibPRNG.InvalidNewLazyShufflerLength.selector);
         }
-        this.lazyShufflerGrow(n);
+        this.lazyShufflerGrow(nGrow);
+        assertEq(_lazyShuffler0.length(), reverts ? n : nGrow);
     }
 
     function testLazyShufflerRevertsOnDoubleInit() public {
@@ -619,5 +622,64 @@ contract LibPRNGTest is SoladyTest {
 
     function lazyShuffler1Get(uint256 i) public view returns (uint256) {
         return _lazyShuffler1.get(i);
+    }
+
+    function testLazyShufflerRevertsOnGrowAcrossWidthBoundary() public {
+        _lazyShuffler0.initialize(2);
+        _lazyShuffler0.next(0);
+        vm.expectRevert(LibPRNG.InvalidNewLazyShufflerLength.selector);
+        this.lazyShufflerGrow(65535);
+    }
+
+    function testLazyShufflerRevertsOnGrowAcrossWidthBoundaryUndrawn() public {
+        _lazyShuffler0.initialize(2);
+        vm.expectRevert(LibPRNG.InvalidNewLazyShufflerLength.selector);
+        this.lazyShufflerGrow(65535);
+    }
+
+    // `grow` had no upper bound check, so the length silently truncated to zero.
+    function testLazyShufflerRevertsOnGrowOutOfRange(uint256 n) public {
+        _lazyShuffler0.initialize(10);
+        n = _bound(n, 2 ** 32 - 1, type(uint256).max);
+        vm.expectRevert(LibPRNG.InvalidNewLazyShufflerLength.selector);
+        this.lazyShufflerGrow(n);
+        assertEq(_lazyShuffler0.length(), 10);
+    }
+
+    function testLazyShufflerGrowWithinSameWidth() public {
+        _lazyShuffler0.initialize(2);
+        uint256 first = _lazyShuffler0.next(0);
+        _lazyShuffler0.grow(1000);
+        assertEq(_lazyShuffler0.get(0), first);
+        assertLt(_lazyShuffler0.get(0), 1000);
+    }
+
+    function testLazyShufflerGrowWithinWideWidth() public {
+        _lazyShuffler0.initialize(70000);
+        uint256 first = _lazyShuffler0.next(0);
+        _lazyShuffler0.grow(200000);
+        assertEq(_lazyShuffler0.get(0), first);
+        assertLt(_lazyShuffler0.get(0), 200000);
+    }
+
+    // A 32-bit shuffler still draws each value at most once across a grow.
+    function testLazyShufflerWideProducesNoDuplicatesAcrossGrow() public {
+        _lazyShuffler0.initialize(65535);
+        uint256[] memory seen = new uint256[](8);
+        unchecked {
+            for (uint256 i; i != 4; ++i) {
+                seen[i] = _lazyShuffler0.next(_random());
+            }
+            _lazyShuffler0.grow(65600);
+            for (uint256 i = 4; i != 8; ++i) {
+                seen[i] = _lazyShuffler0.next(_random());
+            }
+            LibSort.sort(seen);
+            LibSort.uniquifySorted(seen);
+            assertEq(seen.length, 8);
+            for (uint256 i; i != 8; ++i) {
+                assertLt(seen[i], 65600);
+            }
+        }
     }
 }

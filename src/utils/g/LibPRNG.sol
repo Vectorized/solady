@@ -36,7 +36,8 @@ library LibPRNG {
     /// @dev The initial length must be greater than zero and less than `2**32 - 1`.
     error InvalidInitialLazyShufflerLength();
 
-    /// @dev The new length must not be less than the current length.
+    /// @dev The new length must not be less than the current length,
+    /// and must be less than `2**32 - 1`.
     error InvalidNewLazyShufflerLength();
 
     /// @dev The lazy shuffler has not been initialized.
@@ -348,17 +349,20 @@ library LibPRNG {
 
     /// @dev Increases the length of `$`.
     /// Reverts if `$` has not been initialized.
+    /// Reverts if `n` is less than the current length, or if `n >= 2**32 - 1`.
+    /// Reverts if `n` crosses the entry width boundary at a length of 65535.
     function grow(LazyShuffler storage $, uint256 n) internal {
         /// @solidity memory-safe-assembly
         assembly {
             let state := sload($.slot) // The packed value at `$`.
-            // If the new length is smaller than the old length, revert.
-            if lt(n, shr(224, state)) {
-                mstore(0x00, 0xbed37c6e) // `InvalidNewLazyShufflerLength()`.
-                revert(0x1c, 0x04)
-            }
             if iszero(state) {
                 mstore(0x00, 0x1ead2566) // `LazyShufflerNotInitialized()`.
+                revert(0x1c, 0x04)
+            }
+            let o := shr(224, state) // The old length.
+            let limit := or(0xfffe, mul(0xffff0000, gt(o, 0xfffe)))
+            if or(lt(n, o), gt(n, limit)) {
+                mstore(0x00, 0xbed37c6e) // `InvalidNewLazyShufflerLength()`.
                 revert(0x1c, 0x04)
             }
             sstore($.slot, or(shl(224, n), shr(32, shl(32, state))))
