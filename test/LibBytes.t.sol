@@ -458,6 +458,14 @@ contract LibBytesTest is SoladyTest {
         assertEq(store.at_(40), 0);
     }
 
+    function testUint8AtPaddingAfterTaggedLongValue() public {
+        BytesStore store = _storeWithDirtyPadding(255);
+        assertEq(store.length(), 255);
+        assertEq(store.at_(254), 0x11);
+        assertEq(store.at_(255), 0);
+        assertEq(store.at_(256), 0);
+    }
+
     function _storeWithDirtyPadding(uint256 n) internal returns (BytesStore store) {
         store = new BytesStore();
 
