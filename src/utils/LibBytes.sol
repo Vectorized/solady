@@ -546,6 +546,15 @@ library LibBytes {
         /// @solidity memory-safe-assembly
         assembly {
             let searchLen := mload(needle)
+            if gt(searchLen, mload(subject)) {
+                // Allocate a proper empty array instead of returning a null pointer,
+                // so that downstream consumers (e.g. `split`) never read the
+                // scratch space at 0x00 to determine the array length.
+                // We allocate one more word, so this array can be recycled for {split}.
+                result := mload(0x40)
+                mstore(result, 0)
+                mstore(0x40, add(result, 0x40))
+            }
             if iszero(gt(searchLen, mload(subject))) {
                 result := mload(0x40)
                 let i := add(subject, 0x20)
@@ -814,7 +823,8 @@ library LibBytes {
             let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
             result.offset := add(a.offset, s)
             result.length := sub(a.length, s)
-            if or(shr(64, or(s, or(l, a.offset))), gt(offset, l)) { revert(l, 0x00) }
+            // forgefmt: disable-next-item
+            if or(shr(64, or(s, or(l, a.offset))), or(gt(offset, l), gt(s, l))) { revert(l, 0x00) }
         }
     }
 
