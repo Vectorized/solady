@@ -437,6 +437,8 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseString('"\\n"');
         _checkParseString('"\\r"');
         _checkParseString('"\\t"');
+        _checkParseString('"\\u0000"');
+        _checkParseString('"\\u001f"');
         _checkParseString('"  \\u1234 \\"\\"\\\\ \\b\\f \\n\\r "');
         _checkParseString('"\\u1234"');
         _checkParseString('"\\uabcd"');
@@ -479,6 +481,13 @@ contract JSONParserLibTest is SoladyTest {
         _checkParseReverts('"\\uxxxx"');
         _checkParseReverts('"\\u012g"');
         _checkParseReverts('"\\u1234');
+    }
+
+    function testParseUnescapedControlCharactersRevert() public {
+        for (uint256 i; i < 0x20; ++i) {
+            string memory s = string(abi.encodePacked('"a', bytes1(uint8(i)), 'b"'));
+            _checkParseReverts(s);
+        }
     }
 
     function _checkItemIsSolo(JSONParserLib.Item memory item) internal {
@@ -723,6 +732,8 @@ contract JSONParserLibTest is SoladyTest {
         assertEq(this.decodeString('"\\r"'), "\r");
         assertEq(this.decodeString('"\\t"'), "\t");
         assertEq(this.decodeString('"\\u0020"'), " ");
+        assertEq(this.decodeString('"\\u0000"'), hex"00");
+        assertEq(this.decodeString('"\\u001f"'), hex"1f");
         bytes32 expectedHash;
         expectedHash = 0x40b2b6558413427ef2da03b1452640d701458e0ce57114db6b7423ae3b5fe857;
         assertEq(keccak256(bytes(this.decodeString('"\\u039e"'))), expectedHash); // Greek uppercase Xi.
@@ -762,6 +773,13 @@ contract JSONParserLibTest is SoladyTest {
         _checkDecodeInvalidStringReverts('"\\u111"');
         _checkDecodeInvalidStringReverts('"\\uxxxx"');
         _checkDecodeInvalidStringReverts('"\\uD83D"'); // Only half of a Smiley emoji.
+    }
+
+    function testDecodeUnescapedControlCharactersRevert() public {
+        for (uint256 i; i < 0x20; ++i) {
+            string memory s = string(abi.encodePacked('"a', bytes1(uint8(i)), 'b"'));
+            _checkDecodeInvalidStringReverts(s);
+        }
     }
 
     function _checkDecodeInvalidStringReverts(string memory s) internal {
