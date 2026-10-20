@@ -815,11 +815,15 @@ library LibBytes {
         /// @solidity memory-safe-assembly
         assembly {
             let l := sub(a.length, 0x20)
-            let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
-            result.offset := add(a.offset, s)
-            result.length := sub(a.length, s)
+            // Relative offset of `result` from `a.offset`. Reuses `result.length` to save a stack slot.
+            result.length := calldataload(add(a.offset, offset))
+            result.offset := add(a.offset, result.length)
+            // Wraps if the relative offset exceeds `a.length`, caught below.
+            result.length := sub(a.length, result.length)
+            // `sub(result.offset, a.offset)` recovers the relative offset, even if the add wrapped.
             // forgefmt: disable-next-item
-            if or(shr(64, or(s, or(l, a.offset))), or(gt(offset, l), gt(s, l))) { revert(l, 0x00) }
+            if or(shr(64, or(result.length, or(sub(result.offset, a.offset), or(l, a.offset)))),
+                gt(offset, l)) { revert(l, 0x00) }
         }
     }
 

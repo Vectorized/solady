@@ -293,6 +293,33 @@ contract LibBytesTest is SoladyTest {
         assertEq(LibBytes.bytesInCalldata(p, 0x40), expected.data);
     }
 
+    function testDynamicStructInCalldataBounds(uint256 s, uint256 n) public {
+        n = (n % 5) << 5;
+        if (_randomChance(2)) s = s % (n + 0x60);
+        bytes memory a = abi.encodePacked(s, new bytes(n));
+        (bool ok, bytes memory r) =
+            address(this).call(abi.encodeWithSignature("_dynamicStructInCalldataBounds(bytes)", a));
+        assertEq(ok, s <= a.length);
+        if (ok) {
+            (uint256 start, uint256 end) = abi.decode(r, (uint256, uint256));
+            assertEq(start, s);
+            assertEq(end, a.length);
+        }
+    }
+
+    function _dynamicStructInCalldataBounds(bytes calldata a)
+        public
+        pure
+        returns (uint256 start, uint256 end)
+    {
+        bytes calldata p = LibBytes.dynamicStructInCalldata(a, 0);
+        /// @solidity memory-safe-assembly
+        assembly {
+            start := sub(p.offset, a.offset)
+            end := add(start, p.length)
+        }
+    }
+
     function testBytesInCalldata() public {
         this._testBytesInCalldata(abi.encode("hello"), 0x00, "hello");
     }
