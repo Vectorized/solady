@@ -549,11 +549,11 @@ library LibBytes {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := mload(0x40)
+            let o := add(result, 0x20)
             let searchLen := mload(needle)
             if iszero(gt(searchLen, mload(subject))) {
-                result := mload(0x40)
                 let i := add(subject, 0x20)
-                let o := add(result, 0x20)
                 let subjectSearchEnd := add(sub(add(i, mload(subject)), searchLen), 1)
                 let h := 0 // The hash of `needle`.
                 if iszero(lt(searchLen, 0x20)) {
@@ -582,11 +582,11 @@ library LibBytes {
                     i := add(i, 1)
                     if iszero(lt(i, subjectSearchEnd)) { break }
                 }
-                mstore(result, shr(5, sub(o, add(result, 0x20)))) // Store the length of `result`.
-                // Allocate memory for result.
-                // We allocate one more word, so this array can be recycled for {split}.
-                mstore(0x40, add(o, 0x20))
             }
+            mstore(result, shr(5, sub(o, add(result, 0x20)))) // Store the length of `result`.
+            // Allocate memory for result.
+            // We allocate one more word, so this array can be recycled for {split}.
+            mstore(0x40, add(o, 0x20))
         }
     }
 
@@ -818,7 +818,8 @@ library LibBytes {
             let s := calldataload(add(a.offset, offset)) // Relative offset of `result` from `a.offset`.
             result.offset := add(a.offset, s)
             result.length := sub(a.length, s)
-            if or(shr(64, or(s, or(l, a.offset))), gt(offset, l)) { revert(l, 0x00) }
+            // forgefmt: disable-next-item
+            if or(shr(64, or(s, or(l, a.offset))), or(gt(offset, l), gt(s, l))) { revert(l, 0x00) }
         }
     }
 

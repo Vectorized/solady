@@ -1037,6 +1037,29 @@ contract LibStringTest is SoladyTest {
         assertTrue(_stringArraysAreSame(LibString.split("", ""), elements));
     }
 
+    function testStringSplitDelimiterLongerThanSubject(uint256 dirty) public brutalizeMemory {
+        string[] memory elements = new string[](1);
+        elements[0] = "ab";
+        for (uint256 t; t < 3; ++t) {
+            uint256 w = [uint256(0), 1, dirty][t];
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, w)
+                mstore(0x20, not(w))
+            }
+            _misalignFreeMemoryPointer();
+            string[] memory split = LibString.split("ab", "xyz");
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(0x00, not(0))
+                mstore(0x20, not(0))
+            }
+            assertTrue(_stringArraysAreSame(split, elements));
+            _checkMemory(split[0]);
+        }
+        assertEq(LibString.indicesOf("ab", "xyz").length, 0);
+    }
+
     function testStringConcat(string memory a, string memory b) public brutalizeMemory {
         string memory concatenated = LibString.concat(a, b);
         _checkMemory(concatenated);

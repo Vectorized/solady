@@ -545,20 +545,11 @@ library LibBytes {
     {
         /// @solidity memory-safe-assembly
         assembly {
+            result := mload(0x40)
+            let o := add(result, 0x20)
             let searchLen := mload(needle)
-            if gt(searchLen, mload(subject)) {
-                // Allocate a proper empty array instead of returning a null pointer,
-                // so that downstream consumers (e.g. `split`) never read the
-                // scratch space at 0x00 to determine the array length.
-                // We allocate one more word, so this array can be recycled for {split}.
-                result := mload(0x40)
-                mstore(result, 0)
-                mstore(0x40, add(result, 0x40))
-            }
             if iszero(gt(searchLen, mload(subject))) {
-                result := mload(0x40)
                 let i := add(subject, 0x20)
-                let o := add(result, 0x20)
                 let subjectSearchEnd := add(sub(add(i, mload(subject)), searchLen), 1)
                 let h := 0 // The hash of `needle`.
                 if iszero(lt(searchLen, 0x20)) {
@@ -587,11 +578,11 @@ library LibBytes {
                     i := add(i, 1)
                     if iszero(lt(i, subjectSearchEnd)) { break }
                 }
-                mstore(result, shr(5, sub(o, add(result, 0x20)))) // Store the length of `result`.
-                // Allocate memory for result.
-                // We allocate one more word, so this array can be recycled for {split}.
-                mstore(0x40, add(o, 0x20))
             }
+            mstore(result, shr(5, sub(o, add(result, 0x20)))) // Store the length of `result`.
+            // Allocate memory for result.
+            // We allocate one more word, so this array can be recycled for {split}.
+            mstore(0x40, add(o, 0x20))
         }
     }
 
