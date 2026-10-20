@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./utils/SoladyTest.sol";
 import {LibBytes} from "../src/utils/LibBytes.sol";
+import {EfficientHashLib} from "../src/utils/EfficientHashLib.sol";
 
 contract BytesStore {
     LibBytes.BytesStorage internal value;
@@ -307,6 +308,22 @@ contract LibBytesTest is SoladyTest {
         }
     }
 
+    function testDynamicStructInCalldataMalformedOffset() public {
+        // 64 bytes, with the struct offset word set to 65 (> `a.length`).
+        bytes memory a = abi.encode(uint256(65), uint256(0));
+        (bool ok, bytes memory reason) =
+            address(this).call(abi.encodeWithSignature("_dynamicStructInCalldataBounds(bytes)", a));
+        assertFalse(ok);
+        assertEq(reason, "");
+    }
+
+    function testDynamicStructInCalldataValid() public {
+        (uint256 start, uint256 end) =
+            this._dynamicStructInCalldataBounds(abi.encode(uint256(0x20), uint256(123)));
+        assertEq(start, 0x20);
+        assertEq(end, 0x40);
+    }
+
     function _dynamicStructInCalldataBounds(bytes calldata a)
         public
         pure
@@ -318,6 +335,30 @@ contract LibBytesTest is SoladyTest {
             start := sub(p.offset, a.offset)
             end := add(start, p.length)
         }
+    }
+
+    function testSplitNullPathCleanScratch() public {
+        bytes[] memory p = LibBytes.split("ab", "xyz");
+        assertEq(p.length, 1);
+        assertEq(p[0], "ab");
+    }
+
+    function testSplitNullPathAfterHash() public {
+        // Dirties the scratch space before the split.
+        EfficientHashLib.hash(uint256(1));
+        bytes[] memory p = LibBytes.split("ab", "xyz");
+        assertEq(p.length, 1);
+        assertEq(p[0], "ab");
+    }
+
+    function testSplitNullPathTwoConsecutive() public {
+        // The first split leaves the scratch space dirty for the second.
+        bytes[] memory a = LibBytes.split("ab", "xyz");
+        bytes[] memory b = LibBytes.split("cd", "wxyz");
+        assertEq(a.length, 1);
+        assertEq(a[0], "ab");
+        assertEq(b.length, 1);
+        assertEq(b[0], "cd");
     }
 
     function testBytesInCalldata() public {
