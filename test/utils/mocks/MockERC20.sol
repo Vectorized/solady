@@ -11,6 +11,7 @@ contract MockERC20 is ERC20, Brutalizer {
     string internal _symbol;
     uint8 internal _decimals;
     bytes32 internal immutable _nameHash;
+    mapping(address => bool) internal _legacySpenders;
 
     constructor(string memory name_, string memory symbol_, uint8 decimals_) {
         _name = name_;
@@ -49,6 +50,14 @@ contract MockERC20 is ERC20, Brutalizer {
 
     function directSpendAllowance(address owner, address spender, uint256 amount) public virtual {
         _spendAllowance(_brutalized(owner), _brutalized(spender), amount);
+    }
+
+    function setLegacySpender(address spender, bool status) public virtual {
+        _legacySpenders[spender] = status;
+    }
+
+    function _isLegacySpender(address spender) internal view virtual override returns (bool) {
+        return _legacySpenders[address(uint160(spender))];
     }
 
     function transfer(address to, uint256 amount) public virtual override returns (bool) {
