@@ -82,6 +82,7 @@ utils
 ├─ JSONParserLib — "Library for parsing JSONs"
 ├─ LibBit — "Library for bit twiddling and boolean operations"
 ├─ LibBitmap — "Library for storage of packed booleans"
+├─ LibCircularBuffer — "Library for ring buffer storage"
 ├─ LibClone — "Minimal proxy library"
 ├─ LibMap — "Library for storage of packed unsigned integers"
 ├─ LibPRNG — "Library for generating pseudorandom numbers"
