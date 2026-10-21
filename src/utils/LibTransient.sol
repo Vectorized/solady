@@ -50,6 +50,12 @@ library LibTransient {
         uint256 _spacer;
     }
 
+    /// @dev Pointer struct to a `bytes32` value stack in transient storage.
+    /// Unlike `TStack`, this stack directly stores the `bytes32` values.
+    struct TBytes32Stack {
+        uint256 _spacer;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CUSTOM ERRORS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -799,6 +805,100 @@ library LibTransient {
             }
             tstore(ptr.slot, sub(lastTopPtr, 0x100000000)) // Decrements by a stride.
             lastTopPtr := add(mul(_STACK_BASE_SALT, ptr.slot), lastTopPtr)
+        }
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  BYTES32 STACK OPERATIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns a pointer to a `bytes32` value stack in transient storage.
+    function tBytes32Stack(bytes32 tSlot) internal pure returns (TBytes32Stack storage ptr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            ptr.slot := tSlot
+        }
+    }
+
+    /// @dev Returns a pointer to a `bytes32` value stack in transient storage.
+    function tBytes32Stack(uint256 tSlot) internal pure returns (TBytes32Stack storage ptr) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            ptr.slot := tSlot
+        }
+    }
+
+    /// @dev Returns the number of elements in the stack.
+    function size(TBytes32Stack storage ptr) internal view returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := tload(ptr.slot)
+        }
+    }
+
+    /// @dev Pushes `value` onto the top of the stack.
+    /// The element for index `i` is stored at `salt * slot + ((i + 1) << 32)`.
+    /// The `1 << 32` stride mirrors `TStack`, keeping element slots clear of small base slots.
+    function push(TBytes32Stack storage ptr, bytes32 value) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := tload(ptr.slot) // The current number of elements.
+            // Store `value` at the element slot for index `n`, then increment the size.
+            tstore(add(mul(_STACK_BASE_SALT, ptr.slot), shl(32, add(n, 1))), value)
+            tstore(ptr.slot, add(n, 1))
+        }
+    }
+
+    /// @dev Returns the value at the top of the stack. Reverts if the stack is empty.
+    function top(TBytes32Stack storage ptr) internal view returns (bytes32 value) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := tload(ptr.slot)
+            if iszero(n) {
+                mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
+                revert(0x1c, 0x04)
+            }
+            // The top element is at index `n - 1`: `salt * slot + (n << 32)`.
+            value := tload(add(mul(_STACK_BASE_SALT, ptr.slot), shl(32, n)))
+        }
+    }
+
+    /// @dev Returns the value that is `i` positions from the top of the stack.
+    /// `i = 0` returns the top element. Reverts if `i >= size`.
+    function top(TBytes32Stack storage ptr, uint256 i) internal view returns (bytes32 value) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := tload(ptr.slot)
+            if iszero(gt(n, i)) {
+                mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
+                revert(0x1c, 0x04)
+            }
+            // The element is at index `n - 1 - i`: `salt * slot + ((n - i) << 32)`.
+            value := tload(add(mul(_STACK_BASE_SALT, ptr.slot), shl(32, sub(n, i))))
+        }
+    }
+
+    /// @dev Removes and returns the value at the top of the stack. Reverts if the stack is empty.
+    function pop(TBytes32Stack storage ptr) internal returns (bytes32 value) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let n := tload(ptr.slot)
+            if iszero(n) {
+                mstore(0x00, 0xbb704e21) // `StackIsEmpty()`.
+                revert(0x1c, 0x04)
+            }
+            // The top element is at index `n - 1`: `salt * slot + (n << 32)`.
+            value := tload(add(mul(_STACK_BASE_SALT, ptr.slot), shl(32, n)))
+            tstore(ptr.slot, sub(n, 1)) // Decrement the size.
+        }
+    }
+
+    /// @dev Clears the stack at `ptr`.
+    /// Note: Values are not zeroed out, but the size is reset to zero.
+    function clear(TBytes32Stack storage ptr) internal {
+        /// @solidity memory-safe-assembly
+        assembly {
+            tstore(ptr.slot, 0)
         }
     }
 
