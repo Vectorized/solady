@@ -438,7 +438,7 @@ library SafeTransferLib {
     }
 
     /// @dev Returns the amount of ERC20 `token` owned by `account`.
-    /// Returns zero if the `token` does not exist.
+    /// Returns zero if the `token` reverts during execution, does not exist, or returns less than 32 bytes.
     function balanceOf(address token, address account) internal view returns (uint256 amount) {
         /// @solidity memory-safe-assembly
         assembly {
