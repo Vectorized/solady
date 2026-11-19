@@ -254,6 +254,7 @@ library LibZip {
     }
 
     /// @dev Returns the decompressed `data`.
+    /// A trailing `0x00` marker with no control byte is not expanded.
     function cdDecompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
@@ -268,6 +269,8 @@ library LibZip {
                 for { let i := add(0x20, data) } 1 {} {
                     let c := mload(i)
                     if iszero(byte(0, c)) {
+                        // Marker with no control byte. Do not read past `end`.
+                        if iszero(lt(add(i, 1), end)) { break }
                         c := add(1, byte(1, c))
                         if iszero(gt(c, 0x80)) {
                             i := add(i, 2)

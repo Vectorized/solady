@@ -183,6 +183,8 @@ contract LibZiWithCLZTest is SoladyTest {
                     data := add(data, 1)
                     let c := byte(31, mload(data))
                     if iszero(c) {
+                        // The marker is the last byte, so the control byte is not in `data`.
+                        if iszero(lt(data, end)) { break }
                         data := add(data, 1)
                         let d := byte(31, mload(data))
                         // Fill with either 0xff or 0x00.
@@ -251,6 +253,22 @@ contract LibZiWithCLZTest is SoladyTest {
         this.flzDecompress(hex"e000");
         vm.expectRevert(truncated);
         this.flzDecompress(hex"02616263e000");
+    }
+
+    function testCdDecompressTruncatedRle() public {
+        // Logical `11 22 33 44 00`. The final `0x00` is an RLE marker and the
+        // control byte is absent. Stored form negates the first 4 bytes.
+        // Unfixed code reads the padding as that control byte and appends one `0x00`.
+        assertEq(LibZip.cdDecompress(hex"eeddccbb00"), hex"11223344");
+        assertEq(LibZip.cdDecompress(hex"ff"), "");
+        assertEq(LibZip.cdDecompress(hex"ffffeeff"), hex"0011");
+        assertEq(LibZip.cdDecompress(hex"eeddccbb0000"), hex"1122334400");
+        assertEq(
+            LibZip.cdDecompress(hex"ff60"),
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+        assertEq(LibZip.cdDecompress(hex"ff80"), new bytes(128));
+        assertEq(LibZip.cdDecompress(LibZip.cdCompress(hex"1122334400ff")), hex"1122334400ff");
     }
 
     function _expandedData(bytes memory data) internal returns (bytes memory) {
