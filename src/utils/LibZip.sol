@@ -11,6 +11,13 @@ pragma solidity ^0.8.4;
 /// FastLZ and calldata operations for convenience.
 library LibZip {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The FastLZ payload ends before an instruction is complete.
+    error TruncatedFastLZ();
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     FAST LZ OPERATIONS                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -108,9 +115,14 @@ library LibZip {
     }
 
     /// @dev Returns the decompressed `data`.
+    /// Reverts with `TruncatedFastLZ` if an instruction runs past the end of `data`.
     function flzDecompress(bytes memory data) internal pure returns (bytes memory result) {
         /// @solidity memory-safe-assembly
         assembly {
+            function revertTruncated() {
+                mstore(0x00, 0x8bb83a49) // `TruncatedFastLZ()`.
+                revert(0x1c, 0x04)
+            }
             result := mload(0x40)
             let op := add(result, 0x20)
             let end := add(add(data, 0x20), mload(data))
@@ -119,13 +131,17 @@ library LibZip {
                 let c := byte(0, w)
                 let t := shr(5, c)
                 if iszero(t) {
+                    // Literal run: control byte plus `c + 1` payload bytes.
+                    if lt(sub(end, data), add(2, c)) { revertTruncated() }
                     mstore(op, mload(add(data, 1)))
                     data := add(data, add(2, c))
                     op := add(op, add(1, c))
                     continue
                 }
+                let g := eq(t, 7)
+                // Short match is 2 bytes. Long match (`t == 7`) is 3 bytes.
+                if lt(sub(end, data), add(2, g)) { revertTruncated() }
                 for {
-                    let g := eq(t, 7)
                     let l := add(2, xor(t, mul(g, xor(t, add(7, byte(1, w)))))) // M
                     let s := add(add(shl(8, and(0x1f, c)), byte(add(1, g), w)), 1) // R
                     let r := sub(op, s)

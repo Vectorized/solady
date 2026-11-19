@@ -220,6 +220,39 @@ contract LibZipTest is SoladyTest {
         assertEq(LibZip.flzDecompress(compressed), decompressed);
     }
 
+    /// @dev External wrapper so `vm.expectRevert` observes `LibZip.flzDecompress`.
+    function flzDecompress(bytes memory data) external pure returns (bytes memory) {
+        return LibZip.flzDecompress(data);
+    }
+
+    function testFlzDecompressTruncatedReverts() public {
+        assertEq(this.flzDecompress(""), "");
+        assertEq(this.flzDecompress(hex"02414243"), hex"414243");
+        assertEq(this.flzDecompress(hex"024142430044"), hex"41424344");
+        assertEq(this.flzDecompress(hex"026162632002"), hex"616263616263");
+        assertEq(this.flzDecompress(hex"02616263e00002"), hex"616263616263616263616263");
+
+        // Instruction ends past the buffer. Unfixed code returns a short zero-padded
+        // bytes string (`0x00`, `0x410000`, `0x414200`) instead of reverting.
+        bytes4 truncated = LibZip.TruncatedFastLZ.selector;
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"00");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"02");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"0241");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"024142");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"1f");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"20");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"e000");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"02616263e000");
+    }
+
     function _expandedData(bytes memory data) internal returns (bytes memory) {
         unchecked {
             DynamicBufferLib.DynamicBuffer memory buffer;
