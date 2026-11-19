@@ -183,6 +183,8 @@ contract LibZipTest is SoladyTest {
                     data := add(data, 1)
                     let c := byte(31, mload(data))
                     if iszero(c) {
+                        // The marker is the last byte, so the control byte is not in `data`.
+                        if iszero(lt(data, end)) { break }
                         data := add(data, 1)
                         let d := byte(31, mload(data))
                         // Fill with either 0xff or 0x00.
@@ -428,12 +430,82 @@ contract LibZipTest is SoladyTest {
         assertEq(LibZip.cdCompress(data), expected);
     }
 
+    /// @dev Shrinks `data` to `len` bytes without clearing the following byte.
+    function _cdDecompressLen(bytes memory data, uint256 len) internal pure returns (bytes memory) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore(data, len)
+        }
+        return LibZip.cdDecompress(data);
+    }
+
+    function testCdDecompressTruncatedRleStops() public {
+        // Lone marker. Stored `0xff` un-negates to `0x00`, and the control byte is absent.
+        // Unfixed code reads the next byte (zero padding, negated to `0xff`) and returns 128 bytes.
+        assertEq(LibZip.cdDecompress(hex"ff"), "");
+
+        // Literals plus a trailing marker. Unfixed code reads one `0x00` past the end
+        // and appends a one-byte zero run, returning `0x0102030400`.
+        assertEq(LibZip.cdDecompress(hex"fefdfcfb00"), hex"01020304");
+
+        // A non-zero control byte left in memory past `len` must not be consumed.
+        // `0x0a` would append 11 zeros. `0xff` would append a 128-byte run.
+        assertEq(_cdDecompressLen(hex"fefdfcfb000a", 5), hex"01020304");
+        assertEq(_cdDecompressLen(hex"fefdfcfb00ff", 5), hex"01020304");
+
+        // Complete marker plus control, then a second marker with no control byte.
+        // The first run is two zeros. The trailing marker is not expanded.
+        assertEq(LibZip.cdDecompress(hex"fffeff"), hex"0000");
+
+        // Complete runs still decode, including a run that ends on the last byte.
+        assertEq(LibZip.cdDecompress(hex"ffff"), hex"00");
+        assertEq(LibZip.cdDecompress(hex"ff7f"), hex"ff");
+        assertEq(
+            LibZip.cdDecompress(
+                LibZip.cdCompress(hex"010203040000ffffffffffffffffffffffffffffffff")
+            ),
+            hex"010203040000ffffffffffffffffffffffffffffffff"
+        );
+    }
+
     function testCdDecompressOnInvalidInput() public {
         bytes memory data = hex"ffffffff00ff";
         bytes memory expected =
             hex"0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
         bytes memory decompressed = LibZip.cdDecompress(data);
         assertEq(decompressed, expected);
+    }
+
+    function testCdDecompressTruncatedRle() public {
+        // Logical `11 22 33 44 00`. The final `0x00` is an RLE marker and the
+        // control byte is absent. Stored form negates the first 4 bytes.
+        // Unfixed code reads the padding as that control byte and appends one `0x00`.
+        assertEq(LibZip.cdDecompress(hex"eeddccbb00"), hex"11223344");
+
+        // Same marker, with `0x7f` (a 128-zero run) planted past the payload.
+        bytes memory planted = hex"eeddccbb00";
+        /// @solidity memory-safe-assembly
+        assembly {
+            mstore8(add(add(planted, 0x20), mload(planted)), 0x7f)
+        }
+        assertEq(LibZip.cdDecompress(planted), hex"11223344");
+
+        // Lone logical `0x00`, stored as `0xff`. Negating the first 4 bytes turns
+        // the zero padding into `0xff`, and unfixed code appends a 128-byte run.
+        assertEq(LibZip.cdDecompress(hex"ff"), hex"");
+
+        // `00 00 11 00`: one zero, the literal `0x11`, then a truncated marker.
+        assertEq(LibZip.cdDecompress(hex"ffffeeff"), hex"0011");
+
+        // Complete headers still expand. `00 00` is one zero, `00 9f` is 32 `0xff`,
+        // `00 7f` is 128 zeros. First 4 stored bytes are negated.
+        assertEq(LibZip.cdDecompress(hex"eeddccbb0000"), hex"1122334400");
+        assertEq(
+            LibZip.cdDecompress(hex"ff60"),
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+        assertEq(LibZip.cdDecompress(hex"ff80"), new bytes(128));
+        assertEq(LibZip.cdDecompress(LibZip.cdCompress(hex"1122334400ff")), hex"1122334400ff");
     }
 
     function testDecompressWontRevert(bytes memory data) public brutalizeMemory {

@@ -85,7 +85,8 @@ function cdDecompress(bytes memory data)
     returns (bytes memory result)
 ```
 
-Returns the decompressed `data`.
+Returns the decompressed `data`.   
+A trailing `0x00` marker with no control byte is not expanded.
 
 ### cdFallback()
 
