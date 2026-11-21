@@ -515,6 +515,51 @@ contract LibZipTest is SoladyTest {
         assertEq(decompressed, data);
     }
 
+    function testCdFallbackTruncatedRleStops() public {
+        // Logical `01 02 03 04 00`. The final `0x00` is an RLE marker and the
+        // control byte is absent. Stored form negates the first 4 bytes.
+        // Unfixed code reads the zero padding as that control byte and appends one `0x00`.
+        assertEq(_cdFallbackEcho(hex"fefdfcfb00"), hex"01020304");
+
+        // Same shape: logical `11 22 33 44 00`.
+        assertEq(_cdFallbackEcho(hex"eeddccbb00"), hex"11223344");
+
+        // One zero, the literal `0x11`, then a marker on the last byte.
+        // The missing control sits at index 4, so padding is not negated.
+        assertEq(_cdFallbackEcho(hex"ffffeeff"), hex"0011");
+
+        // A control byte that is present, including as the last byte, still expands.
+        // `00 00` is one zero. `00 80` is one `0xff`.
+        assertEq(_cdFallbackEcho(hex"fefdfcfb0000"), hex"0102030400");
+        assertEq(_cdFallbackEcho(hex"fefdfcfb0080"), hex"01020304ff");
+
+        // Lone marker. Stored `0xff` un-negates to `0x00`, and the control byte is absent.
+        // Unfixed code reads the zero padding, negates it to `0xff`, and returns 128 bytes.
+        assertEq(_cdFallbackEcho(hex"ff"), "");
+
+        // Two zeros, then a marker whose missing control is still inside the negated prefix.
+        // Unfixed code appends 128 `0xff` bytes from that padding.
+        assertEq(_cdFallbackEcho(hex"fffeff"), hex"0000");
+
+        // Complete headers still expand. `00 00` is one zero, `00 9f` is 32 `0xff`,
+        // `00 7f` is 128 zeros. First 4 stored bytes are negated.
+        assertEq(_cdFallbackEcho(hex"ffff"), hex"00");
+        assertEq(_cdFallbackEcho(hex"ff7f"), hex"ff");
+        assertEq(_cdFallbackEcho(hex"ff80"), new bytes(128));
+        assertEq(
+            _cdFallbackEcho(hex"ff60"),
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+        assertEq(_cdFallbackEcho(LibZip.cdCompress(hex"1122334400ff")), hex"1122334400ff");
+    }
+
+    function _cdFallbackEcho(bytes memory compressed) internal returns (bytes memory result) {
+        MockCdFallbackEcho echo = new MockCdFallbackEcho();
+        bool success;
+        (success, result) = address(echo).call(compressed);
+        assertTrue(success);
+    }
+
     function testCdFallback() public {
         MockCd mockCd = new MockCd();
         _testCdFallback(mockCd);
@@ -644,5 +689,19 @@ contract LibZipTest is SoladyTest {
             }
         }
         assertEq(computed, expected);
+    }
+}
+
+/// @dev Returns the bytes `LibZip.cdFallback` passes to its delegatecall.
+contract MockCdFallbackEcho {
+    fallback() external payable {
+        assembly {
+            if sload(0) {
+                calldatacopy(0x00, 0x00, calldatasize())
+                return(0x00, calldatasize())
+            }
+            sstore(0, 1)
+        }
+        LibZip.cdFallback();
     }
 }

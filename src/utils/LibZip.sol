@@ -316,6 +316,7 @@ library LibZip {
     /// ```
     /// For efficiency, this function will directly return the results, terminating the context.
     /// If called internally, it must be called at the end of the function.
+    /// A trailing `0x00` marker with no control byte is not expanded.
     function cdFallback() internal {
         /// @solidity memory-safe-assembly
         assembly {
@@ -326,6 +327,8 @@ library LibZip {
                 let c := byte(0, xor(add(i, f), calldataload(i)))
                 i := add(i, 1)
                 if iszero(c) {
+                    // Marker with no control byte. Do not read past calldata.
+                    if iszero(lt(i, calldatasize())) { break }
                     let d := byte(0, xor(add(i, f), calldataload(i)))
                     i := add(i, 1)
                     // Fill with either 0xff or 0x00.

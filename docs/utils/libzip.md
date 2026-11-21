@@ -101,4 +101,5 @@ receive() external payable {}
 Silence compiler warning to add a `receive` function.   
 ```   
 For efficiency, this function will directly return the results, terminating the context.   
-If called internally, it must be called at the end of the function.
+If called internally, it must be called at the end of the function.   
+A trailing `0x00` marker with no control byte is not expanded.
