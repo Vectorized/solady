@@ -12,6 +12,16 @@ FastLZ and calldata operations for convenience.
 
 <!-- customintro:start --><!-- customintro:end -->
 
+## Custom Errors
+
+### TruncatedFastLZ()
+
+```solidity
+error TruncatedFastLZ()
+```
+
+The FastLZ payload ends before an instruction is complete.
+
 ## Fast LZ Operations
 
 LZ77 implementation based on FastLZ.   
@@ -39,7 +49,8 @@ function flzDecompress(bytes memory data)
     returns (bytes memory result)
 ```
 
-Returns the decompressed `data`.
+Returns the decompressed `data`.   
+Reverts with `TruncatedFastLZ` if an instruction runs past the end of `data`.
 
 ## Calldata Operations
 
@@ -74,7 +85,8 @@ function cdDecompress(bytes memory data)
     returns (bytes memory result)
 ```
 
-Returns the decompressed `data`.
+Returns the decompressed `data`.   
+A trailing `0x00` marker with no control byte is not expanded.
 
 ### cdFallback()
 
@@ -89,4 +101,5 @@ receive() external payable {}
 Silence compiler warning to add a `receive` function.   
 ```   
 For efficiency, this function will directly return the results, terminating the context.   
-If called internally, it must be called at the end of the function.
+If called internally, it must be called at the end of the function.   
+A trailing `0x00` marker with no control byte is not expanded.

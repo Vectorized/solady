@@ -183,6 +183,8 @@ contract LibZiWithCLZTest is SoladyTest {
                     data := add(data, 1)
                     let c := byte(31, mload(data))
                     if iszero(c) {
+                        // The marker is the last byte, so the control byte is not in `data`.
+                        if iszero(lt(data, end)) { break }
                         data := add(data, 1)
                         let d := byte(31, mload(data))
                         // Fill with either 0xff or 0x00.
@@ -218,6 +220,55 @@ contract LibZiWithCLZTest is SoladyTest {
         compressed =
             hex"1f4e65772077617665206469676974616c206172742073686f756c64206e6f74201f6265206a756467656420736f6c656c79206f6e20616573746865746963206d65017269202301757420240e737420617320696d706f7274616e74202a1b666f7220697473206162696c69747920746f20646576656c6f702061200c406d03766973692051026f662020510320576972206801616e200301626f209315616c6c20637265617465206e6574776f726b20737069207201756140500e2e20416e6369656e7420477265656b60ba04697320686520bb01696e6051036869676820ad062072656761726420cd0463617573652095c089406f0220776820db03206d79742007016f6720a801686141040061401d0272656c2119066f6e2c206d6f72607660a0017761210a0866206c6966652e2054212f016768607c20ff026c6963205fa080414e40b80073402de003ae016365613741630373756666203320c8213406646973656e676141710366726f6d208b016520201102736f722097006f208e03666c6563205e21570b6f776e2070726f647563747340840065400d03626c656d406b056d6f6465726e417621124044a17a006d2066401f0272617420d521f00273656c200d805620118048036265617520e920e140c00561707065617220dc21fb41d5006d21310a69636820636f6e74726173208a02616273200920972142410a40450275732ce0081720852028016f798092056e616976652f40dd02756f752044057070726563696098c07a2072076578657274696e6760f3046e617475722172015265818b20dc02736c612025016279208e006d20400068212c60c701507221de2281026e7465409a201304207769746820a200652008426906696e766f6c7665808c20bf006e21940373657061811b4082227c2312e006dc620004616363656c20580074203e0165782062214b01697380bb2072026f207020a74009017569407a072c20656d626f647940c74080c2cf42ec01756e4183214c0273636921074204027261774029006f235905747275746873e2010c02636f6c42012139223c046f73706865410f025468724178205b2111016265603c830280ea0077228a02636869237e21c20172652144201d006f214e2047002ce0078140b620da2064c20f06696e64697669642377032065676f6175036163726922b6234060ee40d4e00b9a405c210121be205701756e2294208063fc23fa201583d040c0427523aa427021cf404f80ba20d04325016f6e21186297036966756c633c82fc21800061e1004f804e20a722f9052e2049206c6f20634488004ea4400c53706972697475616c69747921";
         assertEq(LibZip.flzDecompress(compressed), decompressed);
+    }
+
+    /// @dev External wrapper so `vm.expectRevert` observes `LibZip.flzDecompress`.
+    function flzDecompress(bytes memory data) external pure returns (bytes memory) {
+        return LibZip.flzDecompress(data);
+    }
+
+    function testFlzDecompressTruncatedReverts() public {
+        assertEq(this.flzDecompress(""), "");
+        assertEq(this.flzDecompress(hex"02414243"), hex"414243");
+        assertEq(this.flzDecompress(hex"024142430044"), hex"41424344");
+        assertEq(this.flzDecompress(hex"026162632002"), hex"616263616263");
+        assertEq(this.flzDecompress(hex"02616263e00002"), hex"616263616263616263616263");
+
+        // Instruction ends past the buffer. Unfixed code returns a short zero-padded
+        // bytes string (`0x00`, `0x410000`, `0x414200`) instead of reverting.
+        bytes4 truncated = LibZip.TruncatedFastLZ.selector;
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"00");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"02");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"0241");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"024142");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"1f");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"20");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"e000");
+        vm.expectRevert(truncated);
+        this.flzDecompress(hex"02616263e000");
+    }
+
+    function testCdDecompressTruncatedRle() public {
+        // Logical `11 22 33 44 00`. The final `0x00` is an RLE marker and the
+        // control byte is absent. Stored form negates the first 4 bytes.
+        // Unfixed code reads the padding as that control byte and appends one `0x00`.
+        assertEq(LibZip.cdDecompress(hex"eeddccbb00"), hex"11223344");
+        assertEq(LibZip.cdDecompress(hex"ff"), "");
+        assertEq(LibZip.cdDecompress(hex"ffffeeff"), hex"0011");
+        assertEq(LibZip.cdDecompress(hex"eeddccbb0000"), hex"1122334400");
+        assertEq(
+            LibZip.cdDecompress(hex"ff60"),
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
+        assertEq(LibZip.cdDecompress(hex"ff80"), new bytes(128));
+        assertEq(LibZip.cdDecompress(LibZip.cdCompress(hex"1122334400ff")), hex"1122334400ff");
     }
 
     function _expandedData(bytes memory data) internal returns (bytes memory) {
