@@ -256,15 +256,14 @@ Note: This function is an approximation. Monotonically increasing.
 function expWadFast(int256 x) internal pure returns (int256 r)
 ```
 
-Returns `exp(x)`, denominated in `WAD`. Cheaper than `expWad`.   
+Returns `exp(x)`, denominated in `WAD`. Cheaper and more accurate than `expWad`.   
+Credit to David Dallaire (ddallaire) under MIT license.   
 Let `E = exp(x / 1e18) * 1e18` denote the exact, infinite-precision result.   
-Never overestimates: the result is greater than `E * (1 - 2.58e-22) - 1`   
-and not more than `E`, so it is `floor(E)` or `floor(E) - 1` whenever   
-`x <= 8265113944572514620` (results up to `~3885 * 1e18`).   
+Never overestimates: `E * (1 - 1.7237 * 2**-128) - 1 < r <= E` (`< 5.07e-39` relative),   
+so `r` is `floor(E)` or `floor(E) - 1` whenever `x <= 46731834294601968657`   
+(outputs up to `~1.97e38`, covering every value representable in `int128`).   
 `expWadFast(0) = 1e18` exactly.   
-Monotonically increasing, including across all `2**k` seams.   
-The bounds are certified by exact-rational interval proofs, reproducible via   
-https://github.com/ddallaire/wad-exponentials
+Monotonically increasing, including across all `2**k` seams.
 
 ### lnWad(int256)
 
@@ -283,11 +282,10 @@ function lnWadFast(int256 x) internal pure returns (int256 r)
 ```
 
 Returns `ln(x)`, denominated in `WAD`. Cheaper than `lnWad`.   
+Credit to David Dallaire (ddallaire) under MIT license.   
 Let `L = ln(x / 1e18) * 1e18` denote the exact, infinite-precision result.   
 Never overestimates: always returns `floor(L)` or `floor(L) - 1`.   
-`lnWadFast(1e18) = 0` exactly. Monotonically increasing.   
-The bounds are certified by exact-rational interval proofs, reproducible via   
-https://github.com/ddallaire/wad-exponentials
+`lnWadFast(1e18) = 0` exactly. Monotonically increasing.
 
 ### lambertW0Wad(int256)
 

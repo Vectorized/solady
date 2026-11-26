@@ -271,80 +271,89 @@ library FixedPointMathLib {
         }
     }
 
-    /// @dev Returns `exp(x)`, denominated in `WAD`. Cheaper than `expWad`.
+    /// @dev Returns `exp(x)`, denominated in `WAD`. Cheaper and more accurate than `expWad`.
+    /// Credit to David Dallaire (ddallaire) under MIT license.
     /// Let `E = exp(x / 1e18) * 1e18` denote the exact, infinite-precision result.
-    /// Never overestimates: the result is greater than `E * (1 - 2.58e-22) - 1`
-    /// and not more than `E`, so it is `floor(E)` or `floor(E) - 1` whenever
-    /// `x <= 8265113944572514620` (results up to `~3885 * 1e18`).
+    /// Never overestimates: `E * (1 - 1.7237 * 2**-128) - 1 < r <= E` (`< 5.07e-39` relative),
+    /// so `r` is `floor(E)` or `floor(E) - 1` whenever `x <= 46731834294601968657`
+    /// (outputs up to `~1.97e38`, covering every value representable in `int128`).
     /// `expWadFast(0) = 1e18` exactly.
     /// Monotonically increasing, including across all `2**k` seams.
-    /// The bounds are certified by exact-rational interval proofs, reproducible via
-    /// https://github.com/ddallaire/wad-exponentials
     function expWadFast(int256 x) internal pure returns (int256 r) {
-        unchecked {
-            // Accept `-41446531673892822313 < x < 135305999368893231589` with a
-            // single unsigned comparison; sort out the two edges on the cold path.
-            if (uint256(x) + 41446531673892822312 >= 176752531042786053901) {
-                // When the true result is less than 1 wei we return zero.
-                // This happens when `x <= (log(1e-18) * 1e18) ~ -4.15e19`.
-                if (x <= -41446531673892822313) return r;
-
-                /// @solidity memory-safe-assembly
-                assembly {
-                    // When the result is greater than `(2**255 - 1) / 1e18` we can not
-                    // represent it as an int. This happens when
-                    // `x >= floor(log((2**255 - 1) / 1e18) * 1e18) ≈ 135`.
-                    mstore(0x00, 0xa37bfec9) // `ExpOverflow()`.
-                    revert(0x1c, 0x04)
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                // Accept `-41446531673892822312 <= x <= 135305999368893231588` with one
+                // unsigned check; inputs above the range revert with `ExpOverflow()`,
+                // matching `expWad`, and inputs below have true result `< 1` wei (`r = 0`).
+                // Under `--via-ir` when inlined, the optimizer may hoist the pure arithmetic
+                // below above this guard; all intermediate ops remain total and discarded.
+                if iszero(lt(add(x, 41446531673892822312), 176752531042786053901)) {
+                    if sgt(x, 0) {
+                        mstore(0x00, 0xa37bfec9) // `ExpOverflow()`.
+                        revert(0x1c, 0x04)
+                    }
+                    r := 0
+                    break
                 }
-            }
 
-            // Convert `x` from `10**18` fixed point to `2**96` fixed point.
-            x = (x << 78) / 5 ** 18;
+                // Convert `x` to base-2 exponent `y = x / (1e18 * ln(2))` in `Q202` with
+                // `C_INV = round(2**202 / (1e18 * ln(2)))`. On the accepted domain,
+                // `|p| < 2**210`, the constant error changes `2**y` by `< 0.0002 * 2**-128`,
+                // and `k = round(p / 2**202)` lies in `[-60, 195]`, so `195 - k` lies in
+                // `[0, 255]`. Extract the signed `Q129` fractional octave
+                // `f = floor((y - k) * 2**129)`. Across all 256 octaves,
+                // `|f| < 2**128 - 2**59`, so `v = f * f < 2**256` and `|f << 127| < 2**255`
+                // never wrap, and `f == 0` iff `x == 0`.
+                let p := mul(x, 0x6a73bd23984bcd93c97a35e9aead95472e13)
+                let f := sar(127, shl(54, p))
+                let v := mul(f, f)
 
-            // Reduce to `x' in (-½ ln 2, ½ ln 2) * 2**96` with `exp(x) = 2**k * exp(x')`.
-            // `6196328019 = round(2**128 / (ln 2 * 2**96))`; `k` is in the range `[-60, 195]`.
-            int256 k = (x * 6196328019 + 2 ** 127) >> 128;
-            x = x - k * 54916777467707473351141471128;
-
-            // `exp(x') = (E + x' * O) / (E - x' * O)`, a symmetric rational with
-            // `E`, `O` polynomials in `x'^2`. `E` is monic: its last Horner stage
-            // needs no `>> 96`, so with the constant term pre-shifted, `e` and `t`
-            // are in `2**192` basis. The coefficients are jointly fitted so that the
-            // certified relative error stays one-sided after the margin below, and
-            // the error at the `+½ ln 2` edge is negative, which makes every seam
-            // between adjacent `2**k` octaves step upward (monotonicity).
-            int256 u = (x * x) >> 96;
-            int256 e = (((u + 66584530426202717196765975783591) * u) >> 96)
-                + 5993331421273161380223160234961546;
-            e = e * u + (52742053377336245150083666490725880 << 96);
-            int256 o =
-                ((3328678398953600544402144014937 * u) >> 96) + 799080153247570479545590910204849;
-            o = ((o * u) >> 96) + 26371026688668122575032340971836885;
-            int256 t = x * o;
-
-            /// @solidity memory-safe-assembly
-            assembly {
-                // Div in assembly because solidity adds a zero check despite the unchecked.
-                // The denominator is positive on the whole reduced domain.
-                r := sdiv(add(e, t), sar(96, sub(e, t)))
-            }
-
-            // Multiply by `2**k * 1e18 / 2**96`, less a margin that keeps the result
-            // at or below `E` at every certified error extreme. `r < 1.5 * 2**96`,
-            // so the product cannot overflow, and the shift amount is never negative.
-            r = int256(
-                (uint256(r) * 633825300114114700748270193445868131307960658286) >> uint256(195 - k)
-            );
-
-            /// @solidity memory-safe-assembly
-            assembly {
-                // `exp(0) = 1` is the only exact integer result in the domain; the
-                // margin lands it one unit low, so add one back exactly there.
-                // The reduced `x` is zero iff the input was zero (the truncated
-                // base conversion never lands on `k * 54916777467707473351141471128`
-                // for any other input; checked exhaustively for every `k`).
-                r := add(iszero(x), r)
+                // Let `t = f / 2**129` in `(-1/2, 1/2)`. Using the reciprocal-symmetric form
+                // `A(t) = (C(t**2) + t) / (C(t**2) - t) = 1 + 2*t / (C(t**2) - t)`, the 10
+                // positive `Q129` constants (`17` bytes each) are the lattice-refined
+                // continued fraction of the `[10/10]` Remez approximant to `2**t * exp(-a*t)`
+                // on `[-1/2, 1/2]`, where the odd tilt `a ~= 1.324 * 2**-128` (`~0.662 * 2**-128`
+                // at `t = +-1/2`) balances the `-3 * 2**-130` one-sided margin between the
+                // two halves while preserving `A(-t) = 1 / A(t)`.
+                // Shifting `den = C(t**2) - t` (`Q129`) right by 4 produces `Q125` so
+                // `q = (2**130 - 3) + sdiv(f << 127, den >> 4)` yields `(A(t) - 3 * 2**-130) * 2**130`
+                // in one division without 512-bit arithmetic. Multiplying `q` by exact
+                // `5**18 * 2**83 = 1e18 * 2**65` gives `E * 2**(195 - k)` (`< 0.62 * 2**256`)
+                // before the closing floor shift by `195 - k = (390 - floor(p / 2**201)) >> 1`.
+                // On `[-1/2, 1/2]`, `q / 2**130 <= 2**(y - k)` and the relative shortfall is
+                // `< 1.7237 * 2**-128` (`< 5.07e-39`). At `x = 0` (`f = 0`), the margin lands
+                // one unit below `1e18`, and `iszero(f)` restores exact `1e18`.
+                // forgefmt: disable-next-item
+                r := add(
+                    iszero(f),
+                    shr(
+                        shr(1, sub(390, sar(201, p))),
+                        mul(
+                            add(
+                                0x3fffffffffffffffffffffffffffffffd,
+                                sdiv(
+                                    shl(127, f),
+                                    shr(
+                                        4,
+                                        add(sub(0x5c551d94ae0bf85ddf43ff68348e9f455, f),
+                                        div(v, add(0x114ff58be0a23e9199dcbfe389dabebd6c,
+                                        div(v, add(0x1cda993e7663bd9d55c53fd090aa130722,
+                                        div(v, add(0x28653cf10c253ca911adbfccbf014f046e,
+                                        div(v, add(0x33efe0a3a1e6bbb4cd99a4b12712c29cf5,
+                                        div(v, add(0x3f7a845637a83ac1384c8ff39ba40f6037,
+                                        div(v, add(0x4b052808cd69d894eeadda077d9867b7aa,
+                                        div(v, add(0x568fcbbb67b9f6161f9f9a099fdcb43109,
+                                        div(v, add(0x621a6ff60123286f8e24b679c68e5b8d96,
+                                        div(v, 0x6db02aa65ba05766e2174cad821028b2c9))))))))))))))))))
+                                    )
+                                )
+                            ),
+                            0x1bc16d674ec800000000000000000000
+                        )
+                    )
+                )
+                break
             }
         }
     }
@@ -425,15 +434,14 @@ library FixedPointMathLib {
     }
 
     /// @dev Returns `ln(x)`, denominated in `WAD`. Cheaper than `lnWad`.
+    /// Credit to David Dallaire (ddallaire) under MIT license.
     /// Let `L = ln(x / 1e18) * 1e18` denote the exact, infinite-precision result.
     /// Never overestimates: always returns `floor(L)` or `floor(L) - 1`.
     /// `lnWadFast(1e18) = 0` exactly. Monotonically increasing.
-    /// The bounds are certified by exact-rational interval proofs, reproducible via
-    /// https://github.com/ddallaire/wad-exponentials
     function lnWadFast(int256 x) internal pure returns (int256 r) {
         /// @solidity memory-safe-assembly
         assembly {
-            // Compute `k = log2(x) - 96`, `r = 159 - k = 255 - log2(x) = 255 ^ log2(x)`.
+            // Compute `r = clz(x) = 255 ^ floor(log2(x))` in `[1, 255]`.
             r := shl(7, lt(0xffffffffffffffffffffffffffffffff, x))
             r := or(r, shl(6, lt(0xffffffffffffffff, shr(r, x))))
             r := or(r, shl(5, lt(0xffffffff, shr(r, x))))
@@ -448,57 +456,48 @@ library FixedPointMathLib {
             r := xor(r, byte(and(0x1f, shr(shr(r, x), 0x8421084210842108cc6318c6db6d54be)),
                 0xf8f9f9faf9fdfafbf9fdfcfdfafbfcfef9fafdfafcfcfbfefafafcfbffffffff))
 
-            // Reduce range of x to (1, 2) * 2**96
-            // ln(2^k * x) = k * ln(2) + ln(x)
-            x := shr(159, shl(r, x))
+            // Normalize to a `Q71` mantissa `m` in `[2**71, 2**72 - 1]`. Truncation only
+            // underestimates `ln(x)` by `< 2**-71 * 1e18` (`< 0.00043` wei).
+            x := shr(184, shl(r, x))
 
-            // `s = (x - sqrt(2)) * 2**96 / (x + sqrt(2))`, so that
-            // `ln(x) = ln(2)/2 + 2 * atanh(s)`. Centering on `sqrt(2)` halves the
-            // fit domain: `|s| <= 3 - 2 * sqrt(2)`.
-            let s :=
-                sdiv(
-                    shl(96, sub(x, 112045541949572279837463876455)),
-                    add(x, 112045541949572279837463876455)
-                )
+            // Center on `c = round(sqrt(2) * 2**71)` (`9` bytes):
+            // `ln(m / 2**71) = ln(c / 2**71) - 2 * atanh(s)` with `s = (c - m) / (m + c)`
+            // in `Q70` (`|s| <= 3 - 2*sqrt(2)`, `u = s**2` in `Q140`, zero intermediate shifts).
+            // Forming `sub(c, x)` avoids constant-folding `-c` into a second literal + `NOT`.
+            let c := 0xb504f333f9de648459
+            let s := sdiv(shl(70, sub(c, x)), add(x, c))
+            let u := mul(s, s)
 
-            // `2 * atanh(s) = s * A(w) / B(w)`, a (3, 3)-term odd rational in `w = s^2`.
-            let w := sar(96, mul(s, s))
-            let a :=
-                add(
-                    sar(96, mul(sub(w, 1813347344949966953757847210329), w)),
-                    5824670411451500986303020460168
-                )
-            a := sub(sar(96, mul(a, w)), 4518264490991587979207438354337)
-            let b :=
+            // The 7 positive `Q70` constants (`9` bytes each) are the lattice-refined
+            // continued fraction `d(u)` of the `[7/6]` Remez approximant to `2 * 1e18 * atanh(s)`,
+            // gauge-scaled by `alpha = 2**61 / 1e18` (multiplying even terms by `alpha` and
+            // dividing odd terms by `alpha`) so `sdiv(s << 81, d(u))` lands directly in
+            // `Q20` WAD units without a WAD multiplication. The rational error is at most
+            // `0.041605` wei, upward rounding errors total `< 0.00201` wei (covered by a
+            // `0.0436103` wei margin folded into the `Q20` bias), and downward rounding
+            // errors total `< 0.00253` wei, keeping the accumulator in `(L - 0.0878, L]`
+            // so `sar(20, ...)` always lands on `floor(L)` or `floor(L) - 1`.
+            // forgefmt: disable-next-item
+            r := sar(
+                20,
                 sub(
-                    sar(96, mul(188151507788160136135094921663, w)),
-                    1676640319226537252003611223372
+                    sub(0x75a8ec06363475913bc365, mul(0x99e8db03256ce5d6acfc, r)),
+                    sdiv(
+                        shl(81, s),
+                        sub(0x49c97747490eae7a05,
+                        div(u, sub(0xa688906bd8b13d41b5,
+                        div(u, sub(0x5c3bd51917af114e67,
+                        div(u, sub(0xacb38c5a6f4e6f26f0,
+                        div(u, sub(0x5d62efb01a897d9ae3,
+                        div(u, sub(0xadbe79b5eedca6a560,
+                        div(u, 0x5b0d661aadd0aaecc6))))))))))))
+                    )
                 )
-            b := add(sar(96, mul(b, w)), 3665379287557676720634158507137)
-            b := sub(sar(96, mul(b, w)), 2259132245495793985525851698055)
-
-            // `B` is bounded away from zero on the whole domain.
-            let p := sdiv(mul(s, a), b)
-
-            // Add `(2k + 1) * ln(2)/2` and `ln(2**96 / 10**18)`, then convert to `WAD`,
-            // all in `5**18 * 2**192` basis. The additive constant is lowered by a
-            // certified margin (~0.0417 wei) so the accumulator never exceeds
-            // `L * 2**174`; downward errors total under 1 wei, so `sar(174, p)`
-            // lands on `floor(L)` or `floor(L) - 1`.
-            p := mul(302231454903657293676544000000000000000000, p)
-            p := add(
-                mul(
-                    8298788776342807110743642979096973734596910279609939088954046749604186,
-                    sub(319, shl(1, r))
-                ),
-                p
             )
-            p := add(600920179829731861735705478226805774338444159116519230494951146088873754, p)
-            r := sar(174, p)
 
             // `ln(1e18 / 1e18) = 0` is the only exact integer result in the domain;
-            // the margin lands it exactly on `-1`, so add one back precisely there.
-            // (`floor(L) = -1` is unreachable: no input has `L in [-1, 0)`.)
+            // the margin lands it on `-1`, and no other input lands on `-1`
+            // (`L(1e18 - 1) < -1` and `L(1e18 + 1) > 0.9999`), so add 1 iff `r == -1`.
             r := add(iszero(not(r)), r)
         }
     }
