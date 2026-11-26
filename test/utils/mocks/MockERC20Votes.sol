@@ -31,6 +31,10 @@ contract MockERC20Votes is ERC20Votes, Brutalizer {
         _spendAllowance(owner, spender, amount);
     }
 
+    function _isLegacySpender(address) internal view virtual override returns (bool) {
+        return false;
+    }
+
     function directDelegate(address delegator, address delegatee) public {
         _delegate(delegator, delegatee);
     }

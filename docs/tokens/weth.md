@@ -2,6 +2,9 @@
 
 Simple Wrapped Ether implementation.
 
+All spenders are treated as ERC-8255 legacy-compatible because this contract
+has no owner-controlled spender policy.
+
 
 
 

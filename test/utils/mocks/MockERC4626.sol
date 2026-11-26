@@ -61,6 +61,10 @@ contract MockERC4626 is ERC4626 {
         return decimalsOffset;
     }
 
+    function _isLegacySpender(address) internal view virtual override returns (bool) {
+        return false;
+    }
+
     function _beforeWithdraw(uint256, uint256) internal override {
         unchecked {
             ++beforeWithdrawHookCalledCounter;
