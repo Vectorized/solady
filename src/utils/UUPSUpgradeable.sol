@@ -20,6 +20,8 @@ abstract contract UUPSUpgradeable is CallContextChecker {
 
     /// @dev The upgrade failed.
     error UpgradeFailed();
+    /// @dev The storagelayout mismatch.
+    error StorageLayoutMismatch();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -52,6 +54,10 @@ abstract contract UUPSUpgradeable is CallContextChecker {
     /// ```
     function _authorizeUpgrade(address newImplementation) internal virtual;
 
+    /// @dev Optional hook to guard against storage layout incompatibility.
+    /// Override in implementation if desired (e.g. compare a constant layout hash).
+    function _checkStorageLayout(address newImplementation) internal virtual {}
+
     /// @dev Returns the storage slot used by the implementation,
     /// as specified in [ERC1822](https://eips.ethereum.org/EIPS/eip-1822).
     ///
@@ -73,6 +79,7 @@ abstract contract UUPSUpgradeable is CallContextChecker {
         onlyProxy
     {
         _authorizeUpgrade(newImplementation);
+        _checkStorageLayout(newImplementation);
         /// @solidity memory-safe-assembly
         assembly {
             newImplementation := shr(96, shl(96, newImplementation)) // Clears upper 96 bits.
