@@ -816,9 +816,9 @@ contract FixedPointMathLibTest is SoladyTest {
 
     function testExpWadFast() public {
         // `[x, expWadFast(x), floor(E)]` with `E = exp(x / 1e18) * 1e18` exact.
-        // Certified: `expWadFast(x) <= E`, and for `x <= 46731834294601968657`
-        // (outputs up to `~1.97e38`, covering all `int128` values) the result
-        // is `floor(E)` or `floor(E) - 1`.
+        // Certified: `expWadFast(x) <= E`, and for `x <= 46918143602790025991`
+        // (outputs up to `~2.38e38`, covering all nonnegative `int128` values)
+        // the result is `floor(E)` or `floor(E) - 1`.
         // forgefmt: disable-next-item
         int256[3][33] memory v = [
             [int256(0), int256(1000000000000000000), int256(1000000000000000000)],
@@ -842,16 +842,16 @@ contract FixedPointMathLibTest is SoladyTest {
             [int256(25993019270997948527), int256(194368031998467068332484943241), int256(194368031998467068332484943241)],
             [int256(40000000000000000000), int256(235385266837019985407899910749034804), int256(235385266837019985407899910749034804)],
             [int256(46583160257220231983), int256(170141183460469231618605817547117587836), int256(170141183460469231618605817547117587836)],
-            [int256(46731834294601968656), int256(197413915948795302597903661418404646664), int256(197413915948795302597903661418404646664)],
-            [int256(46731834294601968657), int256(197413915948795302795317577367199949360), int256(197413915948795302795317577367199949361)],
-            [int256(50000000000000000000), int256(5184705528587072464087453322933485384809), int256(5184705528587072464087453322933485384827)],
-            [int256(82831088076913464779), int256(939906129562517908616601079225643138686523437500000000), int256(939906129562517908616601079225643138686684571791753957)],
-            [int256(100000000000000000000), int256(26881171418161354484126255515800135873544192000000000000000000), int256(26881171418161354484126255515800135873611118773741922415191608)],
+            [int256(46918143602790025990), int256(237843270371802937682540992743850452431), int256(237843270371802937682540992743850452432)],
+            [int256(46918143602790025991), int256(237843270371802937920384263115653390233), int256(237843270371802937920384263115653390233)],
+            [int256(50000000000000000000), int256(5184705528587072464087453322933485384813), int256(5184705528587072464087453322933485384827)],
+            [int256(82831088076913464779), int256(939906129562517908616601079225643138683593750000000000), int256(939906129562517908616601079225643138686684571791753957)],
+            [int256(100000000000000000000), int256(26881171418161354484126255515800135873560576000000000000000000), int256(26881171418161354484126255515800135873611118773741922415191608)],
             [int256(135305999368893231588), int256(57896044618658097649816762928942336782007752655546636828672000000000000000000), int256(57896044618658097649816762928942336782129491980154662247847962410455084893091)],
             [int256(-41446531673892822312), int256(1), int256(1)],
             [int256(-41446531673892822311), int256(1), int256(1)],
-            [int256(346573590264282617), int256(1414213562350905984), int256(1414213562350905984)],
-            [int256(346573590264282618), int256(1414213562350905986), int256(1414213562350905986)],
+            [int256(346573590279972654), int256(1414213562373095047), int256(1414213562373095047)],
+            [int256(346573590279972655), int256(1414213562373095049), int256(1414213562373095049)],
             [int256(1234567890123456789), int256(3436893084346008004), int256(3436893084346008004)],
             [int256(-9876543210987654321), int256(51365531132686), int256(51365531132686)]
         ];
@@ -860,7 +860,7 @@ contract FixedPointMathLibTest is SoladyTest {
                 int256 r = FixedPointMathLib.expWadFast(v[i][0]);
                 assertEq(r, v[i][1]);
                 assertLe(r, v[i][2]); // Never overestimates `floor(E)`.
-                if (v[i][0] <= 46731834294601968657) assertGe(r, v[i][2] - 1);
+                if (v[i][0] <= 46918143602790025991) assertGe(r, v[i][2] - 1);
             }
         }
         assertEq(FixedPointMathLib.expWadFast(-41446531673892822313), 0);
@@ -1007,8 +1007,8 @@ contract FixedPointMathLibTest is SoladyTest {
         x = _boundExpWadFastInput(x);
         uint256 fast = uint256(FixedPointMathLib.expWadFast(x));
         uint256 orig = uint256(FixedPointMathLib.expWad(x));
-        // `expWadFast` is certified within `5.07e-39` relative one-sided;
-        // `expWad`'s measured error is below `1e-17` relative.
+        // `expWadFast` satisfies `E * (1 - 1.4307 * 2**-128) - 1 < r <= E`;
+        // `expWad` agrees with `E` to within `E / 1e17 + 1` on the accepted domain.
         assertLe(FixedPointMathLib.dist(fast, orig), orig / 1e17 + 2);
     }
 
@@ -1060,18 +1060,13 @@ contract FixedPointMathLibTest is SoladyTest {
     }
 
     function _expWadFastSeamOf(int256 k) private pure returns (int256 x) {
-        // Smallest `x` whose range reduction lands on octave `k`, by binary
-        // search over the exact `k(x)` map (monotone nondecreasing).
+        // Smallest `x` whose range reduction lands on octave `k`: `ceil(((2*k - 1) * 2**201) / C_INV)`.
         unchecked {
-            int256 lo = -41446531673892822312;
-            int256 hi = 135305999368893231588;
-            while (lo < hi) {
-                int256 mid = (lo + hi) >> 1;
-                if (_expWadFastKOf(mid) >= k) hi = mid;
-                else lo = mid + 1;
-            }
-            assert(_expWadFastKOf(lo) == k && _expWadFastKOf(lo - 1) == k - 1);
-            return lo;
+            int256 c = 0x6a73bd23984bcd93c97a35e9aead95472e13;
+            int256 num = (2 * k - 1) << 201;
+            x = num / c;
+            if (num > 0 && num % c != 0) ++x;
+            assert(_expWadFastKOf(x) == k && _expWadFastKOf(x - 1) == k - 1);
         }
     }
 
