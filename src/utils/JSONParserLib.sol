@@ -438,6 +438,7 @@ library JSONParserLib {
                 if iszero(eq(c, 92)) {
                     // Not '"'.
                     if iszero(eq(c, 34)) {
+                        if lt(c, 0x20) { fail() }
                         mstore8(out, c)
                         out := add(out, 1)
                         continue
@@ -649,6 +650,7 @@ library JSONParserLib {
                     if eq(c_, 34) { break } // '"'.
                     // Not '\'.
                     if iszero(eq(c_, 92)) {
+                        if lt(c_, 0x20) { fail() }
                         _pOut := add(_pOut, 1)
                         continue
                     }
