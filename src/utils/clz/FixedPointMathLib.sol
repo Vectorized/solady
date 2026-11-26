@@ -271,6 +271,98 @@ library FixedPointMathLib {
         }
     }
 
+    /// @dev Returns `exp(x)`, denominated in `WAD`. Cheaper than `expWad` on accepted inputs,
+    /// with tighter pre-floor bounds and one-sided rounding.
+    /// Credit to David Dallaire (ddallaire) and Duncan Townsend (duncancmt) under MIT license.
+    /// Let `E = exp(x / 1e18) * 1e18` denote the exact, infinite-precision result.
+    /// Never overestimates: `E * (1 - 1.4307 * 2**-128) - 1 < r <= E`, so `r` is `floor(E)`
+    /// or `floor(E) - 1` whenever `x <= 46918143602790025991` (outputs up to `~2.38e38`,
+    /// covering every nonnegative exact output representable in `int128`).
+    /// `expWadFast(0) = 1e18` exactly. Returns `0` for `x <= -41446531673892822313`, and
+    /// reverts with `ExpOverflow()` for `x >= 135305999368893231589` (matching `expWad`).
+    /// Nondecreasing across all 255 range-reduction boundaries.
+    function expWadFast(int256 x) internal pure returns (int256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                // Accept `-41446531673892822312 <= x <= 135305999368893231588` with one
+                // unsigned check; inputs `>= 135305999368893231589` revert with `ExpOverflow()`
+                // (matching `expWad`), and inputs below have true result `< 1` wei (`r = 0`).
+                // Under `--via-ir` when inlined, the optimizer may hoist the pure arithmetic
+                // below above this guard; all intermediate ops remain total and discarded.
+                if iszero(lt(add(x, 41446531673892822312), 176752531042786053901)) {
+                    if sgt(x, 0) {
+                        mstore(0x00, 0xa37bfec9) // `ExpOverflow()`.
+                        revert(0x1c, 0x04)
+                    }
+                    r := 0
+                    break
+                }
+
+                // Convert `x` to base-2 exponent `y = x / (1e18 * ln(2))` in `Q202` with
+                // `C_INV = round(2**202 / (1e18 * ln(2)))`. On the accepted domain,
+                // `|p| < 2**210`, the constant error changes `2**y` by `< 0.0002 * 2**-128`
+                // relative, and `k = round(p / 2**202)` lies in `[-60, 195]`, so `195 - k`
+                // lies in `[0, 255]`. Let `u = p / 2**202 - k` in `(-1/2, 1/2)`.
+                // `n = shl(54, p)` holds `u * 2**256` with all 202 fractional bits intact,
+                // and `f = sar(127, n) = floor(u * 2**129)`. Across all 256 octaves,
+                // `|f| < 2**128 - 2**59`, so `v = f * f < 2**256` and `|n| < 2**255` never wrap.
+                let p := mul(x, 0x6a73bd23984bcd93c97a35e9aead95472e13)
+                let n := shl(54, p)
+                let f := sar(127, n)
+                let v := mul(f, f)
+
+                // Let `t = f / 2**129` in `(-1/2, 1/2)`. Using the reciprocal-symmetric form
+                // `A(t) = (C(t**2) + t) / (C(t**2) - t) = 1 + 2*t / (C(t**2) - t)`, the 10
+                // positive `Q129` constants (`17` bytes each) are the lattice-refined
+                // continued fraction of the `[10/10]` Remez approximant to `2**t * exp(-a*t)`
+                // on `[-1/2, 1/2]` (with `D0` decremented by 1 to center the `f`-floor bias
+                // in `den = C(t**2) - t`), where the odd tilt `a ~= 1.324 * 2**-128`
+                // (`~0.662 * 2**-128` at `t = +-1/2`) balances the `-3 * 2**-130` one-sided
+                // margin across the two halves while preserving `A(-t) = 1 / A(t)`.
+                // Passing `n = u * 2**256` directly to `sdiv(n, den >> 4)` (with `den >> 4`
+                // in `Q125`) preserves the low 127 bits of `u` in the linear numerator and
+                // yields `q = (2**130 - 3) + sdiv(n, den >> 4)` in one division. Multiplying
+                // `q` by exact `5**18 * 2**83 = 1e18 * 2**65` approximates `E * 2**(195 - k)`
+                // (`< 0.62 * 2**256`) before the closing floor shift by
+                // `195 - k = (390 - floor(p / 2**201)) >> 1`. On `[-1/2, 1/2]`,
+                // `q / 2**130 <= 2**(y - k)` and the pre-floor relative shortfall is
+                // `< 1.4307 * 2**-128` (`< 4.21e-39`). At `x = 0`, the margin lands one unit
+                // below `1e18`, and `iszero(x)` restores exact `1e18`.
+                // forgefmt: disable-next-item
+                r := add(
+                    iszero(x),
+                    shr(
+                        shr(1, sub(390, sar(201, p))),
+                        mul(
+                            0x1bc16d674ec800000000000000000000,
+                            add(
+                                0x3fffffffffffffffffffffffffffffffd,
+                                sdiv(
+                                    n,
+                                    shr(
+                                        4,
+                                        add(sub(0x5c551d94ae0bf85ddf43ff68348e9f454, f),
+                                        div(v, add(0x114ff58be0a23e9199dcbfe389dabebd6c,
+                                        div(v, add(0x1cda993e7663bd9d55c53fd090aa130722,
+                                        div(v, add(0x28653cf10c253ca911adbfccbf014f046e,
+                                        div(v, add(0x33efe0a3a1e6bbb4cd99a4b12712c29cf5,
+                                        div(v, add(0x3f7a845637a83ac1384c8ff39ba40f6037,
+                                        div(v, add(0x4b052808cd69d894eeadda077d9867b7aa,
+                                        div(v, add(0x568fcbbb67b9f6161f9f9a099fdcb43109,
+                                        div(v, add(0x621a6ff60123286f8e24b679c68e5b8d96,
+                                        div(v, 0x6db02aa65ba05766e2174cad821028b2c9))))))))))))))))))
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+                break
+            }
+        }
+    }
+
     /// @dev Returns `ln(x)`, denominated in `WAD`.
     /// Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln
     /// Note: This function is an approximation. Monotonically increasing.
@@ -335,6 +427,71 @@ library FixedPointMathLib {
             p := add(600920179829731861736702779321621459595472258049074101567377883020018308, p)
             // Base conversion: mul `2**18 / 2**192`.
             r := sar(174, p)
+        }
+    }
+
+    /// @dev Returns `ln(x)`, denominated in `WAD`. Cheaper than `lnWad`.
+    /// Credit to David Dallaire (ddallaire) and Duncan Townsend (duncancmt) under MIT license.
+    /// Let `L = ln(x / 1e18) * 1e18` denote the exact, infinite-precision result.
+    /// Never overestimates: always returns `floor(L)` or `floor(L) - 1`.
+    /// `lnWadFast(1e18) = 0` exactly. Nondecreasing.
+    function lnWadFast(int256 x) internal pure returns (int256 r) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if iszero(sgt(x, 0)) {
+                mstore(0x00, 0x1615e638) // `LnWadUndefined()`.
+                revert(0x1c, 0x04)
+            }
+
+            // Compute `r = clz(x)` in `[1, 255]`, then normalize to a `Q71` mantissa `m`
+            // in `[2**71, 2**72 - 1]`. Truncation only underestimates `ln(x)` by
+            // `< 2**-71 * 1e18` (`< 0.000424` wei). Scale `r` by `LN2_Q20` early for
+            // tighter stack scheduling under Osaka legacy codegen.
+            r := clz(x)
+            x := shr(184, shl(r, x))
+            r := mul(0x99e8db03256ce5d6acfc, r)
+
+            // Center on `c = round(sqrt(2) * 2**71)` (`9` bytes):
+            // `ln(m / 2**71) = ln(c / 2**71) + 2 * atanh(s_r)` where
+            // `s_r = (m - c) / (m + c) = 1 - 2*c / (m + c)` satisfies `|s_r| <= 3 - 2*sqrt(2)`.
+            // Evaluating `s = 2**70 - floor((c << 71) / (m + c))` via unsigned `div` rounds
+            // `s / 2**70` upward from `s_r` by `< 2**-70` (`u = s**2` in `Q140`, zero shifts).
+            let c := 0xb504f333f9de648459
+            let s := sub(shl(70, 1), div(shl(71, c), add(x, c)))
+            let u := mul(s, s)
+
+            // The 7 positive `Q70` constants (`9` bytes each) are the lattice-refined
+            // continued fraction `d(u)` of the `[7/6]` Remez approximant to `2 * atanh(s_r)`,
+            // scaled to `WAD` by gauge factor `alpha = 2**61 / 1e18` (multiplying even terms
+            // by `alpha` and dividing odd terms by `alpha`) so `sdiv(s << 81, d(u))` lands
+            // directly in `Q20` WAD units without a WAD multiplication. On the encoded range
+            // `|s| <= 202557498867041663911`, the rational error is `<= 0.041605` wei and
+            // upward rounding totals `< 0.00200472` wei (`< 0.04360972` wei combined, covered
+            // by the `> 0.04361024` wei margin folded into the `Q20` bias); downward rounding
+            // totals `< 0.000783` wei, keeping the accumulator in `(L - 0.0860, L]` so
+            // `sar(20, ...)` always lands on `floor(L)` or `floor(L) - 1`.
+            // forgefmt: disable-next-item
+            r := sar(
+                20,
+                add(
+                    sub(0x75a8ec06363475913bc365, r),
+                    sdiv(
+                        shl(81, s),
+                        sub(0x49c97747490eae7a05,
+                        div(u, sub(0xa688906bd8b13d41b5,
+                        div(u, sub(0x5c3bd51917af114e67,
+                        div(u, sub(0xacb38c5a6f4e6f26f0,
+                        div(u, sub(0x5d62efb01a897d9ae3,
+                        div(u, sub(0xadbe79b5eedca6a560,
+                        div(u, 0x5b0d661aadd0aaecc6))))))))))))
+                    )
+                )
+            )
+
+            // `ln(1e18 / 1e18) = 0` is the only exact integer result in the domain;
+            // the margin lands it on `-1`, and no other input lands on `-1`
+            // (`L(1e18 - 1) < -1` and `L(1e18 + 1) > 0.9999`), so add 1 iff `r == -1`.
+            r := add(iszero(not(r)), r)
         }
     }
 

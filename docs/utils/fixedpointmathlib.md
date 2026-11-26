@@ -147,10 +147,7 @@ Equivalent to `(x * y) / WAD` rounded down.
 ### rawMulWad(uint256,uint256)
 
 ```solidity
-function rawMulWad(uint256 x, uint256 y)
-    internal
-    pure
-    returns (uint256 z)
+function rawMulWad(uint256 x, uint256 y) internal pure returns (uint256 z)
 ```
 
 Equivalent to `(x * y) / WAD` rounded down, but without overflow checks.
@@ -201,10 +198,7 @@ Equivalent to `(x * WAD) / y` rounded down.
 ### rawDivWad(uint256,uint256)
 
 ```solidity
-function rawDivWad(uint256 x, uint256 y)
-    internal
-    pure
-    returns (uint256 z)
+function rawDivWad(uint256 x, uint256 y) internal pure returns (uint256 z)
 ```
 
 Equivalent to `(x * WAD) / y` rounded down, but without overflow and divide by zero checks.
@@ -256,6 +250,23 @@ Returns `exp(x)`, denominated in `WAD`.
 Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln   
 Note: This function is an approximation. Monotonically increasing.
 
+### expWadFast(int256)
+
+```solidity
+function expWadFast(int256 x) internal pure returns (int256 r)
+```
+
+Returns `exp(x)`, denominated in `WAD`. Cheaper than `expWad` on accepted inputs,   
+with tighter pre-floor bounds and one-sided rounding.   
+Credit to David Dallaire (ddallaire) and Duncan Townsend (duncancmt) under MIT license.   
+Let `E = exp(x / 1e18) * 1e18` denote the exact, infinite-precision result.   
+Never overestimates: `E * (1 - 1.4307 * 2**-128) - 1 < r <= E`, so `r` is `floor(E)`   
+or `floor(E) - 1` whenever `x <= 46918143602790025991` (outputs up to `~2.38e38`,   
+covering every nonnegative exact output representable in `int128`).   
+`expWadFast(0) = 1e18` exactly. Returns `0` for `x <= -41446531673892822313`, and   
+reverts with `ExpOverflow()` for `x >= 135305999368893231589` (matching `expWad`).   
+Nondecreasing across all 255 range-reduction boundaries.
+
 ### lnWad(int256)
 
 ```solidity
@@ -266,10 +277,25 @@ Returns `ln(x)`, denominated in `WAD`.
 Credit to Remco Bloemen under MIT license: https://2π.com/22/exp-ln   
 Note: This function is an approximation. Monotonically increasing.
 
+### lnWadFast(int256)
+
+```solidity
+function lnWadFast(int256 x) internal pure returns (int256 r)
+```
+
+Returns `ln(x)`, denominated in `WAD`. Cheaper than `lnWad`.   
+Credit to David Dallaire (ddallaire) and Duncan Townsend (duncancmt) under MIT license.   
+Let `L = ln(x / 1e18) * 1e18` denote the exact, infinite-precision result.   
+Never overestimates: always returns `floor(L)` or `floor(L) - 1`.   
+`lnWadFast(1e18) = 0` exactly. Nondecreasing.
+
 ### lambertW0Wad(int256)
 
 ```solidity
-function lambertW0Wad(int256 x) internal pure returns (int256 w)
+function lambertW0Wad(int256 x)
+    internal
+    pure
+    returns (int256 w)
 ```
 
 Returns `W_0(x)`, denominated in `WAD`.   
@@ -759,7 +785,7 @@ function lerp(uint256 a, uint256 b, uint256 t, uint256 begin, uint256 end)
 Returns `a + (b - a) * (t - begin) / (end - begin)`,   
 with `t` clamped between `begin` and `end` (inclusive).   
 Agnostic to the order of (`a`, `b`) and (`end`, `begin`).   
-If `begins == end`, returns `t <= begin ? a : b`.
+If `begin == end`, returns `t <= begin ? a : b`.
 
 ### lerp(int256,int256,int256,int256,int256)
 
@@ -773,7 +799,7 @@ function lerp(int256 a, int256 b, int256 t, int256 begin, int256 end)
 Returns `a + (b - a) * (t - begin) / (end - begin)`.   
 with `t` clamped between `begin` and `end` (inclusive).   
 Agnostic to the order of (`a`, `b`) and (`end`, `begin`).   
-If `begins == end`, returns `t <= begin ? a : b`.
+If `begin == end`, returns `t <= begin ? a : b`.
 
 ### isEven(uint256)
 

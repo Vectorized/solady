@@ -868,6 +868,276 @@ contract FixedPointMathLibTest is SoladyTest {
         return FixedPointMathLib.lnWad(x);
     }
 
+    function expWadFast(int256 x) public pure returns (int256) {
+        return FixedPointMathLib.expWadFast(x);
+    }
+
+    function lnWadFast(int256 x) public pure returns (int256) {
+        return FixedPointMathLib.lnWadFast(x);
+    }
+
+    function testExpWadFast() public {
+        // `[x, expWadFast(x), floor(E)]` with `E = exp(x / 1e18) * 1e18` exact.
+        // Certified: `expWadFast(x) <= E`, and for `x <= 46918143602790025991`
+        // (outputs up to `~2.38e38`, covering all nonnegative `int128` values)
+        // the result is `floor(E)` or `floor(E) - 1`.
+        // forgefmt: disable-next-item
+        int256[3][33] memory v = [
+            [int256(0), int256(1000000000000000000), int256(1000000000000000000)],
+            [int256(1), int256(1000000000000000001), int256(1000000000000000001)],
+            [int256(-1), int256(999999999999999999), int256(999999999999999999)],
+            [int256(2), int256(1000000000000000002), int256(1000000000000000002)],
+            [int256(-2), int256(999999999999999998), int256(999999999999999998)],
+            [int256(1000000000000000000), int256(2718281828459045235), int256(2718281828459045235)],
+            [int256(-1000000000000000000), int256(367879441171442321), int256(367879441171442321)],
+            [int256(2000000000000000000), int256(7389056098930650227), int256(7389056098930650227)],
+            [int256(-2000000000000000000), int256(135335283236612691), int256(135335283236612691)],
+            [int256(3000000000000000000), int256(20085536923187667740), int256(20085536923187667740)],
+            [int256(-3000000000000000000), int256(49787068367863942), int256(49787068367863942)],
+            [int256(500000000000000000), int256(1648721270700128146), int256(1648721270700128146)],
+            [int256(-500000000000000000), int256(606530659712633423), int256(606530659712633423)],
+            [int256(300000000000000000), int256(1349858807576003103), int256(1349858807576003103)],
+            [int256(-300000000000000000), int256(740818220681717866), int256(740818220681717866)],
+            [int256(693147180559945309), int256(1999999999999999999), int256(1999999999999999999)],
+            [int256(10000000000000000000), int256(22026465794806716516957), int256(22026465794806716516957)],
+            [int256(25000000000000000000), int256(72004899337385872524161351466), int256(72004899337385872524161351466)],
+            [int256(25993019270997948527), int256(194368031998467068332484943241), int256(194368031998467068332484943241)],
+            [int256(40000000000000000000), int256(235385266837019985407899910749034804), int256(235385266837019985407899910749034804)],
+            [int256(46583160257220231983), int256(170141183460469231618605817547117587836), int256(170141183460469231618605817547117587836)],
+            [int256(46918143602790025990), int256(237843270371802937682540992743850452431), int256(237843270371802937682540992743850452432)],
+            [int256(46918143602790025991), int256(237843270371802937920384263115653390233), int256(237843270371802937920384263115653390233)],
+            [int256(50000000000000000000), int256(5184705528587072464087453322933485384813), int256(5184705528587072464087453322933485384827)],
+            [int256(82831088076913464779), int256(939906129562517908616601079225643138683593750000000000), int256(939906129562517908616601079225643138686684571791753957)],
+            [int256(100000000000000000000), int256(26881171418161354484126255515800135873560576000000000000000000), int256(26881171418161354484126255515800135873611118773741922415191608)],
+            [int256(135305999368893231588), int256(57896044618658097649816762928942336782007752655546636828672000000000000000000), int256(57896044618658097649816762928942336782129491980154662247847962410455084893091)],
+            [int256(-41446531673892822312), int256(1), int256(1)],
+            [int256(-41446531673892822311), int256(1), int256(1)],
+            [int256(346573590279972654), int256(1414213562373095047), int256(1414213562373095047)],
+            [int256(346573590279972655), int256(1414213562373095049), int256(1414213562373095049)],
+            [int256(1234567890123456789), int256(3436893084346008004), int256(3436893084346008004)],
+            [int256(-9876543210987654321), int256(51365531132686), int256(51365531132686)]
+        ];
+        unchecked {
+            for (uint256 i; i != 33; ++i) {
+                int256 r = FixedPointMathLib.expWadFast(v[i][0]);
+                assertEq(r, v[i][1]);
+                assertLe(r, v[i][2]); // Never overestimates `floor(E)`.
+                if (v[i][0] <= 46918143602790025991) assertGe(r, v[i][2] - 1);
+            }
+        }
+        assertEq(FixedPointMathLib.expWadFast(-41446531673892822313), 0);
+        assertEq(FixedPointMathLib.expWadFast(type(int256).min), 0);
+    }
+
+    function testLnWadFast() public {
+        // `[x, lnWadFast(x), floor(L)]` with `L = ln(x / 1e18) * 1e18` exact.
+        // Certified: the result is always `floor(L)` or `floor(L) - 1`.
+        // forgefmt: disable-next-item
+        int256[3][32] memory v = [
+            [int256(1), int256(-41446531673892822313), int256(-41446531673892822313)],
+            [int256(2), int256(-40753384493332877003), int256(-40753384493332877003)],
+            [int256(3), int256(-40347919385224712621), int256(-40347919385224712621)],
+            [int256(1000), int256(-34538776394910685261), int256(-34538776394910685261)],
+            [int256(1000000000), int256(-20723265836946411157), int256(-20723265836946411157)],
+            [int256(1000000000000000), int256(-6907755278982137053), int256(-6907755278982137053)],
+            [int256(100000000000000000), int256(-2302585092994045685), int256(-2302585092994045685)],
+            [int256(300000000000000000), int256(-1203972804325935993), int256(-1203972804325935993)],
+            [int256(700000000000000000), int256(-356674943938732379), int256(-356674943938732379)],
+            [int256(999999999999999999), int256(-2), int256(-2)],
+            [int256(1000000000000000000), int256(0), int256(0)],
+            [int256(1000000000000000001), int256(0), int256(0)],
+            [int256(1000000000000000002), int256(1), int256(1)],
+            [int256(1414213562373095048), int256(346573590279972654), int256(346573590279972654)],
+            [int256(2718281828459045235), int256(999999999999999999), int256(999999999999999999)],
+            [int256(2000000000000000000), int256(693147180559945309), int256(693147180559945309)],
+            [int256(5000000000000000000), int256(1609437912434100374), int256(1609437912434100374)],
+            [int256(10000000000000000000), int256(2302585092994045683), int256(2302585092994045684)],
+            [int256(31415926535897932384), int256(3447314978843445858), int256(3447314978843445858)],
+            [int256(1000000000000000000000), int256(6907755278982137052), int256(6907755278982137052)],
+            [int256(4722366482869645210699), int256(8460065326423239964), int256(8460065326423239965)],
+            [int256(1000000000000000000000000), int256(13815510557964274104), int256(13815510557964274104)],
+            [int256(1000000000000000000000000000), int256(20723265836946411156), int256(20723265836946411156)],
+            [int256(1000000000000000000000000000000000000), int256(41446531673892822312), int256(41446531673892822312)],
+            [int256(999999999999999999999), int256(6907755278982137052), int256(6907755278982137052)],
+            [int256(79228162514264337593543950336), int256(25095597659861927391), int256(25095597659861927391)],
+            [int256(340282366920938463463374607431768211456), int256(47276307437780177293), int256(47276307437780177293)],
+            [int256(1461501637330902918203684832716283019655932542976), int256(69457017215698427194), int256(69457017215698427194)],
+            [int256(1606938044258990275541962092341162602522202993782792835301376), int256(97182904438096239571), int256(97182904438096239571)],
+            [int256(28948022309329048855892746252171976963317496166410141009864396001978282409984), int256(134612852188333286279), int256(134612852188333286279)],
+            [int256(28948022309329049033012450883287947656941812176334275215783788787470287503360), int256(134612852188333286285), int256(134612852188333286285)],
+            [int256(57896044618658097711785492504343953926634992332820282019728792003956564819967), int256(135305999368893231588), int256(135305999368893231589)]
+        ];
+        unchecked {
+            for (uint256 i; i != 32; ++i) {
+                int256 r = FixedPointMathLib.lnWadFast(v[i][0]);
+                assertEq(r, v[i][1]);
+                assertTrue(r == v[i][2] || r == v[i][2] - 1);
+            }
+        }
+    }
+
+    function testExpWadFastOverflowReverts() public {
+        vm.expectRevert(FixedPointMathLib.ExpOverflow.selector);
+        this.expWadFast(135305999368893231589);
+        vm.expectRevert(FixedPointMathLib.ExpOverflow.selector);
+        this.expWadFast(type(int256).max);
+        assertGt(this.expWadFast(135305999368893231588), 0);
+    }
+
+    function testLnWadFastNegativeReverts() public {
+        vm.expectRevert(FixedPointMathLib.LnWadUndefined.selector);
+        this.lnWadFast(-1);
+        vm.expectRevert(FixedPointMathLib.LnWadUndefined.selector);
+        this.lnWadFast(-2 ** 255);
+        vm.expectRevert(FixedPointMathLib.LnWadUndefined.selector);
+        this.lnWadFast(0);
+    }
+
+    function testExpWadFastMonotonicallyIncreasing(int256 a, int256 b) public {
+        a = _boundExpWadFastInput(a);
+        b = _boundExpWadFastInput(b);
+        if (a > b) (a, b) = (b, a);
+        assertLe(FixedPointMathLib.expWadFast(a), FixedPointMathLib.expWadFast(b));
+    }
+
+    function testExpWadFastMonotonicallyIncreasingAround(int256 t) public {
+        t = _boundExpWadFastInput(t);
+        unchecked {
+            for (int256 x = t - 2; x != t + 2; ++x) {
+                if (x < 135305999368893231588) {
+                    assertLe(FixedPointMathLib.expWadFast(x), FixedPointMathLib.expWadFast(x + 1));
+                }
+            }
+        }
+    }
+
+    function testExpWadFastSeamsMonotonic() public {
+        // Exhaustively checks the adjacent-input pair at every `2**k` seam of the
+        // range reduction, where the reduced argument jumps across the full fitted
+        // domain. These are the only monotonicity-critical points; the certified
+        // per-wei accumulator gain dominates everywhere else.
+        unchecked {
+            for (int256 k = -59; k <= 195; ++k) {
+                int256 x = _expWadFastSeamOf(k);
+                assertLe(FixedPointMathLib.expWadFast(x - 1), FixedPointMathLib.expWadFast(x));
+            }
+        }
+    }
+
+    function testLnWadFastOctaveSeamsMonotonic() public {
+        // Exhaustively checks the adjacent-input pair at every power-of-two
+        // mantissa boundary.
+        unchecked {
+            for (uint256 n = 1; n != 255; ++n) {
+                assertLe(
+                    FixedPointMathLib.lnWadFast(int256(1 << n) - 1),
+                    FixedPointMathLib.lnWadFast(int256(1 << n))
+                );
+            }
+        }
+    }
+
+    function testLnWadFastMonotonicallyIncreasing(uint256 a, uint256 b) public {
+        a = _bound(a, 1, 2 ** 255 - 1);
+        b = _bound(b, 1, 2 ** 255 - 1);
+        if (a > b) (a, b) = (b, a);
+        assertLe(FixedPointMathLib.lnWadFast(int256(a)), FixedPointMathLib.lnWadFast(int256(b)));
+    }
+
+    function testExpWadFastLnWadFastRoundTrip(int256 x) public {
+        // Both functions never overestimate, so the round trips can never exceed
+        // the identity: `lnWadFast(expWadFast(x)) <= x` and vice versa.
+        x = _boundExpWadFastInput(x);
+        int256 e = FixedPointMathLib.expWadFast(x);
+        if (e > 0) assertLe(FixedPointMathLib.lnWadFast(e), x);
+    }
+
+    function testLnWadFastExpWadFastRoundTrip(uint256 x_) public {
+        int256 x = int256(_bound(x_, 1, 2 ** 255 - 1));
+        int256 l = FixedPointMathLib.lnWadFast(x);
+        assertLe(FixedPointMathLib.expWadFast(l), x);
+    }
+
+    function testLnWadFastDifferential(uint256 x_) public {
+        int256 x = int256(_bound(x_, 1, 2 ** 255 - 1));
+        assertLe(
+            FixedPointMathLib.dist(FixedPointMathLib.lnWadFast(x), FixedPointMathLib.lnWad(x)), 2
+        );
+    }
+
+    function testExpWadFastDifferential(int256 x) public {
+        x = _boundExpWadFastInput(x);
+        uint256 fast = uint256(FixedPointMathLib.expWadFast(x));
+        uint256 orig = uint256(FixedPointMathLib.expWad(x));
+        // `expWadFast` satisfies `E * (1 - 1.4307 * 2**-128) - 1 < r <= E`;
+        // `expWad` agrees with `E` to within `E / 1e17 + 1` on the accepted domain.
+        assertLe(FixedPointMathLib.dist(fast, orig), orig / 1e17 + 2);
+    }
+
+    function testExpWadGas() public {
+        unchecked {
+            uint256 acc;
+            for (int256 x = -40e18; x <= 130e18; x += 10e18) {
+                acc ^= uint256(FixedPointMathLib.expWad(x));
+            }
+            assertTrue(acc != 0);
+        }
+    }
+
+    function testExpWadFastGas() public {
+        unchecked {
+            uint256 acc;
+            for (int256 x = -40e18; x <= 130e18; x += 10e18) {
+                acc ^= uint256(FixedPointMathLib.expWadFast(x));
+            }
+            assertTrue(acc != 0);
+        }
+    }
+
+    function testLnWadGas() public {
+        unchecked {
+            uint256 acc;
+            for (int256 x = 1e9; x <= 1e63; x *= 1e6) {
+                acc ^= uint256(FixedPointMathLib.lnWad(x));
+            }
+            assertTrue(acc != 0);
+        }
+    }
+
+    function testLnWadFastGas() public {
+        unchecked {
+            uint256 acc;
+            for (int256 x = 1e9; x <= 1e63; x *= 1e6) {
+                acc ^= uint256(FixedPointMathLib.lnWadFast(x));
+            }
+            assertTrue(acc != 0);
+        }
+    }
+
+    function _boundExpWadFastInput(int256 x) private pure returns (int256) {
+        unchecked {
+            // Map into `[-41446531673892822312, 135305999368893231588]`.
+            return -41446531673892822312 + int256(uint256(x) % 176752531042786053901);
+        }
+    }
+
+    function _expWadFastSeamOf(int256 k) private pure returns (int256 x) {
+        // Smallest `x` whose range reduction lands on octave `k`: `ceil(((2*k - 1) * 2**201) / C_INV)`.
+        unchecked {
+            int256 c = 0x6a73bd23984bcd93c97a35e9aead95472e13;
+            int256 num = (2 * k - 1) << 201;
+            x = num / c;
+            if (num > 0 && num % c != 0) ++x;
+            assert(_expWadFastKOf(x) == k && _expWadFastKOf(x - 1) == k - 1);
+        }
+    }
+
+    function _expWadFastKOf(int256 x) private pure returns (int256) {
+        unchecked {
+            return (((x * 0x6a73bd23984bcd93c97a35e9aead95472e13) >> 201) + 1) >> 1;
+        }
+    }
+
     function testRPow() public {
         assertEq(FixedPointMathLib.rpow(0, 0, 0), 0);
         assertEq(FixedPointMathLib.rpow(1, 0, 0), 0);
