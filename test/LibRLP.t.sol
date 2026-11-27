@@ -7,6 +7,7 @@ import {FixedPointMathLib} from "../src/utils/FixedPointMathLib.sol";
 
 contract LibRLPTest is SoladyTest {
     using LibRLP for LibRLP.List;
+    using LibRLP for LibRLP.Item;
 
     function testComputeAddressDifferential(address deployer, uint256 nonce) public {
         address computed = LibRLP.computeAddress(_brutalized(deployer), nonce);
@@ -652,6 +653,278 @@ contract LibRLPTest is SoladyTest {
         if (n <= 0x00ffffff) return 2;
         if (n <= 0xffffffff) return 3;
         revert();
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    RLP DECODING TESTS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function testRLPDecodeKnownVectors() public {
+        // Empty string.
+        assertEq(LibRLP.decodeBytes(hex"80"), hex"");
+        // Single byte below 0x80.
+        assertEq(LibRLP.decodeBytes(hex"00"), hex"00");
+        assertEq(LibRLP.decodeBytes(hex"0f"), hex"0f");
+        assertEq(LibRLP.decodeBytes(hex"7f"), hex"7f");
+        // Short string.
+        assertEq(LibRLP.decodeBytes(hex"83646f67"), "dog");
+        // Scalars.
+        assertEq(LibRLP.decodeUint256(hex"80"), 0);
+        assertEq(LibRLP.decodeUint256(hex"00"), 0);
+        assertEq(LibRLP.decodeUint256(hex"0f"), 15);
+        assertEq(LibRLP.decodeUint256(hex"820400"), 1024);
+        assertEq(LibRLP.decodeUint256(hex"8180"), 0x80);
+        assertEq(LibRLP.decodeUint256(hex"88ab54a98ceb1f0ad2"), 12345678901234567890);
+    }
+
+    function testRLPDecodeBytesRoundTrip(bytes32) public {
+        bytes memory x = _randomBytesZeroRightPadded();
+        _maybeBzztMemory();
+        bytes memory encoded = LibRLP.encode(x);
+        _checkAndMaybeBzztMemory(encoded);
+        bytes memory decoded = LibRLP.decodeBytes(encoded);
+        _checkMemory(decoded);
+        assertEq(decoded, x);
+    }
+
+    function testRLPDecodeBytesEdgeCases() public {
+        assertEq(LibRLP.decodeBytes(LibRLP.encode(_repeatFF(0))), _repeatFF(0));
+        assertEq(LibRLP.decodeBytes(LibRLP.encode(_repeatFF(1))), _repeatFF(1));
+        assertEq(LibRLP.decodeBytes(LibRLP.encode(_repeatFF(55))), _repeatFF(55));
+        assertEq(LibRLP.decodeBytes(LibRLP.encode(_repeatFF(56))), _repeatFF(56));
+        assertEq(LibRLP.decodeBytes(LibRLP.encode(_repeatFF(255))), _repeatFF(255));
+        assertEq(LibRLP.decodeBytes(LibRLP.encode(_repeatFF(256))), _repeatFF(256));
+        assertEq(LibRLP.decodeBytes(LibRLP.encode(_repeatFF(1000))), _repeatFF(1000));
+    }
+
+    function testRLPDecodeUintRoundTrip(uint256 x) public {
+        _maybeBzztMemory();
+        bytes memory encoded = LibRLP.encode(x);
+        _checkAndMaybeBzztMemory(encoded);
+        assertEq(LibRLP.decodeUint256(encoded), x);
+    }
+
+    function testRLPDecodeUint() public {
+        unchecked {
+            uint256 x = type(uint256).max;
+            while (x != 0) {
+                assertEq(LibRLP.decodeUint256(LibRLP.encode(x)), x);
+                assertEq(LibRLP.decodeUint256(LibRLP.encode(x - 1)), x - 1);
+                x >>= 8;
+            }
+        }
+    }
+
+    function testRLPDecodeAddressRoundTrip(address x) public {
+        _maybeBzztMemory();
+        bytes memory encoded = LibRLP.encode(_brutalized(x));
+        _checkAndMaybeBzztMemory(encoded);
+        assertEq(LibRLP.decodeAddress(encoded), x);
+    }
+
+    function testRLPDecodeAddressSingleByte() public {
+        // External encoders may encode small addresses (e.g. precompiles) as a single byte.
+        assertEq(LibRLP.decodeAddress(hex"01"), address(uint160(1)));
+        assertEq(LibRLP.decodeAddress(hex"7f"), address(uint160(0x7f)));
+        // The standard 21-byte encoding.
+        assertEq(
+            LibRLP.decodeAddress(hex"941111111111111111111111111111111111111111"),
+            0x1111111111111111111111111111111111111111
+        );
+    }
+
+    function testRLPDecodeBytes32() public {
+        bytes32 x = keccak256("hello");
+        bytes memory encoded = abi.encodePacked(hex"a0", x);
+        assertEq(LibRLP.decodeBytes32(encoded), x);
+        // Scalar encodings are right-aligned into the bytes32.
+        assertEq(LibRLP.decodeBytes32(hex"820400"), bytes32(uint256(1024)));
+        assertEq(LibRLP.decodeBytes32(hex"80"), bytes32(0));
+    }
+
+    function testRLPDecodeNonCanonical() public {
+        // Leading zero bytes in a scalar are accepted (permissive).
+        assertEq(LibRLP.decodeUint256(hex"820000"), 0);
+        assertEq(
+            LibRLP.decodeUint256(hex"8900ab54a98ceb1f0ad2"),
+            LibRLP.decodeUint256(hex"88ab54a98ceb1f0ad2")
+        );
+    }
+
+    function decodeBytesExt(bytes memory x) external pure returns (bytes memory) {
+        return LibRLP.decodeBytes(x);
+    }
+
+    function decodeUint256Ext(bytes memory x) external pure returns (uint256) {
+        return LibRLP.decodeUint256(x);
+    }
+
+    function decodeAddressExt(bytes memory x) external pure returns (address) {
+        return LibRLP.decodeAddress(x);
+    }
+
+    function decodeListLengthExt(bytes memory x) external pure returns (uint256) {
+        return LibRLP.decodeList(x).length;
+    }
+
+    function testRLPDecodeInvalidReverts() public {
+        // Empty input.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeBytesExt(hex"");
+        // A single byte below 0x80 wrapped with a prefix.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeBytesExt(hex"8100");
+        // Short string claiming more bytes than available.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeBytesExt(hex"83646f");
+        // Long string with a leading zero in the length.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeBytesExt(hex"b90001");
+        // Long string whose decoded length is not greater than 55.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeBytesExt(hex"b837");
+        // A list cannot be decoded as bytes.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeBytesExt(hex"c0");
+        // A 33-byte string cannot be decoded as a uint256.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeUint256Ext(abi.encodePacked(hex"a1", uint256(0), uint8(0)));
+        // A string cannot be decoded as a list.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeListLengthExt(hex"83646f67");
+        // An address must be 1 or 21 bytes.
+        vm.expectRevert(LibRLP.RLPDecodingFailed.selector);
+        this.decodeAddressExt(hex"820400");
+    }
+
+    function testRLPDecodeEmptyList() public {
+        LibRLP.Item[] memory items = LibRLP.decodeList(hex"c0");
+        assertEq(items.length, 0);
+    }
+
+    function testRLPDecodeListKnownVector() public {
+        // ["cat", "dog"]
+        LibRLP.Item[] memory items = LibRLP.decodeList(hex"c88363617483646f67");
+        assertEq(items.length, 2);
+        assertEq(items[0].decodeBytes(), "cat");
+        assertEq(items[1].decodeBytes(), "dog");
+        assertFalse(items[0].isList());
+        assertFalse(items[1].isList());
+    }
+
+    function testRLPDecodeNestedList() public {
+        // The "set of three": [ [], [[]], [ [], [[]] ] ]
+        LibRLP.Item[] memory items = LibRLP.decodeList(hex"c7c0c1c0c3c0c1c0");
+        assertEq(items.length, 3);
+        assertTrue(items[0].isList());
+        assertTrue(items[1].isList());
+        assertTrue(items[2].isList());
+
+        assertEq(items[0].decodeList().length, 0);
+
+        LibRLP.Item[] memory sub1 = items[1].decodeList();
+        assertEq(sub1.length, 1);
+        assertEq(sub1[0].decodeList().length, 0);
+
+        LibRLP.Item[] memory sub2 = items[2].decodeList();
+        assertEq(sub2.length, 2);
+        assertEq(sub2[0].decodeList().length, 0);
+        assertEq(sub2[1].decodeList().length, 1);
+    }
+
+    function testRLPDecodeListIteratorEquivalence() public {
+        bytes memory encoded = LibRLP.p(uint256(1)).p(uint256(2)).p(uint256(3)).encode();
+        LibRLP.Item[] memory items = LibRLP.decodeList(encoded);
+        assertEq(items.length, 3);
+
+        // Iterating with `next` must visit the same items as the array.
+        uint256 i;
+        for (LibRLP.Item memory it = items[0]; !it.isEmpty(); it = it.next()) {
+            assertEq(it._data, items[i]._data);
+            assertEq(it.decodeUint256(), i + 1);
+            unchecked {
+                ++i;
+            }
+        }
+        assertEq(i, 3);
+        // `next` past the last item yields an empty item.
+        assertTrue(items[2].next().isEmpty());
+    }
+
+    function testRLPDecodeListRoundTrip(uint256) public {
+        unchecked {
+            uint256 n = _bound(_random(), 0, 8);
+            LibRLP.List memory l;
+            uint256[] memory values = new uint256[](n);
+            for (uint256 i; i != n; ++i) {
+                uint256 v = _random();
+                values[i] = v;
+                l.p(v);
+            }
+            _maybeBzztMemory();
+            bytes memory encoded = LibRLP.encode(l);
+            _checkAndMaybeBzztMemory(encoded);
+            LibRLP.Item[] memory items = LibRLP.decodeList(encoded);
+            assertEq(items.length, n);
+            for (uint256 i; i != n; ++i) {
+                assertEq(items[i].decodeUint256(), values[i]);
+                assertFalse(items[i].isList());
+            }
+        }
+    }
+
+    function testRLPDecodeLongListRoundTrip() public {
+        unchecked {
+            // 20 elements of 32 bytes each forces a long-list encoding (>55 byte payload).
+            uint256 n = 20;
+            LibRLP.List memory l;
+            for (uint256 i; i != n; ++i) {
+                l.p((1 << 255) ^ i);
+            }
+            bytes memory encoded = LibRLP.encode(l);
+            LibRLP.Item[] memory items = LibRLP.decodeList(encoded);
+            assertEq(items.length, n);
+            for (uint256 i; i != n; ++i) {
+                assertEq(items[i].decodeUint256(), (1 << 255) ^ i);
+            }
+        }
+    }
+
+    function testRLPDecodeMixedListRoundTrip(bytes32) public {
+        uint256 x0 = _random();
+        bytes memory x1 = _randomBytesZeroRightPadded();
+        address x2 = _randomNonZeroAddress();
+        _maybeBzztMemory();
+        bytes memory encoded = LibRLP.p(x0).p(x1).p(x2).encode();
+        _checkAndMaybeBzztMemory(encoded);
+        LibRLP.Item[] memory items = LibRLP.decodeList(encoded);
+        assertEq(items.length, 3);
+        assertEq(items[0].decodeUint256(), x0);
+        assertEq(items[1].decodeBytes(), x1);
+        assertEq(items[2].decodeAddress(), x2);
+    }
+
+    function testRLPDecodeListDifferential(bytes32) public {
+        // Build a possibly-nested list, encode it, decode it, and verify structurally.
+        LibRLP.List memory l = _testRLPP(0);
+        bytes memory encoded = LibRLP.encode(l);
+        _checkAndMaybeBzztMemory(encoded);
+        LibRLP.Item[] memory items = LibRLP.decodeList(encoded);
+        // Every decoded item must re-encode to a slice of the original payload.
+        for (uint256 i; i < items.length; ++i) {
+            if (items[i].isList()) {
+                items[i].decodeList(); // Must not revert.
+            } else {
+                items[i].decodeBytes(); // Must not revert.
+            }
+        }
+    }
+
+    function testRLPDecodeEmptyItemQueries() public {
+        LibRLP.Item memory empty;
+        assertTrue(empty.isEmpty());
+        assertFalse(empty.isList());
+        assertTrue(empty.next().isEmpty());
     }
 
     function _checkMemory(LibRLP.List memory l) internal pure {

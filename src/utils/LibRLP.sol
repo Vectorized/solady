@@ -15,6 +15,23 @@ library LibRLP {
         uint256 _data;
     }
 
+    /// @dev A pointer to a decoded RLP item in memory.
+    /// It is a lightweight view (offset, length, and type) into the RLP encoded
+    /// data being decoded. The fields are packed into a single word for efficiency.
+    /// Items returned by `decodeList` reference memory in the original RLP encoded data.
+    /// Mutating the original RLP encoded data may invalidate the items.
+    struct Item {
+        // Do NOT modify the `_data` directly.
+        uint256 _data;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       CUSTOM ERRORS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev The RLP item is malformed and cannot be decoded.
+    error RLPDecodingFailed();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                 CREATE ADDRESS PREDICTION                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -375,8 +392,269 @@ library LibRLP {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                  RLP DECODING OPERATIONS                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // Note:
+    // - The decoding takes a permissive approach, accepting non-canonical encodings
+    //   (e.g. scalar values with leading zero bytes). This prioritizes compatibility
+    //   over strict adherence to the Yellow Paper's canonicalization rules.
+    // - Single bytes in the `[0x00, 0x7f]` range that are improperly wrapped with a
+    //   length prefix are still rejected as invalid.
+    // - The top-level decoders do NOT require that the item spans the entire input;
+    //   trailing bytes after a valid item are ignored.
+    // - `Item`s returned by `decodeList` are views into the original RLP encoded data.
+    //   Mutating the original encoded data may invalidate them.
+
+    /// @dev Decodes the RLP encoded `encoded` into a bytes string.
+    /// Reverts if `encoded` is not a single RLP data item.
+    function decodeBytes(bytes memory encoded) internal pure returns (bytes memory) {
+        return decodeBytes(_toItem(encoded));
+    }
+
+    /// @dev Decodes the RLP encoded `encoded` into a uint256 scalar.
+    /// Reverts if `encoded` is not a single RLP data item of at most 32 bytes.
+    function decodeUint256(bytes memory encoded) internal pure returns (uint256) {
+        return decodeUint256(_toItem(encoded));
+    }
+
+    /// @dev Decodes the RLP encoded `encoded` into an address.
+    /// Reverts if `encoded` is not a single RLP data item of 1 or 21 bytes.
+    function decodeAddress(bytes memory encoded) internal pure returns (address) {
+        return decodeAddress(_toItem(encoded));
+    }
+
+    /// @dev Decodes the RLP encoded `encoded` into a bytes32.
+    /// Reverts if `encoded` is not a single RLP data item of at most 32 bytes.
+    function decodeBytes32(bytes memory encoded) internal pure returns (bytes32) {
+        return decodeBytes32(_toItem(encoded));
+    }
+
+    /// @dev Decodes the RLP encoded `encoded` into an array of RLP items.
+    /// Reverts if `encoded` is not a single RLP list.
+    /// The returned items are views into `encoded`. See: {Item}.
+    function decodeList(bytes memory encoded) internal pure returns (Item[] memory) {
+        return decodeList(_toItem(encoded));
+    }
+
+    /// @dev Decodes the RLP `item` into a bytes string.
+    /// Reverts if `item` is not a single RLP data item.
+    function decodeBytes(Item memory item) internal pure returns (bytes memory result) {
+        (uint256 ptr, uint256 end) = _unpack(item);
+        (uint256 payloadPtr, uint256 payloadLen, uint256 itemIsList) = _decodeLength(ptr, end);
+        if (itemIsList != 0) revert RLPDecodingFailed();
+        /// @solidity memory-safe-assembly
+        assembly {
+            result := mload(0x40)
+            mstore(result, payloadLen) // Store the length.
+            let o := add(result, 0x20)
+            // Copy the payload. May read some bytes past the payload, which are zeroized below.
+            for { let i := 0 } lt(i, payloadLen) { i := add(i, 0x20) } {
+                mstore(add(o, i), mload(add(payloadPtr, i)))
+            }
+            mstore(add(o, payloadLen), 0) // Zeroize the slot after the string.
+            mstore(0x40, add(o, and(add(payloadLen, 0x1f), not(0x1f)))) // Allocate memory.
+        }
+    }
+
+    /// @dev Decodes the RLP `item` into a uint256 scalar.
+    /// Reverts if `item` is not a single RLP data item of at most 32 bytes.
+    function decodeUint256(Item memory item) internal pure returns (uint256 result) {
+        (uint256 ptr, uint256 end) = _unpack(item);
+        (uint256 payloadPtr, uint256 payloadLen, uint256 itemIsList) = _decodeLength(ptr, end);
+        if (itemIsList != 0) revert RLPDecodingFailed();
+        if (payloadLen > 32) revert RLPDecodingFailed();
+        result = _toUint(payloadPtr, payloadLen);
+    }
+
+    /// @dev Decodes the RLP `item` into an address.
+    /// Reverts if `item` is not a single RLP data item of 1 or 21 bytes.
+    function decodeAddress(Item memory item) internal pure returns (address result) {
+        (uint256 ptr, uint256 end) = _unpack(item);
+        (uint256 payloadPtr, uint256 payloadLen, uint256 itemIsList) = _decodeLength(ptr, end);
+        uint256 itemLen;
+        unchecked {
+            itemLen = payloadPtr + payloadLen - ptr;
+        }
+        if (itemIsList != 0) revert RLPDecodingFailed();
+        if (itemLen != 1) if (itemLen != 21) revert RLPDecodingFailed();
+        result = address(uint160(_toUint(payloadPtr, payloadLen)));
+    }
+
+    /// @dev Decodes the RLP `item` into a bytes32.
+    /// Reverts if `item` is not a single RLP data item of at most 32 bytes.
+    function decodeBytes32(Item memory item) internal pure returns (bytes32) {
+        return bytes32(decodeUint256(item));
+    }
+
+    /// @dev Decodes the RLP `item` into an array of RLP items.
+    /// Reverts if `item` is not a single RLP list.
+    /// The returned items are views into the original encoded data. See: {Item}.
+    function decodeList(Item memory item) internal pure returns (Item[] memory result) {
+        (uint256 ptr, uint256 end) = _unpack(item);
+        (uint256 payloadPtr, uint256 payloadLen, uint256 itemIsList) = _decodeLength(ptr, end);
+        if (itemIsList == 0) revert RLPDecodingFailed();
+        uint256 listEnd;
+        unchecked {
+            listEnd = payloadPtr + payloadLen;
+        }
+        uint256 structsStart;
+        /// @solidity memory-safe-assembly
+        assembly {
+            structsStart := mload(0x40)
+        }
+        // Write the packed `_data` of each child `Item` into the unallocated space,
+        // and count the number of children. The children tile the list payload exactly.
+        uint256 n;
+        for (uint256 q = payloadPtr; q < listEnd;) {
+            (uint256 pp, uint256 pl,) = _decodeLength(q, listEnd);
+            /// @solidity memory-safe-assembly
+            assembly {
+                mstore(add(structsStart, shl(5, n)), or(q, shl(64, listEnd)))
+            }
+            unchecked {
+                q = pp + pl;
+                ++n;
+            }
+        }
+        // Build the array header, followed by pointers to each `Item` struct.
+        /// @solidity memory-safe-assembly
+        assembly {
+            let header := add(structsStart, shl(5, n))
+            result := header
+            mstore(header, n) // Store the length of the array.
+            let ptrs := add(header, 0x20)
+            for { let i := 0 } lt(i, n) { i := add(i, 1) } {
+                mstore(add(ptrs, shl(5, i)), add(structsStart, shl(5, i)))
+            }
+            mstore(0x40, add(ptrs, shl(5, n))) // Allocate memory.
+        }
+    }
+
+    /// @dev Returns the next sibling of `item` within its enclosing list.
+    /// Returns an empty item if `item` is empty or is the last item in its list.
+    /// Useful for iterating without allocating an array. See: {decodeList}, {isEmpty}.
+    function next(Item memory item) internal pure returns (Item memory result) {
+        (uint256 ptr, uint256 end) = _unpack(item);
+        if (ptr == 0) return result;
+        (uint256 payloadPtr, uint256 payloadLen,) = _decodeLength(ptr, end);
+        unchecked {
+            uint256 np = payloadPtr + payloadLen;
+            if (np < end) result._data = np | (end << 64);
+        }
+    }
+
+    /// @dev Returns whether `item` is a list.
+    /// Returns false if `item` is empty.
+    function isList(Item memory item) internal pure returns (bool result) {
+        (uint256 ptr, uint256 end) = _unpack(item);
+        if (ptr == 0) return false;
+        (,, uint256 itemIsList) = _decodeLength(ptr, end);
+        result = itemIsList != 0;
+    }
+
+    /// @dev Returns whether `item` is empty (i.e. a null item).
+    /// This is the case for items returned by `next` after the last item in a list.
+    function isEmpty(Item memory item) internal pure returns (bool result) {
+        result = item._data == 0;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      PRIVATE HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @dev Returns an `Item` viewing the entirety of the RLP encoded `encoded`.
+    /// The item packs the start pointer of the encoded data in the low 64 bits,
+    /// and the end pointer (exclusive) in the next 64 bits.
+    function _toItem(bytes memory encoded) private pure returns (Item memory item) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            let s := add(encoded, 0x20)
+            item := mload(0x40)
+            mstore(item, or(s, shl(64, add(s, mload(encoded)))))
+            mstore(0x40, add(item, 0x20))
+        }
+    }
+
+    /// @dev Unpacks the start pointer `p` and end pointer `e` from `item`.
+    function _unpack(Item memory item) private pure returns (uint256 ptr, uint256 end) {
+        uint256 data = item._data;
+        ptr = uint64(data);
+        end = uint64(data >> 64);
+    }
+
+    /// @dev Returns the big-endian integer of the `payloadLen` bytes at `payloadPtr`.
+    /// Assumes `payloadLen <= 32`.
+    function _toUint(uint256 payloadPtr, uint256 payloadLen) private pure returns (uint256 result) {
+        /// @solidity memory-safe-assembly
+        assembly {
+            if payloadLen { result := shr(shl(3, sub(32, payloadLen)), mload(payloadPtr)) }
+        }
+    }
+
+    /// @dev Decodes the length and type of the RLP item starting at pointer `p`,
+    /// bounded by the end pointer `e` (exclusive).
+    /// Returns the pointer to the payload, the length of the payload,
+    /// and whether the item is a list (`itemIsList` is 1 for a list, 0 otherwise).
+    /// Reverts if the item is malformed or extends beyond `e`.
+    function _decodeLength(uint256 ptr, uint256 end)
+        private
+        pure
+        returns (uint256 payloadPtr, uint256 payloadLen, uint256 itemIsList)
+    {
+        uint256 failed;
+        /// @solidity memory-safe-assembly
+        assembly {
+            for {} 1 {} {
+                if iszero(lt(ptr, end)) {
+                    failed := 1
+                    break
+                }
+                let b := byte(0, mload(ptr))
+                payloadPtr := add(ptr, 1)
+                // Case: single byte in `[0x00, 0x7f]`.
+                if lt(b, 0x80) {
+                    payloadPtr := ptr
+                    payloadLen := 1
+                    break
+                }
+                // Case: short string (0-55 bytes).
+                if lt(b, 0xb8) {
+                    payloadLen := sub(b, 0x80)
+                    // A single byte below `0x80` must not be wrapped with a prefix.
+                    if eq(payloadLen, 1) { failed := lt(byte(0, mload(payloadPtr)), 0x80) }
+                    break
+                }
+                // Case: long string (>55 bytes).
+                if lt(b, 0xc0) {
+                    let l := sub(b, 0xb7) // Length of the length, in `[1, 8]`.
+                    let chunk := mload(payloadPtr)
+                    payloadLen := shr(sub(256, shl(3, l)), chunk)
+                    payloadPtr := add(payloadPtr, l)
+                    // The length must not have a leading zero byte, and must be > 55.
+                    failed := or(iszero(byte(0, chunk)), iszero(gt(payloadLen, 55)))
+                    break
+                }
+                itemIsList := 1
+                // Case: short list.
+                if lt(b, 0xf8) {
+                    payloadLen := sub(b, 0xc0)
+                    break
+                }
+                // Case: long list.
+                let ll := sub(b, 0xf7) // Length of the length, in `[1, 8]`.
+                let c := mload(payloadPtr)
+                payloadLen := shr(sub(256, shl(3, ll)), c)
+                payloadPtr := add(payloadPtr, ll)
+                // The length must not have a leading zero byte, and must be > 55.
+                failed := or(iszero(byte(0, c)), iszero(gt(payloadLen, 55)))
+                break
+            }
+            // The item must not extend beyond `e`.
+            if gt(add(payloadPtr, payloadLen), end) { failed := 1 }
+        }
+        if (failed != 0) revert RLPDecodingFailed();
+    }
 
     /// @dev Updates the tail in `list`.
     function _updateTail(List memory list, List memory result) private pure {
