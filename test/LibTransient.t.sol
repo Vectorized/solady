@@ -418,6 +418,106 @@ contract LibTransientTest is SoladyTest {
         return LibTransient.tStack(stackSlot).pop();
     }
 
+    function testBytes32StackPushPop() public {
+        uint256 stackSlot = 123;
+        LibTransient.tBytes32Stack(stackSlot).push(bytes32(uint256(1)));
+        LibTransient.tBytes32Stack(stackSlot).push(bytes32(uint256(2)));
+        LibTransient.tBytes32Stack(stackSlot).push(bytes32(uint256(3)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).size(), 3);
+        assertEq(LibTransient.tBytes32Stack(stackSlot).top(), bytes32(uint256(3)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).top(0), bytes32(uint256(3)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).top(1), bytes32(uint256(2)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).top(2), bytes32(uint256(1)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).pop(), bytes32(uint256(3)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).pop(), bytes32(uint256(2)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).pop(), bytes32(uint256(1)));
+        assertEq(LibTransient.tBytes32Stack(stackSlot).size(), 0);
+    }
+
+    function testBytes32StackPushPop(uint256 stackSlot, bytes32[] memory values) public {
+        unchecked {
+            for (uint256 i; i < values.length; ++i) {
+                assertEq(LibTransient.tBytes32Stack(stackSlot).size(), i);
+                LibTransient.tBytes32Stack(stackSlot).push(values[i]);
+                assertEq(LibTransient.tBytes32Stack(stackSlot).top(), values[i]);
+            }
+            assertEq(LibTransient.tBytes32Stack(stackSlot).size(), values.length);
+            // Check `top(i)` from the top.
+            for (uint256 i; i < values.length; ++i) {
+                assertEq(
+                    LibTransient.tBytes32Stack(stackSlot).top(i), values[values.length - 1 - i]
+                );
+            }
+            // Pop everything in reverse order.
+            for (uint256 i = values.length; i != 0;) {
+                --i;
+                assertEq(LibTransient.tBytes32Stack(stackSlot).size(), i + 1);
+                assertEq(LibTransient.tBytes32Stack(stackSlot).pop(), values[i]);
+            }
+            assertEq(LibTransient.tBytes32Stack(stackSlot).size(), 0);
+        }
+    }
+
+    function testBytes32StackClear(bytes32 stackSlot) public {
+        uint256 n = _randomUniform() & 7;
+        for (uint256 i; i < n; ++i) {
+            LibTransient.tBytes32Stack(stackSlot).push(keccak256(abi.encode(i)));
+        }
+        assertEq(LibTransient.tBytes32Stack(stackSlot).size(), n);
+        LibTransient.tBytes32Stack(stackSlot).clear();
+        assertEq(LibTransient.tBytes32Stack(stackSlot).size(), 0);
+        // Reusing after clear starts fresh.
+        for (uint256 i; i < n; ++i) {
+            assertEq(LibTransient.tBytes32Stack(stackSlot).size(), i);
+            bytes32 x = keccak256(abi.encode("v", i));
+            LibTransient.tBytes32Stack(stackSlot).push(x);
+            assertEq(LibTransient.tBytes32Stack(stackSlot).top(), x);
+        }
+    }
+
+    function testBytes32StackNoCollision(uint256 aSlot, uint256 bSlot) public {
+        if (aSlot == bSlot) bSlot = aSlot ^ 1;
+        uint256 n = 8;
+        for (uint256 i; i < n; ++i) {
+            LibTransient.tBytes32Stack(aSlot).push(keccak256(abi.encode("a", i)));
+            LibTransient.tBytes32Stack(bSlot).push(keccak256(abi.encode("b", i)));
+        }
+        for (uint256 i = n; i != 0;) {
+            --i;
+            assertEq(LibTransient.tBytes32Stack(aSlot).pop(), keccak256(abi.encode("a", i)));
+            assertEq(LibTransient.tBytes32Stack(bSlot).pop(), keccak256(abi.encode("b", i)));
+        }
+    }
+
+    function testEmptyBytes32StackTopReverts() public {
+        vm.expectRevert(LibTransient.StackIsEmpty.selector);
+        this.bytes32StackTop(0);
+    }
+
+    function testEmptyBytes32StackTopIndexReverts() public {
+        uint256 stackSlot;
+        LibTransient.tBytes32Stack(stackSlot).push(bytes32(uint256(1)));
+        vm.expectRevert(LibTransient.StackIsEmpty.selector);
+        this.bytes32StackTop(0, 1);
+    }
+
+    function testEmptyBytes32StackPopReverts() public {
+        vm.expectRevert(LibTransient.StackIsEmpty.selector);
+        this.bytes32StackPop(0);
+    }
+
+    function bytes32StackTop(uint256 stackSlot) public view returns (bytes32) {
+        return LibTransient.tBytes32Stack(stackSlot).top();
+    }
+
+    function bytes32StackTop(uint256 stackSlot, uint256 i) public view returns (bytes32) {
+        return LibTransient.tBytes32Stack(stackSlot).top(i);
+    }
+
+    function bytes32StackPop(uint256 stackSlot) public returns (bytes32) {
+        return LibTransient.tBytes32Stack(stackSlot).pop();
+    }
+
     function testRegistry(bytes32 key, bytes memory value) public {
         this.checkRegistry(key, value);
     }
