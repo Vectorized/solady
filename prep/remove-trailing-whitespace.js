@@ -6,7 +6,7 @@ async function main() {
     if (!srcPath.match(/\.sol$/i)) return;
     const src = readSync(srcPath);
     const cleanedSrc = src.split('\n').map(l => l.replace(/\s+$/, '')).join('\n');
-    if (src !== cleanedSrc) writeSync(srcPath, src);
+    if (src !== cleanedSrc) writeSync(srcPath, cleanedSrc);
   });
 };
 
